@@ -1,0 +1,9 @@
+.venv/
+__pycache__/
+.pytest_cache/
+data/
+*.log
+artifacts/
+.build/
+.codex-finalizer/
+firmware/esp32-s3/secrets.h

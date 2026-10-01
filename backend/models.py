@@ -1,0 +1,109 @@
+from typing import Literal
+
+from pydantic import BaseModel, ConfigDict, Field, model_validator
+
+
+class StrictModel(BaseModel):
+    model_config = ConfigDict(extra="forbid", allow_inf_nan=False)
+
+
+class Settings(StrictModel):
+    configured: bool = False
+    demo_mode: bool = True
+    pv_enabled: bool = True
+    battery_enabled: bool = True
+    wind_enabled: bool = False
+    weather_enabled: bool = True
+    prices_enabled: bool = True
+    pv_kwp: float = Field(6, ge=0.1, le=100)
+    azimuth_deg: float = Field(180, ge=0, le=360)
+    tilt_deg: float = Field(35, ge=0, le=90)
+    latitude: float = Field(48.15, ge=-65, le=65)
+    longitude: float = Field(17.11, ge=-180, le=180)
+    battery_kwh: float = Field(10, ge=0.1, le=200)
+    battery_max_kw: float = Field(3, ge=0.1, le=100)
+    wind_kw: float = Field(2, ge=0.1, le=50)
+    base_load_w: float = Field(600, ge=50, le=20000)
+    price_mode: Literal["manual", "time_of_use"] = "manual"
+    buy_price: float = Field(0.19, ge=0, le=10)
+    sell_price: float = Field(0.06, ge=0, le=10)
+    offpeak_price: float = Field(0.11, ge=0, le=10)
+    distribution_price: float = Field(0.05, ge=0, le=10)
+    fixed_daily: float = Field(0.25, ge=0, le=100)
+    measurement_source: Literal["simulator", "hybrid"] = "simulator"
+    pv_reference_w: float = Field(0.5, gt=0, le=20)
+    weather_source: Literal["simulator"] = "simulator"
+    price_source: Literal["manual"] = "manual"
+
+
+SCENARIOS = {
+    "sunny": "Slnečný deň",
+    "cloudy": "Zamračenie",
+    "evening": "Večerná špička",
+    "empty": "Vybitá batéria",
+    "surplus": "Vysoký prebytok",
+    "outage": "Výpadok siete",
+    "cheap": "Nízka cena energie",
+    "expensive": "Vysoká cena energie",
+}
+Scenario = Literal["sunny", "cloudy", "evening", "empty", "surplus", "outage", "cheap", "expensive"]
+
+
+class DemoCommand(StrictModel):
+    scenario: Scenario | None = None
+    paused: bool | None = None
+    speed: Literal[1, 5, 20] | None = None
+    step: bool = False
+
+
+class Esp32Telemetry(StrictModel):
+    device_id: str = Field("energia-esp32", min_length=1, max_length=48, pattern=r"^[a-zA-Z0-9_-]+$")
+    firmware_version: str = Field("dev", min_length=1, max_length=24)
+    panel_voltage_v: float = Field(ge=0, le=26)
+    panel_current_a: float = Field(ge=0, le=5)
+    panel_power_w: float = Field(ge=0, le=20)
+    illuminance_lux: float | None = Field(default=None, ge=0, le=300000)
+    temperature_c: float | None = Field(default=None, ge=-40, le=85)
+    load_stage: int = Field(0, ge=0, le=3)
+    grid_available: bool = True
+
+
+class Sample(StrictModel):
+    timestamp: str
+    interval_seconds: int = Field(300, gt=0)
+    source: Literal["simulator", "hybrid"] = "simulator"
+    quality: Literal["synthetic", "mixed"] = "synthetic"
+    device_id: str | None = None
+    panel_power_w: float | None = Field(default=None, ge=0)
+    illuminance_lux: float | None = Field(default=None, ge=0)
+    scenario: Scenario
+    seeded: bool = False
+    load_w: float = Field(ge=0)
+    served_w: float = Field(ge=0)
+    pv_w: float = Field(ge=0)
+    wind_w: float = Field(ge=0)
+    grid_w: float
+    battery_w: float
+    unserved_w: float = Field(ge=0)
+    curtailed_w: float = Field(ge=0)
+    voltage_v: float = Field(ge=0)
+    current_a: float = Field(ge=0)
+    soc_pct: float | None = Field(default=None, ge=0, le=100)
+    battery_energy_kwh: float | None = None
+    battery_eta_hours: float | None = None
+    temperature_c: float
+    cloud_pct: float = Field(ge=0, le=100)
+    wind_ms: float = Field(ge=0)
+    radiation_wm2: float = Field(ge=0)
+    grid_available: bool
+    buy_eur_kwh: float | None = None
+    sell_eur_kwh: float | None = None
+    distribution_eur_kwh: float | None = None
+    fixed_eur_day: float | None = None
+
+    @model_validator(mode="after")
+    def balanced(self):
+        residual = self.pv_w + self.wind_w + self.grid_w + self.battery_w - self.served_w - self.curtailed_w
+        if abs(residual) > 0.01 or abs(self.load_w - self.served_w - self.unserved_w) > 0.01:
+            raise ValueError("Energetická bilancia nesedí")
+        return self
