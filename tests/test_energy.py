@@ -173,6 +173,8 @@ def test_api_lifecycle_validation_restart_and_export(tmp_path):
         settings = initial["settings"] | {"prices_enabled":False,"pv_enabled":False,"battery_enabled":False}
         saved = client.put("/api/settings", json=settings).json()
         assert saved["settings"]["configured"] and saved["demo"]["run_id"] != initial["demo"]["run_id"]
+        unchanged = client.put("/api/settings", json=saved["settings"]).json()
+        assert unchanged["demo"]["run_id"] == saved["demo"]["run_id"]
         assert client.get("/api/history").json()["totals"]["cost_eur"] is None
         outage = client.post("/api/demo", json={"scenario":"outage"}).json()
         assert outage["sample"]["grid_w"] == 0 and outage["sample"]["unserved_w"] > 0

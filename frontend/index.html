@@ -2,8 +2,9 @@
 <html lang="sk">
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#f5f7f6"><title>Energia — prehľad domácnosti</title>
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='12' fill='%239ce8af'/%3E%3Cpath d='M23 5 11 23h9l-3 12 13-19h-9z' fill='%23101515'/%3E%3C/svg%3E">
+  <meta name="theme-color" content="#0b1019"><title>Energia — prehľad domácnosti</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='12' fill='%235b8cff'/%3E%3Cpath d='M23 5 11 23h9l-3 12 13-19h-9z' fill='%230b1019'/%3E%3C/svg%3E">
+  <script>try{document.documentElement.dataset.theme=localStorage.getItem('energia-theme')==='light'?'light':'dark'}catch{document.documentElement.dataset.theme='dark'}</script>
   <link rel="stylesheet" href="/static/styles.css"><script type="module" src="/static/app.js"></script>
 </head>
 <body>
@@ -23,7 +24,7 @@
   <div class="sidebar-bottom"><div class="demo-label"><span class="online-dot"></span>LOKÁLNE PRIPOJENIE</div><p>Energia doma,<br>prehľadne.</p><small>Dáta zostávajú vo vašej sieti.</small><div class="version">energia. <span>v0.4.0</span></div></div>
 </aside>
 <main>
-  <header class="topbar"><div><span class="breadcrumb">Moja domácnosť</span><span class="separator">/</span><span id="breadcrumb">Prehľad</span></div><div class="top-status"><span id="connection" class="status"><i class="online-dot"></i>Lokálne pripojenie</span><span class="avatar">M</span></div></header>
+  <header class="topbar"><div><span class="breadcrumb">Moja domácnosť</span><span class="separator">/</span><span id="breadcrumb">Prehľad</span></div><div class="top-status"><span id="connection" class="status"><i class="online-dot"></i>Lokálne pripojenie</span><button type="button" id="theme-toggle" class="theme-toggle" aria-label="Prepnúť na svetlý režim" aria-pressed="false" title="Zmeniť vzhľad"><span id="theme-icon" aria-hidden="true">☀</span><span id="theme-label">Svetlý režim</span></button></div></header>
   <div id="error" role="alert" hidden></div>
   <div class="page-heading"><div><p class="eyebrow">AKTUÁLNY STAV</p><h1 id="page-title">Prehľad domácnosti</h1><p id="page-description">Spotreba, výroba a tok energie na jednom mieste.</p></div><div class="heading-actions"><span id="mode-pill" class="pill">◉ Demo režim</span><a class="button secondary" href="/api/export">↓ Export CSV</a></div></div>
   <section class="demo-toolbar" aria-label="Ovládanie systému"><div class="demo-caption"><span class="demo-icon">◉</span><div><strong id="mode-title">Demo režim</strong><small id="sim-clock">Pripájam systém…</small></div></div><span id="device-status" class="subtle-tag">SIMULÁTOR</span><label class="scenario-control" data-demo-control><span class="sr-only">Scenár</span><select id="scenario"><option value="sunny">Slnečno</option><option value="cloudy">Zamračené</option><option value="evening">Špička</option><option value="empty">Batéria 10 %</option><option value="surplus">Prebytok</option><option value="outage">Výpadok</option><option value="cheap">Lacná energia</option><option value="expensive">Drahá energia</option></select></label><label class="speed-control" data-demo-control><span>Rýchlosť</span><select id="speed" aria-label="Rýchlosť simulácie"><option value="1">1×</option><option value="5">5×</option><option value="20">20×</option></select></label><button id="step" data-demo-control class="button secondary" title="Posunie čas o päť minút a pozastaví simuláciu">+ 5 min</button><button id="play" class="button primary">▶ Spustiť</button></section>
@@ -38,14 +39,14 @@
     <div class="overview-grid">
       <section class="panel flow-panel"><div class="panel-heading"><div><h2>Živé energetické toky</h2><p>Výroba, spotreba a všetko medzi tým</p></div><span id="flow-status" class="subtle-tag">● BILANCIA</span></div>
         <div class="flow-stage"><svg id="flow-svg" viewBox="0 0 760 360" role="img" aria-labelledby="flow-title"><title id="flow-title">Energetické toky v domácnosti</title>
-          <defs><pattern id="dots" width="18" height="18" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r="0.7" fill="#2a3434"/></pattern></defs><rect width="760" height="360" fill="url(#dots)"/>
+          <defs><pattern id="dots" width="18" height="18" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r="0.7" class="pattern-dot"/></pattern></defs><rect width="760" height="360" fill="url(#dots)"/>
           <path id="path-pv" class="flow-path solar-path" d="M150 112 H270 Q305 112 305 147 V177 H336"/>
           <path id="path-grid" class="flow-path grid-path" d="M610 112 H500 Q455 112 455 147 V177 H424"/>
           <path id="path-battery" class="flow-path battery-path" d="M380 236 V278"/>
           <path id="path-wind" class="flow-path wind-path" d="M160 285 H260 Q290 285 290 240 V204 H336" data-module="wind"/>
           <g data-module="pv"><rect class="node-box" x="72" y="48" width="160" height="100" rx="14"/><text x="152" y="75" class="node-label">☼ FOTOVOLTAIKA</text><text id="flow-pv" x="152" y="109" class="node-value solar-text">—</text><text id="flow-pv-sub" x="152" y="131" class="node-sub">Výroba zo slnka</text></g>
           <g><rect class="node-box" x="528" y="48" width="160" height="100" rx="14"/><text x="608" y="75" class="node-label">↯ ELEKTRICKÁ SIEŤ</text><text id="flow-grid" x="608" y="109" class="node-value grid-text">—</text><text id="flow-grid-sub" x="608" y="131" class="node-sub">Sieť dostupná</text></g>
-          <g class="house-node"><circle cx="380" cy="178" r="76" fill="#192b25" opacity="0.5"/><circle cx="380" cy="178" r="60" fill="#21382d" stroke="#6aa780" stroke-width="1"/><path d="m355 163 25-22 25 22v34h-18v-23h-14v23h-18z" fill="none" stroke="#b6f0c6" stroke-width="2"/><text x="380" y="216" class="node-label house-label">DOMÁCNOSŤ</text><text id="flow-load" x="380" y="98" class="node-value">—</text></g>
+          <g class="house-node"><circle class="house-halo" cx="380" cy="178" r="76"/><circle class="house-core" cx="380" cy="178" r="60"/><path class="house-icon" d="m355 163 25-22 25 22v34h-18v-23h-14v23h-18z"/><text x="380" y="216" class="node-label house-label">DOMÁCNOSŤ</text><text id="flow-load" x="380" y="98" class="node-value">—</text></g>
           <g data-module="battery"><rect class="node-box" x="300" y="278" width="160" height="72" rx="14"/><text x="380" y="301" class="node-label">▱ BATÉRIA</text><text id="flow-battery" x="380" y="330" class="node-value battery-text">—</text></g>
           <g data-module="wind"><rect class="node-box" x="72" y="251" width="160" height="80" rx="14"/><text x="152" y="277" class="node-label">≋ VETERNÁ TURBÍNA</text><text id="flow-wind" x="152" y="308" class="node-value">—</text></g>
         </svg><div class="mobile-flow" aria-label="Aktuálny tok energie"><div data-module="pv"><span>☼ Fotovoltaika</span><strong id="mobile-pv">—</strong></div><div class="mobile-flow-home"><span>⌂ Domácnosť</span><strong id="mobile-load">—</strong></div><div data-module="battery"><span>▱ Virtuálna batéria</span><strong id="mobile-battery">—</strong></div><div><span>↗ Sieť</span><strong id="mobile-grid">—</strong><small id="mobile-grid-detail"></small></div></div></div><div class="flow-footer"><span><i class="legend-dot mint-bg"></i><span id="balance-caption">Výkonová bilancia</span></span><span id="unserved">Simulované merania</span></div>
@@ -63,17 +64,69 @@
   <footer class="page-footer"><span>energia. <span class="muted">Lokálny energetický prehľad</span></span><span id="run-info">Pripájam údaje…</span></footer>
 </main>
 
-<dialog id="setup"><form id="setup-form"><div class="wizard-top"><span class="brand"><span class="brand-symbol">ϟ</span>energia.</span><button type="button" class="icon-button" id="setup-close" aria-label="Zatvoriť nastavenia">×</button></div><p class="eyebrow" id="wizard-progress">KROK 1 Z 3</p><h2 id="wizard-title">Vaša domácnosť, váš systém.</h2><p class="muted">Nastavte simulátor alebo bezpečný hybridný model s ESP32-S3.</p>
-  <section data-wizard="0"><div class="module-options">
-    <label class="mode-option"><input type="checkbox" name="demo_mode"><span>◉ <strong>Demo režim</strong><small>Pripravené scenáre a zrýchlený čas</small></span></label>
-    <label><input type="checkbox" name="pv_enabled"><span>☼ <strong>Fotovoltaika</strong><small>Virtuálna solárna elektráreň</small></span></label>
-    <label><input type="checkbox" name="battery_enabled"><span>▱ <strong>Batéria</strong><small>Ukladanie energie a história SOC</small></span></label>
-    <label><input type="checkbox" name="wind_enabled"><span>≋ <strong>Veterná turbína</strong><small>Výroba podľa výkonovej krivky</small></span></label>
-    <label><input type="checkbox" name="weather_enabled"><span>☁ <strong>Počasie</strong><small>Zobraziť simulované počasie</small></span></label>
-    <label><input type="checkbox" name="prices_enabled"><span>€ <strong>Ceny a ekonomika</strong><small>Tarify, náklady a výkup energie</small></span></label>
-  </div><p class="footnote">Demo režim nemení merané hodnoty panela. Zapína scenáre a zrýchlený čas. Bežný režim zapisuje vzorky každú sekundu.</p></section>
-  <section data-wizard="1" hidden><div class="form-grid"><label>Zdroj merania<select name="measurement_source"><option value="simulator">Softvérový simulátor</option><option value="hybrid">ESP32-S3 + malý panel</option></select></label><label>Základná spotreba (W)<input name="base_load_w" type="number" min="50" max="20000" required></label><label data-setting-module="pv">Výkon FV (kWp)<input name="pv_kwp" type="number" min="0.1" max="100" step="0.1" required></label><label data-setting-module="pv">Kalibračný výkon panela (W)<input name="pv_reference_w" type="number" min="0.001" max="20" step="0.001" required></label><label data-setting-module="pv">Azimut (°; juh = 180)<input name="azimuth_deg" type="number" min="0" max="360" step="1" required></label><label data-setting-module="pv">Sklon panelov (°)<input name="tilt_deg" type="number" min="0" max="90" step="1" required></label><label>Zemepisná šírka (°)<input name="latitude" type="number" min="-65" max="65" step="0.01" required></label><label>Zemepisná dĺžka (°)<input name="longitude" type="number" min="-180" max="180" step="0.01" required></label><label data-setting-module="battery">Kapacita batérie (kWh)<input name="battery_kwh" type="number" min="0.1" max="200" step="0.1" required></label><label data-setting-module="battery">Limit batérie (kW)<input name="battery_max_kw" type="number" min="0.1" max="100" step="0.1" required></label><label data-setting-module="wind">Výkon turbíny (kW)<input name="wind_kw" type="number" min="0.1" max="50" step="0.1" required></label></div><p class="footnote">Kalibračný výkon je maximum namerané pod prezentačným svetlom. Pomer aktuálneho a maximálneho výkonu riadi nastavenú virtuálnu FV elektráreň.</p></section>
-  <section data-wizard="2" hidden><div id="price-settings"><div class="form-grid"><label>Tarifný režim<select name="price_mode"><option value="manual">Jednotná cena</option><option value="time_of_use">Časová tarifa</option></select></label><label>Nákup (€/kWh)<input name="buy_price" type="number" min="0" max="10" step="0.001" required></label><label>Výkup (€/kWh)<input name="sell_price" type="number" min="0" max="10" step="0.001" required></label><label>Nízka tarifa (€/kWh)<input name="offpeak_price" type="number" min="0" max="10" step="0.001" required></label><label>Distribúcia (€/kWh)<input name="distribution_price" type="number" min="0" max="10" step="0.001" required></label><label>Fixný poplatok (€/deň)<input name="fixed_daily" type="number" min="0" max="100" step="0.01" required></label></div><p class="footnote">Nízka tarifa platí 22:00–06:00 v Europe/Bratislava. Cena nákupu je bez distribúcie. Scenáre nízkej/vysokej ceny ju dočasne nahrádzajú.</p></div><div class="notice"><strong>Pripravené na prvý experiment</strong><span>V demo režime vznikne aj 24 hodín syntetickej histórie. Predchádzajúce dáta zostanú v databáze. Systém začne pozastavený.</span></div></section>
-  <p id="setup-error" class="form-error" role="alert"></p><div class="wizard-actions"><button type="button" id="wizard-back" class="button secondary">Späť</button><div><button type="button" id="wizard-next" class="button primary">Pokračovať →</button><button type="submit" id="wizard-save" class="button primary" hidden>Vytvoriť experiment →</button></div></div>
-</form></dialog>
+<dialog id="setup" aria-labelledby="settings-title">
+  <form id="setup-form">
+    <header class="settings-header">
+      <div><p class="eyebrow">KONFIGURÁCIA SYSTÉMU</p><h2 id="settings-title">Nastavenia domácnosti</h2><p class="muted">Upravte model, zdroj dát a tarifu na jednom mieste.</p></div>
+      <button type="button" class="icon-button" id="setup-close" aria-label="Zatvoriť nastavenia">×</button>
+    </header>
+    <div class="settings-layout">
+      <nav class="settings-nav" aria-label="Časti nastavení">
+        <button type="button" data-settings-tab="source" class="active"><span>01</span><strong>Režim a zdroj</strong><small>Simulátor alebo ESP32</small></button>
+        <button type="button" data-settings-tab="modules"><span>02</span><strong>Moduly</strong><small>Čo sledujete</small></button>
+        <button type="button" data-settings-tab="model"><span>03</span><strong>Model domácnosti</strong><small>Výkony a poloha</small></button>
+        <button type="button" data-settings-tab="prices"><span>04</span><strong>Tarifa</strong><small>Ceny a poplatky</small></button>
+        <div class="settings-nav-info"><span class="online-dot"></span><span id="settings-device-state">Lokálny simulátor</span></div>
+      </nav>
+      <div class="settings-content">
+        <section data-settings-panel="source" aria-labelledby="source-title">
+          <div class="settings-section-heading"><span class="section-number">01 / ZDROJ DÁT</span><h3 id="source-title">Ako získavať hodnoty</h3><p>Vyberte, či chcete pripravené scenáre alebo bežný tok údajov. Zdroj určuje, odkiaľ pochádza svetlo pre virtuálnu fotovoltaiku.</p></div>
+          <div class="form-grid">
+            <label class="field">Zdroj merania<select name="measurement_source"><option value="simulator">Softvérový simulátor</option><option value="hybrid">ESP32-S3 + malý panel</option></select><small>Hybrid používa výkon malého panela ako vstup virtuálnej FV.</small></label>
+          </div>
+          <label class="setting-switch"><span class="switch-copy"><strong>Demo režim</strong><small>Scenáre, zrýchlený čas a ručný krok. V bežnom režime pribudne vzorka každú sekundu.</small></span><input type="checkbox" name="demo_mode"><span class="switch-track" aria-hidden="true"></span></label>
+          <div class="settings-callout" id="source-explainer">Simulátor vytvára bezpečné syntetické údaje bez pripojenia zariadenia.</div>
+        </section>
+        <section data-settings-panel="modules" hidden aria-labelledby="modules-title">
+          <div class="settings-section-heading"><span class="section-number">02 / ZOBRAZENIE</span><h3 id="modules-title">Ktoré časti zapnúť</h3><p>Zapnuté moduly sa zobrazia na prehľade, v grafoch aj vo výpočtoch.</p></div>
+          <div class="module-options">
+            <label><span class="module-symbol">☼</span><span><strong>Fotovoltaika</strong><small>Výroba podľa svetla a počasia</small></span><input type="checkbox" name="pv_enabled"><span class="switch-track" aria-hidden="true"></span></label>
+            <label><span class="module-symbol">▱</span><span><strong>Batéria</strong><small>Nabíjanie, vybíjanie a história stavu</small></span><input type="checkbox" name="battery_enabled"><span class="switch-track" aria-hidden="true"></span></label>
+            <label><span class="module-symbol">≋</span><span><strong>Veterná turbína</strong><small>Výroba podľa rýchlosti vetra</small></span><input type="checkbox" name="wind_enabled"><span class="switch-track" aria-hidden="true"></span></label>
+            <label><span class="module-symbol">☁</span><span><strong>Počasie</strong><small>Teplota, vietor, oblačnosť a žiarenie</small></span><input type="checkbox" name="weather_enabled"><span class="switch-track" aria-hidden="true"></span></label>
+            <label><span class="module-symbol">€</span><span><strong>Ceny a ekonomika</strong><small>Tarify, náklady a príjmy z exportu</small></span><input type="checkbox" name="prices_enabled"><span class="switch-track" aria-hidden="true"></span></label>
+          </div>
+        </section>
+        <section data-settings-panel="model" hidden aria-labelledby="model-title">
+          <div class="settings-section-heading"><span class="section-number">03 / PARAMETRE</span><h3 id="model-title">Model domácnosti</h3><p>Hodnoty používajú výpočty výroby, bilancie a histórie. Malý panel reprezentuje väčšiu virtuálnu elektráreň.</p></div>
+          <div class="form-grid">
+            <label class="field">Základná spotreba (W)<input name="base_load_w" type="number" min="50" max="20000" required><small>Spotreba pri bežnej prevádzke.</small></label>
+            <label class="field" data-setting-module="pv">Výkon FV (kWp)<input name="pv_kwp" type="number" min="0.1" max="100" step="0.1" required></label>
+            <label class="field" data-setting-module="pv">Kalibračný výkon panela (W)<input name="pv_reference_w" type="number" min="0.001" max="20" step="0.001" required><small>Maximum pod svetlom pri prezentácii.</small></label>
+            <label class="field" data-setting-module="pv">Azimut (°; juh = 180)<input name="azimuth_deg" type="number" min="0" max="360" step="1" required></label>
+            <label class="field" data-setting-module="pv">Sklon panelov (°)<input name="tilt_deg" type="number" min="0" max="90" step="1" required></label>
+            <label class="field">Zemepisná šírka (°)<input name="latitude" type="number" min="-65" max="65" step="0.01" required></label>
+            <label class="field">Zemepisná dĺžka (°)<input name="longitude" type="number" min="-180" max="180" step="0.01" required></label>
+            <label class="field" data-setting-module="battery">Kapacita batérie (kWh)<input name="battery_kwh" type="number" min="0.1" max="200" step="0.1" required></label>
+            <label class="field" data-setting-module="battery">Limit batérie (kW)<input name="battery_max_kw" type="number" min="0.1" max="100" step="0.1" required></label>
+            <label class="field" data-setting-module="wind">Výkon turbíny (kW)<input name="wind_kw" type="number" min="0.1" max="50" step="0.1" required></label>
+          </div>
+        </section>
+        <section data-settings-panel="prices" hidden aria-labelledby="prices-title">
+          <div class="settings-section-heading"><span class="section-number">04 / EKONOMIKA</span><h3 id="prices-title">Cena energie</h3><p>Nákup, výkup a poplatky sa premietnu do ekonomických štatistík.</p></div>
+          <div id="price-settings"><div class="form-grid">
+            <label class="field">Tarifný režim<select name="price_mode"><option value="manual">Jednotná cena</option><option value="time_of_use">Časová tarifa</option></select></label>
+            <label class="field">Nákup (€/kWh)<input name="buy_price" type="number" min="0" max="10" step="0.001" required></label>
+            <label class="field">Výkup (€/kWh)<input name="sell_price" type="number" min="0" max="10" step="0.001" required></label>
+            <label class="field" id="offpeak-field">Nízka tarifa (€/kWh)<input name="offpeak_price" type="number" min="0" max="10" step="0.001" required><small>Platí od 22:00 do 06:00.</small></label>
+            <label class="field">Distribúcia (€/kWh)<input name="distribution_price" type="number" min="0" max="10" step="0.001" required></label>
+            <label class="field">Fixný poplatok (€/deň)<input name="fixed_daily" type="number" min="0" max="100" step="0.01" required></label>
+          </div><p class="footnote">Ceny sú ručné. Scenáre lacnej a drahej energie dočasne upravia nákupnú cenu.</p></div>
+          <div id="prices-disabled" class="settings-callout" hidden>Modul cien je vypnutý. Zapnite ho v časti Moduly, ak chcete počítať náklady a úspory.</div>
+        </section>
+      </div>
+    </div>
+    <footer class="settings-footer"><div><strong id="settings-change-title">Žiadne neuložené zmeny</strong><span id="settings-change-detail">Upravte nastavenie a zmeny sa zobrazia tu.</span><p id="setup-error" class="form-error" role="alert"></p></div><div class="settings-actions"><button type="button" id="settings-cancel" class="button secondary">Zrušiť</button><button type="submit" id="settings-save" class="button primary" disabled>Uložiť nastavenia</button></div></footer>
+  </form>
+</dialog>
 </body></html>

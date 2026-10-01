@@ -171,7 +171,9 @@ def create_app(database=None, esp32_key=None):
     async def settings(value: Settings, request: Request):
         e = request.app.state.engine
         async with e.lock:
-            e.reset(value.model_copy(update={"configured": True}))
+            updated = value.model_copy(update={"configured": True})
+            if updated != e.settings:
+                e.reset(updated)
             return e.state()
 
     @app.post("/api/demo")

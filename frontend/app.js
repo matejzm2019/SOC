@@ -5,7 +5,7 @@ const kw = watts => `${number(watts / 1000)} kW`;
 const eur = value => value == null ? 'Vypnuté' : `${number(value)} €`;
 const time = timestamp => new Date(timestamp).toLocaleTimeString('sk-SK', {hour:'2-digit', minute:'2-digit', timeZone:'Europe/Bratislava'});
 const escape = value => String(value).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-let state, view = 'overview', period = 'day', wizardStep = 0, busy = false, refreshing = false, revision = 0;
+let state, view = 'overview', period = 'day', settingsTab = 'source', busy = false, refreshing = false, revision = 0;
 let lastDataAt = 0, lastDataKey = '';
 const pages = {
   overview: ['Prehľad', 'Prehľad domácnosti', 'Spotreba, výroba a tok energie na jednom mieste.'],
@@ -115,9 +115,10 @@ function renderState() {
 }
 
 function series() {
-  return [{key:'load_w', color:'#ace8bb', name:'Spotreba'},
-    ...(state.settings.pv_enabled ? [{key:'pv_w', color:'#e4c679', name:'Fotovoltaika'}] : []),
-    ...(state.settings.wind_enabled ? [{key:'wind_w', color:'#8ebce3', name:'Vietor'}] : [])];
+  const color = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  return [{key:'load_w', color:color('--load'), name:'Spotreba'},
+    ...(state.settings.pv_enabled ? [{key:'pv_w', color:color('--solar'), name:'Fotovoltaika'}] : []),
+    ...(state.settings.wind_enabled ? [{key:'wind_w', color:color('--wind'), name:'Vietor'}] : [])];
 }
 
 function chart(id, points, lines = series(), unit = 'kW') {
@@ -173,7 +174,7 @@ function renderHistory(history) {
   }
   if (view === 'history') {
     chart('history-chart', history.points);
-    chart('soc-chart', history.points, [{key:'soc_pct', color:'#c0a1e6', name:'SOC'}], '%');
+    chart('soc-chart', history.points, [{key:'soc_pct', color:getComputedStyle(document.documentElement).getPropertyValue('--battery').trim(), name:'SOC'}], '%');
     const entries = [['Spotreba',t.load_kwh,'kWh','Požadovaný odber'], ['Import zo siete',t.import_kwh,'kWh','Nakúpená energia'], ['Export do siete',t.export_kwh,'kWh','Dodaná energia'], ['Nepokrytá spotreba',t.unserved_kwh,'kWh','Počas výpadku']];
     if (state.settings.pv_enabled) entries.push(['Výroba FV',t.pv_kwh,'kWh','Virtuálna elektráreň']);
     if (state.settings.wind_enabled) entries.push(['Výroba vetra',t.wind_kwh,'kWh','Virtuálna turbína']);
@@ -245,53 +246,91 @@ function switchView(name) {
 
 const form = $('#setup-form');
 form.noValidate = true;
+function selectSettingsTab(name) {
+  settingsTab = name;
+  $$('[data-settings-tab]').forEach(el => { el.classList.toggle('active', el.dataset.settingsTab === name); el.setAttribute('aria-current', el.dataset.settingsTab === name ? 'page' : 'false'); });
+  $$('[data-settings-panel]').forEach(el => el.hidden = el.dataset.settingsPanel !== name);
+}
+function formSettings() {
+  const values = {...state.settings, configured:true};
+  for (const field of form.elements) {
+    if (!field.name || field.disabled) continue;
+    values[field.name] = field.type === 'checkbox' ? field.checked : field.type === 'number' ? Number(field.value) : field.value;
+  }
+  return values;
+}
+function updateSettings() {
+  $$('[data-setting-module]').forEach(el => {
+    el.hidden = !form.elements.namedItem(`${el.dataset.settingModule}_enabled`).checked;
+    el.querySelector('input').disabled = el.hidden;
+  });
+  const prices = form.elements.namedItem('prices_enabled').checked;
+  $('#price-settings').hidden = !prices;
+  $('#prices-disabled').hidden = prices;
+  $$('#price-settings input, #price-settings select').forEach(el => el.disabled = !prices);
+  const offpeak = prices && form.elements.namedItem('price_mode').value === 'time_of_use';
+  $('#offpeak-field').hidden = !offpeak;
+  form.elements.namedItem('offpeak_price').disabled = !offpeak;
+  const hybrid = form.elements.namedItem('measurement_source').value === 'hybrid';
+  setText('source-explainer', hybrid ? 'ESP32-S3 posiela meranie malého panela cez lokálnu Wi-Fi. Kým nie je pripojené, zobrazí sa stav zariadenia; ostatné toky ostávajú simulované.' : 'Simulátor vytvára bezpečné syntetické údaje bez pripojenia zariadenia. Funguje na počítači aj mobile v rovnakej lokálnej sieti.');
+  setText('settings-device-state', hybrid ? (state.device.online ? 'ESP32 pripojené' : 'ESP32 nepripojené') : 'Lokálny simulátor');
+  const changed = Object.keys(state.settings).filter(key => formSettings()[key] !== state.settings[key]);
+  const count = changed.length;
+  setText('settings-change-title', count ? `${count} ${count === 1 ? 'zmena' : count < 5 ? 'zmeny' : 'zmien'} na uloženie` : 'Žiadne neuložené zmeny');
+  setText('settings-change-detail', count ? 'Uloženie vytvorí nový experiment. Doterajšia história zostane uložená; nový experiment začne pozastavený.' : 'Upravte hodnotu alebo modul. Vzhľad stránky sa prepína okamžite mimo nastavení.');
+  $('#settings-save').disabled = !count || busy;
+}
 function openSetup() {
   if (!state) return;
   for (const [key,value] of Object.entries(state.settings)) {
     const field = form.elements.namedItem(key);
     if (field) { if (field.type === 'checkbox') field.checked = value; else field.value = value; }
   }
-  wizardStep = 0; setText('setup-error', ''); updateWizard();
+  selectSettingsTab('source'); setText('setup-error', ''); updateSettings();
   $('#setup-close').hidden = !state.settings.configured;
+  $('#settings-cancel').hidden = !state.settings.configured;
   $('#setup').showModal();
 }
-function updateWizard() {
-  $$('[data-wizard]').forEach(el => el.hidden = Number(el.dataset.wizard) !== wizardStep);
-  setText('wizard-progress', `KROK ${wizardStep + 1} Z 3`);
-  setText('wizard-title', ['Režim a moduly systému.', 'Parametre energetického modelu.', 'Tarify a nový experiment.'][wizardStep]);
-  $('#wizard-back').hidden = wizardStep === 0;
-  $('#wizard-next').hidden = wizardStep === 2;
-  $('#wizard-save').hidden = wizardStep !== 2;
-  $$('[data-setting-module]').forEach(el => { el.hidden = !form.elements.namedItem(`${el.dataset.settingModule}_enabled`).checked; el.querySelector('input').disabled = el.hidden; });
-  const prices = form.elements.namedItem('prices_enabled').checked;
-  $('#price-settings').hidden = !prices;
-  $$('#price-settings input, #price-settings select').forEach(el => el.disabled = !prices);
-}
-function validStep() {
-  const fields = $$(`[data-wizard="${wizardStep}"] input, [data-wizard="${wizardStep}"] select`);
-  return fields.every(field => field.disabled || field.reportValidity());
-}
-$('#wizard-next').addEventListener('click', () => { if (validStep()) { wizardStep++; updateWizard(); } });
-$('#wizard-back').addEventListener('click', () => { wizardStep--; updateWizard(); });
+$$('[data-settings-tab]').forEach(el => el.addEventListener('click', () => selectSettingsTab(el.dataset.settingsTab)));
 $('#setup-close').addEventListener('click', () => $('#setup').close());
+$('#settings-cancel').addEventListener('click', () => $('#setup').close());
 $('#setup').addEventListener('cancel', event => { if (!state.settings.configured) event.preventDefault(); });
-form.addEventListener('change', updateWizard);
+form.addEventListener('input', updateSettings);
+form.addEventListener('change', updateSettings);
 form.addEventListener('submit', async event => {
   event.preventDefault();
-  if (wizardStep < 2) { if (validStep()) { wizardStep++; updateWizard(); } return; }
-  if (!validStep()) return;
-  const settings = {...state.settings, configured:true};
-  for (const field of form.elements) {
-    if (!field.name || field.disabled) continue;
-    settings[field.name] = field.type === 'checkbox' ? field.checked : field.type === 'number' ? Number(field.value) : field.value;
+  const invalid = $$('[data-settings-panel] input, [data-settings-panel] select').find(field => !field.disabled && !field.checkValidity());
+  if (invalid) {
+    selectSettingsTab(invalid.closest('[data-settings-panel]').dataset.settingsPanel);
+    invalid.reportValidity();
+    return;
   }
-  revision++; busy = true; $('#wizard-save').disabled = true;
+  const settings = formSettings();
+  if (Object.keys(settings).every(key => settings[key] === state.settings[key])) return;
+  revision++; busy = true; $('#settings-save').disabled = true;
   try {
     state = await api('settings', {method:'PUT', body:JSON.stringify(settings)});
     $('#setup').close(); renderState();
   } catch (error) { setText('setup-error', error.message); }
-  finally { busy = false; $('#wizard-save').disabled = false; }
+  finally { busy = false; updateSettings(); }
   refresh(true);
+});
+
+function renderTheme() {
+  const light = document.documentElement.dataset.theme === 'light';
+  setText('theme-icon', light ? '☾' : '☀');
+  setText('theme-label', light ? 'Tmavý režim' : 'Svetlý režim');
+  $('#theme-toggle').setAttribute('aria-label', light ? 'Prepnúť na tmavý režim' : 'Prepnúť na svetlý režim');
+  $('#theme-toggle').setAttribute('aria-pressed', String(light));
+  $('meta[name="theme-color"]').content = light ? '#f3f5f9' : '#0b1019';
+}
+renderTheme();
+$('#theme-toggle').addEventListener('click', () => {
+  const next = document.documentElement.dataset.theme === 'light' ? 'dark' : 'light';
+  document.documentElement.dataset.theme = next;
+  try { localStorage.setItem('energia-theme', next); } catch {}
+  renderTheme();
+  if (state) refresh(true);
 });
 
 $$('[data-view]').forEach(el => el.addEventListener('click', () => switchView(el.dataset.view)));

@@ -38,7 +38,8 @@ Pri prvom štarte server vytvorí tajný kľúč v `data/device_key.txt`. Skopí
 
 ## Funkcie
 
-- Setup wizard pre moduly, parametre domácnosti, tarifu a zdroj merania.
+- Nastavenia rozdelené na režim a zdroj dát, moduly, parametre domácnosti a tarifu. Uloženie zmeny vytvorí nový experiment; uloženie bez zmeny históriu neresetuje.
+- Tmavý a svetlý vzhľad s predvoleným tmavým režimom. Voľba sa ukladá len v prehliadači a nemení experiment.
 - Živé energetické toky, výkon, napätie/prúd, SOC, energia batérie a odhad do limitu.
 - Osem prezentačných scenárov vrátane prebytku, večernej špičky a výpadku siete.
 - História 24 h, 7 dní, 30 dní a celého experimentu, intervalové kWh a CSV export.
