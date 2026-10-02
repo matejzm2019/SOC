@@ -21,7 +21,7 @@
   <p class="nav-label">SYSTÉM</p>
   <button id="settings-open" class="nav-item"><span>⚙</span>Nastavenia</button>
   <a class="nav-item" href="/docs" target="_blank" rel="noopener"><span>↗</span>API dokumentácia</a>
-  <div class="sidebar-bottom"><div class="demo-label"><span class="online-dot"></span>LOKÁLNE PRIPOJENIE</div><p>Energia doma,<br>prehľadne.</p><small>Dáta zostávajú vo vašej sieti.</small><div class="version">energia. <span>v0.7.0</span></div></div>
+  <div class="sidebar-bottom"><div class="demo-label"><span class="online-dot"></span>LOKÁLNE PRIPOJENIE</div><p>Energia doma,<br>prehľadne.</p><small>Dáta zostávajú vo vašej sieti.</small><div class="version">energia. <span>v0.7.1</span></div></div>
 </aside>
 <main>
   <header class="topbar"><div><span class="breadcrumb">Moja domácnosť</span><span class="separator">/</span><span id="breadcrumb">Prehľad</span></div><div class="top-status"><span id="connection" class="status"><i class="online-dot"></i>Lokálne pripojenie</span><button type="button" id="theme-toggle" class="theme-toggle" aria-label="Prepnúť na svetlý režim" aria-pressed="false" title="Zmeniť vzhľad"><span id="theme-icon" aria-hidden="true">☀</span><span id="theme-label">Svetlý režim</span></button></div></header>
@@ -167,7 +167,7 @@
         <section data-settings-panel="assistant" hidden aria-labelledby="ai-settings-title">
           <div class="settings-section-heading"><span class="section-number">06 / ASISTENT</span><h3 id="ai-settings-title">Malý model na vašom počítači</h3><p>Ollama beží na rovnakom počítači ako backend. Chat sa spúšťa na vyžiadanie a po nečinnosti uvoľní pamäť modelu.</p></div>
           <label class="setting-switch"><span class="switch-copy"><strong>Zapnúť asistenta</strong><small>Zhrnutia, interpretácia počasia a odpovede podľa dostupných údajov.</small></span><input name="ai_enabled" type="checkbox"><span class="switch-track" aria-hidden="true"></span></label>
-          <div class="form-grid ai-model-field"><label class="field">Lokálny model<select name="ai_model"><option value="qwen3:0.6b">Qwen3 0.6B · úsporný</option><option value="qwen3:1.7b">Qwen3 1.7B · kvalitnejšie odpovede</option></select><small>Pre starší notebook začnite menšou verziou.</small></label></div>
+          <div class="form-grid ai-model-field"><label class="field">Lokálny model<select name="ai_model"><option value="qwen3:0.6b">Qwen3 0.6B · úsporný</option><option value="qwen3:1.7b">Qwen3 1.7B · menší chat</option><option value="qwen3:4b-instruct-2507-q4_K_M">Qwen3 4B Instruct · odporúčaný pre chat</option></select><small>4B potrebuje viac pamäte; pre slabší notebook vyberte 1.7B alebo 0.6B.</small></label></div>
           <div class="settings-callout"><strong>Inštalácia modelu</strong><code id="ollama-command">ollama pull qwen3:0.6b</code><p>Nainštalujte Ollamu, spustite tento príkaz a ponechajte Ollamu spustenú. Backend používa lokálny port. Žiadny cloudový účet ani API kľúč.</p></div>
           <button type="button" id="assistant-check" class="button secondary">Overiť pripojenie</button><p id="assistant-check-result" class="muted"></p>
         </section>

@@ -1,3 +1,15 @@
+# Overenie verzie 0.7.1
+
+Dátum: 2. 10. 2026. Windows.
+
+- **73 úspešných testov**, syntaktická kontrola JavaScriptu a kontrola diffu.
+- Regresia bola zopakovaná na pôvodnej verzii: „ahoj“ vrátilo výkon, spotrebu a ďalšie údaje namiesto pozdravu.
+- Konverzačné správy teraz vynechávajú energetické podklady, staré namerané hodnoty aj rozpoznávanie nastavení. Odpoveď naďalej generuje skutočný lokálny model. Samostatný test overuje pozdravy, poďakovanie, zachovanie príkazov s pozdravom a výber nového modelu bez zmeny datasetu.
+- Rozpočet odpovede je 512 tokenov, s obmedzením opakovania. Pri skutočne čiastočnej odpovedi zostáva text viditeľný a možnosť napísať „pokračuj“; kratšia otázka sa nevyžaduje ako chybové hlásenie.
+- Playwright so skutočným Qwen3 1.7B: pozdrav a poďakovanie bez energetických hodnôt a chybovej hlášky, desktop a mobil, bez chýb JS a vodorovného pretečenia. Riadená odpoveď overila aj poznámku pri vyčerpaní tokenov.
+- Rovnaká skúška prebehla po výbere Qwen3 4B Instruct: skutočný pozdrav „Ahoj! Ako môžem pomôcť? 😊“, bez energetického prehľadu a hlášky o limite. Zmena modelu zachovala dataset. Samostatná Ollama skúška overila aj otázku na identitu a návrh internetových cien. Kvalita slovenčiny a vecná správnosť malého modelu zostávajú obmedzené; samotná kontrola čísel nekontroluje význam odpovede.
+- Použitý je konkrétny tag `qwen3:4b-instruct-2507-q4_K_M`. Bežný aktuálny tag `qwen3:4b` pri skúške deklaroval iba thinking=true a nevypol uvažovanie ani pri think=false; preto nie je v ponuke aplikácie. Menšie kompatibilné modely zostávajú dostupné.
+
 # Overenie verzie 0.7.0
 
 Dátum: 2. 10. 2026. Windows.

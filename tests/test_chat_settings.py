@@ -5,7 +5,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from backend.main import create_app
-from backend.assistant import relevant_facts
+from backend.assistant import relevant_facts, is_small_talk
 from backend.models import ChatMessage
 
 
@@ -93,3 +93,34 @@ def test_price_questions_and_followups_use_price_facts_without_unrelated_daily_c
     followup=relevant_facts('A teraz?', [ChatMessage(role='user',content='Koľko stojí energia?')],facts)
     assert followup==selected
     assert relevant_facts('Zhrň scenár.',[],facts)==facts
+
+
+def test_small_talk_uses_llm_without_energy_facts_history_or_settings_classifier(tmp_path, monkeypatch):
+    monkeypatch.setenv('SOC_OFFLINE','1')
+    calls=[]
+    def respond(request):
+        if request.url.path=='/api/tags':
+            return httpx.Response(200,json={'models':[{'name':'qwen3:0.6b'}]})
+        body=json.loads(request.content)
+        calls.append(body)
+        return httpx.Response(200,json={'message':{'content':'Ahoj! Ako ti môžem pomôcť?'},'done_reason':'stop'})
+    with TestClient(create_app(tmp_path/'chat.sqlite3','secret',httpx.MockTransport(respond))) as client:
+        for question in ('ahoj','Čau!','Dobrý deň.','Ahoj, ako sa máš?','ďakujem'):
+            reply=client.post('/api/assistant/chat',json={'question':question,'history':[
+                {'role':'user','content':'Koľko stojí energia?'},
+                {'role':'assistant','content':'Výkon je 12345 kW.'}]}).json()
+            assert reply['answer']=='Ahoj! Ako ti môžem pomôcť?'
+            assert reply['facts']==[] and reply['proposal'] is None and not reply['truncated']
+            body=calls[-1]
+            assert 'format' not in body and len(body['messages'])==2
+            assert '12345' not in body['messages'][0]['content'] and 'Nákupná cena' not in body['messages'][0]['content']
+            assert body['options']['num_predict']==512 and body['think'] is False
+        assert len(calls)==5
+        before=client.get('/api/state').json()
+        before=client.put('/api/settings',json=before['settings']).json()
+        better=client.put('/api/settings',json=before['settings'] | {'ai_model':'qwen3:4b-instruct-2507-q4_K_M'})
+        assert better.status_code==200 and better.json()['demo']['run_id']==before['demo']['run_id']
+        status=client.get('/api/assistant/status?model=qwen3:4b-instruct-2507-q4_K_M')
+        assert status.status_code==200 and not status.json()['available']
+    assert not is_small_talk('Ahoj, zapni internetové ceny.')
+    assert not is_small_talk('Ahoj, aký je výkon FV?')

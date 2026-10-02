@@ -35,6 +35,8 @@ ollama pull qwen3:0.6b
 
 Model je už prednastavený v aplikácii. Ponechajte Ollamu spustenú, v nastaveniach overte pripojenie a použite kartu asistenta na domovskej stránke. Chat a zhrnutia sú lokálne. Pre výkonnejší PC možno v nastaveniach vybrať `qwen3:1.7b`. Podrobnosti a obmedzenia číselných odpovedí sú v [návode asistenta](docs/LOKALNY_ASISTENT.md).
 
+Pre prirodzenejší rozhovor odporúčame stiahnuť `ollama pull qwen3:4b-instruct-2507-q4_K_M` a vybrať **Qwen3 4B** v nastaveniach. Menšie verzie zostávajú dostupné pre slabší notebook. Pozdravy odpovedajú bez energetického prehľadu; odpoveď vytvára lokálny model.
+
 **AI chat vie navrhnúť aj nastavenia:** „Zapni internetové ceny“, „Nastav nákup na 0,20 €/kWh“, „Vypni demo režim“ alebo „Nastav kapacitu malej batérie na 2000 mAh“. Návrh zobrazí pôvodné aj nové hodnoty; tlačidlo **Použiť zmenu** ho uloží. Bežné otázky nastavenia nemenia.
 
 ### Manuálne spustenie

@@ -437,7 +437,7 @@ async function loadRuns() {
 
 function applyAssistantStatus(result) {
   assistantStatus = result;
-  setText('assistant-status', result.available ? result.model.toUpperCase() : 'NEPRIPOJENÝ');
+  setText('assistant-status', result.available ? result.model.startsWith('qwen3:4b-') ? 'QWEN3 4B' : result.model.toUpperCase() : 'NEPRIPOJENÝ');
   setText('assistant-connection', result.message);
   $$('.assistant-prompts button, #chat-send').forEach(el => el.disabled = chatBusy || !result.available);
   setText('chat-send', chatBusy ? 'Spracúva…' : 'Odoslať ↑');
@@ -585,19 +585,21 @@ async function askAssistant(question) {
     const article = chatBubble('assistant',result.answer);
     applyAssistantStatus({available:true,model:result.model,message:'Pripravený na tomto počítači.'});
     article.querySelector('small').textContent = `Lokálny asistent · údaje #${result.run_id}`;
-    const details = document.createElement('details'), summary = document.createElement('summary');
-    summary.textContent = 'Údaje použité pri odpovedi a ich pôvod';
-    const list = document.createElement('dl'); list.className = 'assistant-facts';
-    result.facts.forEach(fact => {
-      const term = document.createElement('dt'), value = document.createElement('dd');
-      term.textContent = fact.label; value.textContent = `${fact.value} · ${fact.source}`; list.append(term,value);
-    });
-    details.append(summary,list); article.append(details);
+    if (result.facts.length) {
+      const details = document.createElement('details'), summary = document.createElement('summary');
+      summary.textContent = 'Údaje použité pri odpovedi a ich pôvod';
+      const list = document.createElement('dl'); list.className = 'assistant-facts';
+      result.facts.forEach(fact => {
+        const term = document.createElement('dt'), value = document.createElement('dd');
+        term.textContent = fact.label; value.textContent = `${fact.value} · ${fact.source}`; list.append(term,value);
+      });
+      details.append(summary,list); article.append(details);
+    }
     if (result.proposal) chatProposal(article,result.proposal);
     if (!result.numeric_guard_passed) { const note = document.createElement('p'); note.className = 'footnote'; note.textContent = 'Neoverené číselné hodnoty boli označené priamo v odpovedi. Zvyšok odpovede zostal zobrazený.'; article.append(note); }
     if (result.run_id === state.demo.run_id) chatHistory.push({role:'user',content:question},{role:'assistant',content:result.answer.slice(0,1800)});
     chatHistory = chatHistory.slice(-6);
-    if (result.truncated) setText('chat-error','Odpoveď dosiahla limit dĺžky. Položte kratšiu doplňujúcu otázku.');
+    if (result.truncated) { const note = document.createElement('p'); note.className = 'footnote'; note.textContent = 'Odpoveď je čiastočná. Napíš „pokračuj“, ak chceš jej zvyšok.'; article.append(note); }
     $('#chat-messages').scrollTop = $('#chat-messages').scrollHeight;
   } catch (error) {
     pending.remove(); setText('chat-error', error.name === 'AbortError' ? 'Model neodpovedal v časovom limite.' : error.message);

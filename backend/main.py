@@ -205,7 +205,7 @@ def create_app(database=None, esp32_key=None, http_transport=None):
                         await task
                 engine.storage.connection.close()
 
-    app = FastAPI(title="Energia", version="0.7.0", lifespan=lifespan)
+    app = FastAPI(title="Energia", version="0.7.1", lifespan=lifespan)
     app.add_middleware(TrustedHostMiddleware, allowed_hosts=["*"])
 
     @app.middleware("http")
@@ -276,7 +276,7 @@ def create_app(database=None, esp32_key=None, http_transport=None):
         return engine.weather_state()
 
     @app.get("/api/assistant/status")
-    async def assistant_status(request: Request, model: Literal["qwen3:0.6b", "qwen3:1.7b"] | None = None):
+    async def assistant_status(request: Request, model: Literal["qwen3:0.6b", "qwen3:1.7b", "qwen3:4b-instruct-2507-q4_K_M"] | None = None):
         settings = request.app.state.engine.settings
         if model:
             settings = settings.model_copy(update={"ai_model": model, "ai_enabled": True})

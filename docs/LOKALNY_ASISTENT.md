@@ -17,13 +17,15 @@ Model aplikácia automaticky nesťahuje. Na stiahnutie modelu potrebujete intern
 
 ## Úsporné nastavenie
 
-Backend volá `http://127.0.0.1:11434/api/chat`, nastavuje `think=false`, kontext 2048 tokenov a `keep_alive=60s`. Krátky prvý dotaz rozpoznáva požiadavku na nastavenia cez JSON schému (najviac 180 tokenov, limit 35 sekúnd). Pri bežnej otázke nasleduje odpoveď s relevantnými faktmi (najviac 256 tokenov). Celé spracovanie má limit približne 120 sekúnd. Spracúva jednu otázku naraz, potom nechá Ollamu model uvoľniť. Na slabšom CPU môže prvá odpoveď trvať dlhšie. Podporované sú iba lokálne modely. Dokumentácia: [Ollama Chat API](https://docs.ollama.com/api/chat), [štruktúrované odpovede](https://docs.ollama.com/capabilities/structured-outputs).
+Backend volá `http://127.0.0.1:11434/api/chat`, nastavuje `think=false`, kontext 2048 tokenov a `keep_alive=60s`. Krátky prvý dotaz rozpoznáva požiadavku na nastavenia cez JSON schému (najviac 180 tokenov, limit 35 sekúnd). Pri bežnej otázke nasleduje odpoveď s relevantnými faktmi (najviac 512 tokenov, s obmedzením opakovania). Celé spracovanie má limit približne 120 sekúnd. Spracúva jednu otázku naraz, potom nechá Ollamu model uvoľniť. Na slabšom CPU môže prvá odpoveď trvať dlhšie. Podporované sú iba lokálne modely. Dokumentácia: [Ollama Chat API](https://docs.ollama.com/api/chat), [štruktúrované odpovede](https://docs.ollama.com/capabilities/structured-outputs).
 
 Voliteľná serverová premenná `SOC_OLLAMA_URL` môže zmeniť lokálny port; hostiteľ musí zostať localhost, 127.0.0.1 alebo ::1. Je to nastavenie správcu servera, nie URL zadávaná návštevníkom.
 
 ## Čo asistent smie robiť
 
 Asistent dostáva aktuálne fakty o energii, počasí, cenách a modeli. Podľa témy vyberá podklady, aby sa napríklad cena za kWh nezamieňala s dennými nákladmi. Otázky môžu prirodzene nadväzovať na predošlé správy. Matematické predikcie počíta Python; LLM ich vysvetľuje.
+
+Pozdravy, poďakovania a jednoduché otázky na asistenta dostanú priamo konverzačnú odpoveď modelu bez energetických podkladov, starých hodnôt z histórie a druhého dotazu na nastavenia. Na „ahoj“ teda nemá vzniknúť výpis výkonov. Pre chat odporúčame `ollama pull qwen3:4b-instruct-2507-q4_K_M` a výber 4B v nastaveniach; 1.7B a 0.6B zostávajú úspornými možnosťami. [4B balík](https://ollama.com/library/qwen3:4b-instruct-2507-q4_K_M) má približne 2,5 GB, spotreba RAM je vyššia. Pri staršom notebooku treba overiť rýchlosť a voľnú pamäť; menší model možno vybrať bez zmeny energetických dát. Väčší model stále nezaručuje bezchybnú slovenčinu. Ak dlhá odpoveď vyčerpá tokeny, jej text zostane viditeľný s možnosťou napísať „pokračuj“.
 
 ## Nastavenia cez chat
 
