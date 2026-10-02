@@ -8,7 +8,7 @@ Lokálna aplikácia používa FastAPI, SQLite a responzívny webový dashboard. 
 - **CSV história:** import vlastnej intervalovej spotreby a voliteľne FV, história, výpočtová ekonomika a výhľad podľa dostupných dát. Nepotrebuje ESP32.
 - **Normálny režim:** model domu s ESP32-S3, malým panelom a prepínačmi záťaží cez Wi-Fi. Backend na notebooku spracúva meranie v sekundových intervaloch; pri odpojení ESP čaká na dáta a po pripojení automaticky pokračuje. Energetika domácnosti je škálovaný výpočtový model.
 
-Projekt nikdy nepotrebuje pripojenie na 230 V. ESP32 sa napája cez USB a merací model používa iba bezpečné jednosmerné napätie.
+Na model sa privádza iba nízke DC napätie. Laboratórny zdroj môže mať sieťový vstup vo svojom uzavretom prístroji; so sieťovým napätím sa na modeli nepracuje.
 
 ## Spustenie
 
@@ -43,20 +43,20 @@ py -3 -m venv .venv
 
 ## ESP32-S3 a fyzický model
 
-Odporúčaná zostava: ESP32-S3, panel približne 5–6 V / 0,5–1 W, INA219, BH1750, 47 Ω / 2 W rezistor, tri tlačidlá alebo prepínače, tri LED, chránená 3,7 V batéria a modul PowerBoost 1000C. Panel osvetľuje USB LED lampa. Powerbanka nabíja fyzickú batériu cez modul; pri jej odpojení batéria ďalej napája ESP32 a svetlá. Panel sa meria samostatne, domácu FV aplikácia prepočítava.
+ESP32-S3 a LED napája laboratórny zdroj 5 V. Panel 6 V / približne 1–3 W cez INA219 a BQ24074 nabíja samostatný chránený Li-ion článok. MAX17048 meria napätie a odhaduje nabitie; voliteľný BH1750 meria osvetlenie. Batéria nenapája ESP ani LED. Stará rezistorová záťaž a PowerBoost sa nepoužívajú.
 
 Firmvér, zapojenie a nastavenie Wi-Fi sú v [firmware/esp32-s3/README.md](firmware/esp32-s3/README.md). Presný nákupný zoznam je v [docs/KOMPONENTY.md](docs/KOMPONENTY.md) a priebeh ukážky v [docs/DEMO.md](docs/DEMO.md).
 
-Pri prvom štarte server vytvorí tajný kľúč v `data/device_key.txt`. Skopírujte `firmware/esp32-s3/secrets.example.h` na `secrets.h`, doplňte Wi-Fi, LAN adresu PC a tento kľúč. Súbor `secrets.h` je ignorovaný Gitom. ESP32 odosiela JSON každé dve sekundy na `POST /api/device/telemetry`; dashboard jasne ukazuje online/offline stav.
+Pri prvom štarte server vytvorí tajný kľúč v `data/device_key.txt`. Skopírujte `firmware/esp32-s3/secrets.example.h` na `secrets.h`, doplňte Wi-Fi, LAN adresu PC a tento kľúč. Súbor `secrets.h` je ignorovaný Gitom. ESP32 odosiela JSON každú sekundu na `POST /api/device/telemetry`; dashboard jasne ukazuje online/offline stav.
 
 ## Funkcie
 
 - Nastavenia pre zdroj dát, miesto a počasie, moduly, model domácnosti, tarifu a lokálneho asistenta. Zmena modelu vytvorí nový súbor údajov; zmena asistenta alebo zobrazenia zachová históriu.
 - Tmavý a svetlý vzhľad s predvoleným tmavým režimom. Voľba sa ukladá len v prehliadači a nemení experiment.
-- Živé energetické toky, výkon, napätie/prúd, SOC, energia batérie a odhad do limitu.
+- Živé modelované energetické toky; v deme virtuálna batéria s odhadom do limitu, v normálnom režime reálny výstup MAX17048: SOC, napätie článku, trend a odhad energie.
 - Osem prezentačných scenárov vrátane prebytku, večernej špičky a výpadku siete.
 - História 24 h, 7 dní, 30 dní a celého experimentu, intervalové kWh a CSV export.
-- Manuálna alebo časová tarifa, nákup, výkup, distribúcia, fixný poplatok a prevádzková úspora.
+- Ručná/časová tarifa alebo aktuálny slovenský spot Energy-Charts, zadaná prirážka a DPH; nezávislý výkup, distribúcia a fixný poplatok. Spot nie je automaticky cena z faktúry. SK dáta sú na súkromné použitie; verejné demo používa ručné ceny.
 - 24 h predikcia klasickým sezónnym time-series modelom; LLM sa na matematickú predikciu nepoužíva.
 - Výhľad FV podľa internetového počasia, orientácie a sklonu panelov, cache a označenie starých meteorologických údajov.
 - Lokálny chat a zhrnutia cez Ollamu, kontrola dostupnosti modelu a číselné hodnoty viazané na podkladové fakty.
@@ -66,7 +66,7 @@ Pri prvom štarte server vytvorí tajný kľúč v `data/device_key.txt`. Skopí
 
 V DEMO MODE predstavuje krok päť minút. V monitorovacom režime vzniká vzorka každú sekundu a prehliadač aktualizuje živé hodnoty približne každých 0,5 sekundy. Pri zdroji ESP32 pomer aktuálneho výkonu malého panela ku kalibračnému výkonu riadi virtuálnu FV elektráreň. Ide o názorný model správania výroby, nie o tvrdenie, že malý panel fyzicky vyrába kilowatty. Dáta majú označenie `source=hybrid` a `quality=mixed`.
 
-Hotové podklady na odovzdanie sú v priečinku `deliverables/`: prezentácia a správa pre učiteľa. Ilustrovaný návrh modelu je v `docs/assets/model_soc.png`.
+Aktuálna správa pre učiteľa je v [docs/SPRAVA_PRE_UCITELA.md](docs/SPRAVA_PRE_UCITELA.md). Staršie súbory v `deliverables/` a ilustrácia modelu zachytávajú pôvodné powerbankové zapojenie; pre aktuálnu zostavu použite KOMPONENTY.md.
 
 ## Testy
 
@@ -78,7 +78,7 @@ node --check frontend/app.js
 
 Testy overujú bilanciu výkonov, SOC a účinnosť batérie, tarify, výpadok, predikciu, persistenciu, API validáciu, autentifikáciu ESP32 a hybridný prepočet panela. Záznam kontrol je v [docs/OVERENIE.md](docs/OVERENIE.md).
 
-Integračné testy používajú riadené HTTP odpovede pre počasie a Ollamu. Overujú cache pri výpadku internetu, záznamy plánovania, atomický CSV import, časovú tarifu, archívy, modelové nastavenia a zadržanie neoverených číslic. Skutočnú kvalitu a rýchlosť nainštalovaného LLM treba overiť na konkrétnom PC.
+Integračné testy používajú riadené HTTP odpovede pre počasie a Ollamu. Overujú cache pri výpadku internetu, záznamy plánovania, atomický CSV import, časovú tarifu, archívy, modelové nastavenia a označenie neoverených číselných veličín bez zablokovania odpovede. Skutočnú kvalitu a rýchlosť nainštalovaného LLM treba overiť na konkrétnom PC.
 
 ## Repozitár
 

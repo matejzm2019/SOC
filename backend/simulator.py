@@ -80,7 +80,7 @@ class Simulator:
         battery = 0.0
         hours = interval_seconds / 3600
         minimum = s.battery_kwh * 0.1
-        if s.battery_enabled:
+        if s.battery_enabled and not measured:
             if net > 0:
                 battery = min(net, s.battery_max_kw * 1000, max(0, self.energy - minimum) * 1000 * EFFICIENCY / hours)
                 self.energy -= battery / 1000 * hours / EFFICIENCY
@@ -117,8 +117,12 @@ class Simulator:
             load_w=load, served_w=served, pv_w=pv, wind_w=wind_power, grid_w=grid,
             battery_w=battery, unserved_w=unserved, curtailed_w=curtailed,
             voltage_v=voltage, current_a=served / voltage if voltage else 0,
-            soc_pct=self.energy / s.battery_kwh * 100 if s.battery_enabled else None,
-            battery_energy_kwh=self.energy if s.battery_enabled else None, battery_eta_hours=eta,
+            soc_pct=(measured.battery_soc_pct if measured else self.energy / s.battery_kwh * 100) if s.battery_enabled else None,
+            battery_energy_kwh=(s.battery_capacity_mah * 3.7 / 1_000_000 * measured.battery_soc_pct / 100
+                                if measured.battery_soc_pct is not None else None) if measured and s.battery_enabled else self.energy if s.battery_enabled else None,
+            battery_eta_hours=eta,
+            battery_voltage_v=measured.battery_voltage_v if measured and s.battery_enabled else None,
+            battery_charge_rate_pct_h=measured.battery_charge_rate_pct_h if measured and s.battery_enabled else None,
             temperature_c=temperature, cloud_pct=cloud, wind_ms=wind, radiation_wm2=radiation,
             grid_available=grid_available, buy_eur_kwh=buy if s.prices_enabled else None,
             sell_eur_kwh=s.sell_price if s.prices_enabled else None,

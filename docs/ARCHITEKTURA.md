@@ -6,7 +6,7 @@ Pracovný názov SOČ: „Inteligentný lokálny systém pre monitorovanie, pred
 
 ## Rozsah a rozhodnutia
 
-Jadro beží na PC a poskytuje responzívnu webovú aplikáciu v lokálnej sieti, dostupnú aj na mobile. Verzia 0.5.0 pridáva plánovanie bez hardvéru podľa internetového počasia, import intervalovej spotreby z CSV a lokálneho asistenta cez Ollamu. Demo má pripravené scenáre a zrýchlený čas; plánovanie vytvára minútové odhady a CSV poskytuje analýzu vlastnej histórie. Spotreba bez merania zostáva modelovaná. Voliteľný hybridný model s ESP32 zostáva podporovaný. Demo a import fungujú offline; Open-Meteo potrebuje internet. Server používa jeden worker v dôveryhodnej LAN, bez verejného vystavenia.
+Jadro beží na PC a poskytuje responzívny web v domácej LAN. Verzia 0.6.0 rozlišuje softvérové demo, normálny model s ESP32 a samostatnú CSV analýzu. Normálny režim bez ESP nevytvára náhradné vzorky. Panel nabíja malý článok cez BQ24074; MAX17048 meria napätie a odhaduje SOC. ESP a LED napája laboratórny zdroj. Ceny sú ručné alebo slovenský spot Energy-Charts. Open-Meteo poskytuje počasie a lokálna Ollama interpretuje vypočítané fakty. Server používa jeden worker v dôveryhodnej LAN.
 
 - Python + FastAPI: validované REST API, riadený životný cyklus simulátora, automatická dokumentácia.
 - SQLite (WAL): jedna lokálna databáza, žiadny databázový server; transakcie a index času. Výpočty a ukladanie sú serializované jedným aplikačným zámkom. Spúšťať jeden worker.
@@ -59,7 +59,7 @@ flowchart LR
 
 ## Fyzika a čas
 
-V DEMO MODE každý krok reprezentuje 300 simulačných sekúnd. Rýchlosť nastavuje počet krokov za reálnu sekundu a nový experiment dostane syntetický deň histórie. Monitorovací režim používa sekundové intervaly, beží v reálnom čase a začína jednou vzorkou. Interval končí časom vzorky. Výkon je priemerný za interval, energia = W × sekundy / 3 600 000. Scenár reštartuje iba stav virtuálnej domácej batérie, neposúva čas dozadu; história zostáva a nesie názov scenára. Nový profil nastavení začne samostatný experiment (run), aby sa nemiešala ekonomika a konfigurácie.
+V DEMO MODE každý krok reprezentuje 300 simulačných sekúnd. Rýchlosť nastavuje počet krokov za reálnu sekundu a nový experiment dostane syntetický deň histórie. Normálny režim používa sekundové intervaly, beží v reálnom čase a čaká na prvé meranie ESP. Interval končí časom vzorky. Výkon je priemerný za interval, energia = W × sekundy / 3 600 000. Scenár reštartuje iba stav virtuálnej domácej batérie, neposúva čas dozadu; história zostáva a nesie názov scenára. Nový profil nastavení začne samostatný experiment (run), aby sa nemiešala ekonomika a konfigurácie.
 
 Znamienka: sieť + import / − export; batéria + vybíjanie / − nabíjanie. Bilancia: FV + vietor + sieť + batéria = obslúžená spotreba + obmedzená výroba. Požadovaná spotreba = obslúžená + nepokrytá. SOC nikdy neprekročí 10–100 %, nabitie/vybitie je obmedzené dostupnou energiou aj výkonom. Účinnosť nabíjania aj vybíjania je 95 %. Pri výpadku je import/export nula; model predpokladá virtuálny ostrovný menič. Napätie a prúd sú zjednodušené jednofázové RMS ekvivalenty pri účinníku 1, nie merania reálnej siete.
 
@@ -99,7 +99,7 @@ Ceny zostávajú ručné alebo časové. Internetový cenový provider a vlastn�
 
 LLM nikdy nepočíta energetickú predikciu. Baseline je predchádzajúci deň rovnakého času. Zmerať MAE a RMSE samostatne pre spotrebu a výrobu; validácia iba na časovo neskorších dátach, žiadny náhodný split ani únik budúcich informácií. Ďalší model: lag 1/24/168 h, deň v týždni, sviatky, časové harmonické a dostupná predpoveď počasia. Syntetické dáta overia mechaniku, nie kvalitu na reálnej domácnosti.
 
-Lokálna Ollama používa Qwen3 0.6B alebo 1.7B na tom istom PC. `assistant.py` povolí iba loopback endpoint, jeden výpočet naraz, vypnuté premýšľanie, krátky kontext, limit výstupu a timeout. Dostane výpočtové fakty s pôvodom a malú históriu konverzácie. Čísla v odpovedi sa dopĺňajú cez ID faktov; neznáme ID a ďalšie číslice odpoveď zadržujú. Voľný text stále môže obsahovať nesprávnu interpretáciu a nie je zárukou proti halucinácii. Žiadne ovládanie zariadení ani cloudový model. Inštalácia a hranice: [lokálny asistent](LOKALNY_ASISTENT.md).
+Lokálna Ollama používa Qwen3 0.6B alebo 1.7B na tom istom PC. `assistant.py` povolí iba loopback endpoint, jeden výpočet naraz, vypnuté premýšľanie, krátky kontext, limit výstupu a timeout. Dostane výpočtové fakty s pôvodom a malú históriu konverzácie. ID faktov sa dopĺňajú z podkladov; číselné veličiny sa kontrolujú vrátane zaokrúhlenia a zmien jednotiek. Neoverený úsek sa označí bez zadržania zvyšku odpovede. Voľný text stále môže obsahovať nesprávnu interpretáciu a nie je zárukou proti halucinácii. Žiadne ovládanie zariadení ani cloudový model. Inštalácia a hranice: [lokálny asistent](LOKALNY_ASISTENT.md).
 
 Ekonomika: import × (nákup + variabilná distribúcia) − export × výkup + pomerný fixný poplatok. Referenčné náklady = obslúžená spotreba bez lokálnej výroby pri rovnakej tarife. Rozdiel je prevádzková úspora, nezohľadňuje investíciu, degradáciu ani dane navyše; pri počiatočne nabitej batérii ide o energiu zo syntetického počiatočného stavu. Tarify sú používateľské ilustračné hodnoty, nie aktuálny cenník. Pri vypnutí cien API vracia ekonomiku ako nedostupnú.
 
@@ -150,3 +150,10 @@ README.md
 - ESP32-S3 Wi-Fi station: https://docs.espressif.com/projects/esp-idf/en/latest/esp32s3/api-guides/wifi-driver/station-scenarios.html
 
 Tieto zdroje podkladajú voľbu životného cyklu servera, lokálneho úložiska a implementáciu meteorologického providera; vlastné fyzikálne aproximácie sú uvedené vyššie.
+
+
+## Aktuálny solárny článok a ceny
+
+Normálny režim používa SOC a napätie MAX17048. Článok nabíja panel cez BQ24074, ESP a svetlá napája laboratórny zdroj. Článok nevstupuje do virtuálnej bilancie domu; demo naďalej používa virtuálne úložisko. Voliteľné polia telemetrie zachovávajú kompatibilitu staršieho ESP firmvéru.
+
+`prices.py` získava SK spot z Energy-Charts cez existujúci HTTP klient, validuje jednotky a intervaly, perzistuje cache a oceňuje vzorky podľa ich skutočného času. Zdroj manual/internet je používateľská voľba. Nedostupné intervaly nemajú vymyslenú cenu. Účtovanie používa uložené intervalové ceny. Licenčné podmienky SK a rozdiel medzi spotom a tarifou sú v REALNE_POUZITIE.md.

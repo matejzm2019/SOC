@@ -25,7 +25,9 @@ Voliteľná serverová premenná `SOC_OLLAMA_URL` môže zmeniť lokálny port; 
 
 Asistent dostáva aktuálny snapshot: označenie pôvodu energetických dát, vypočítanú históriu, matematický výhľad a dostupné počasie. Môže ich zhrnúť, vysvetliť a vytvoriť orientačné odporúčanie. Nevykonáva príkazy, nemení nastavenia ani neriadi zariadenia. Energetickú predikciu počíta Python; LLM ju len interpretuje.
 
-Číselné hodnoty má model uvádzať cez značky existujúcich faktov. Backend ich nahradí hodnotami zo snapshotu. Pri neznámej značke alebo samostatných čísliciach sa odpoveď zadrží a zobrazia sa podkladové fakty. Pri odpovedi možno rozbaliť hodnoty a ich pôvod. Táto kontrola obmedzuje číselné výmysly, nezaručuje správnosť každého slovného tvrdenia malého jazykového modelu. Preto sú odpovede označené ako interpretácia a odporúčania vyžadujú overenie.
+Asistent odpovedá prirodzene. Číslované zoznamy, názvy ako ESP32 a overené hodnoty s jednotkami odpoveď neblokujú. Podporované ID faktov sa doplnia z podkladov. Ak číselná veličina nezodpovedá faktom ani ich zaokrúhleniu či podporovanej zmene jednotiek, označí sa iba tento úsek; zvyšok odpovede zostane viditeľný. Podklady možno rozbaliť pod správou.
+
+Kontrola nie je úplným overením významu: model môže správne číslo priradiť nesprávnej veličine alebo slovne zle vysvetliť situáciu. Qwen3 0.6B je úsporný, ale slovenčina a interpretácia môžu byť slabé. Pre kvalitnejšie odpovede skúste ponúkaný 1.7B model podľa pamäte notebooku. Energetické výpočty a predikcie robí Python; model nemá ovládanie zariadení.
 
 Konverzácia sa drží len v pamäti otvorenej stránky; po obnovení sa vymaže. Backend otázky neukladá. Do Ollamy sa posiela krátka história a aktuálne fakty; aplikácia ich neodosiela cloudovému LLM.
 

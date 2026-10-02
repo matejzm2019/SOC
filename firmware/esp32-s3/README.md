@@ -1,40 +1,20 @@
 # ESP32-S3 merací uzol
 
-Firmvér pre Arduino IDE pripája ESP32-S3 k domácemu routeru a každú sekundu odošle meranie panela do FastAPI servera.
+Firmware 0.2.0 pre Arduino IDE posiela každú sekundu výkon panela, osvetlenie, prepínače a voliteľne meranie malej batérie. ESP a svetlá napája laboratórny zdroj; batériu nabíja solárny panel cez BQ24074. Presné zapojenie a nastavenie nabíjacieho prúdu sú v [KOMPONENTY.md](../../docs/KOMPONENTY.md).
 
-## Knižnice
+V Library Manager nainštalujte **Adafruit INA219**, **Adafruit MAX1704X**, **BH1750** od Christophera Laws a ich ponúknuté závislosti. WiFi, HTTPClient a Wire sú v Arduino ESP32 core. [Oficiálny MAX17048 Arduino návod](https://learn.adafruit.com/adafruit-max17048-lipoly-liion-fuel-gauge-and-battery-monitor/arduino).
 
-V Arduino Library Manager nainštalujte:
+1. Spustite PC aplikáciu, aby vznikol `data/device_key.txt`.
+2. Skopírujte `secrets.example.h` ako `secrets.h`. Doplňte Wi-Fi, LAN adresu PC a kľúč zariadenia.
+3. Vyberte konkrétnu ESP32-S3 dosku a nahrajte `.ino`.
+4. V aplikácii vypnite Demo a nastavte kapacitu článku v mAh. Kalibrujte výkon panela pod používaným osvetlením.
 
-- Adafruit INA219
-- BH1750 od Christophera Laws
+`secrets.h` a merania zostávajú mimo Gitu. Router nesmie izolovať klientov. Pri nahrávaní z PC odpojte USB napájanie z laboratórneho zdroja.
 
-`WiFi`, `HTTPClient` a `Wire` sú súčasťou Arduino ESP32 core.
+I²C: SDA GPIO 8, SCL GPIO 9, logika 3,3 V. INA219 0x40, MAX17048 0x36 a BH1750 0x23 zdieľajú zbernicu. Gauge musí byť pripojený na článok; bez neho nemusí odpovedať. Firmware jeho pripojenie opakovane skúša, panel funguje ďalej. Prepínače: GPIO 4/5/6 proti GND. LED: GPIO 7/10/11 cez samostatné rezistory. Skontrolujte piny svojej dosky.
 
-## Príprava
+Panel `+ → INA219 VIN+ → VIN− → BQ24074 solárny vstup +`. Mínus panela je GND. Stará 47 Ω záťaž sa nepoužíva. Nabíjačka BATT a chránený článok idú na dva paralelné JST porty Adafruit MAX17048. BQ24074 LOAD zostáva voľný; batéria+ sa nespája s laboratórnymi 5 V.
 
-1. Spustite PC aplikáciu aspoň raz. Vznikne `data/device_key.txt`.
-2. Skopírujte `secrets.example.h` ako `secrets.h`.
-3. Vyplňte Wi-Fi, IP adresu PC zo štartovacieho okna a kľúč zariadenia.
-4. V Arduino IDE vyberte svoju konkrétnu dosku ESP32-S3 a nahrajte `energia_esp32_s3.ino`.
+Nové voliteľné JSON polia: `battery_voltage_v`, `battery_soc_pct`, `battery_charge_rate_pct_h`. SOC a napätie sa posielajú spoločne; trend nie je meranie prúdu. Starší firmware zostáva kompatibilný a batériu zobrazuje ako nedostupnú. API kontroluje kľúč, rozsahy aj nečíselné hodnoty.
 
-`secrets.h` sa neukladá do Gitu. ESP32 aj PC musia byť v rovnakej lokálnej sieti. Router s izoláciou Wi-Fi klientov musí mať túto izoláciu vypnutú, inak sa zariadenia neuvidia.
-
-## Zapojenie
-
-| ESP32-S3 | Modul |
-|---|---|
-| 3V3 | INA219 VCC, BH1750 VCC |
-| GND | INA219 GND, BH1750 GND, mínus panela |
-| GPIO 8 | SDA oboch I²C modulov |
-| GPIO 9 | SCL oboch I²C modulov |
-| GPIO 4 | tlačidlo výpadku proti GND |
-| GPIO 5 | prepínač záťaže 1 proti GND |
-| GPIO 6 | prepínač záťaže 2 proti GND |
-| GPIO 7 | LED záťaže 1 cez rezistor 220 Ω do GND |
-| GPIO 10 | LED záťaže 2 cez rezistor 220 Ω do GND |
-| GPIO 11 | modrá LED siete cez rezistor 220 Ω do GND |
-
-Panel plus pripojte na `INA219 VIN+`, `VIN-` na kladný vývod 47 Ω / 2 W záťaže a druhý vývod záťaže na spoločný GND. Kratšia nožička každej LED ide na GND. ESP32 napájajte cez USB z 5 V výstupu modulu PowerBoost 1000C. K modulu patrí chránená 3,7 V batéria cez JST a powerbanka na jeho micro-USB nabíjacom vstupe. Panel nepripájajte na GPIO, batériu ani na napájací pin ESP32. Presný nákupný zoznam a schéma sú v [docs/KOMPONENTY.md](../../docs/KOMPONENTY.md).
-
-GPIO čísla možno zmeniť na začiatku `.ino` podľa konkrétnej dosky. Pri paneli s vyšším výkonom zvoľte záťaž podľa jeho parametrov; táto schéma je určená pre približne 6 V / 1 W panel.
+Kompilácia na konkrétnej doske a fyzické nabíjanie vyžadujú overenie na zakúpenom hardvéri.

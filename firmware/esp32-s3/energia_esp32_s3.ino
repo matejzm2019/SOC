@@ -1,4 +1,6 @@
 #include <Adafruit_INA219.h>
+#include <Adafruit_MAX1704X.h>
+#include <math.h>
 #include <BH1750.h>
 #include <HTTPClient.h>
 #include <WiFi.h>
@@ -18,6 +20,8 @@ constexpr unsigned long SEND_INTERVAL_MS = 1000;
 
 Adafruit_INA219 panelSensor;
 BH1750 lightSensor;
+Adafruit_MAX17048 batteryGauge;
+bool batteryReady = false;
 unsigned long lastSend = 0;
 
 void connectWifi() {
@@ -44,6 +48,8 @@ void setup() {
     while (true) delay(1000);
   }
   lightSensor.begin(BH1750::CONTINUOUS_HIGH_RES_MODE);
+  batteryReady = batteryGauge.begin();
+  if (!batteryReady) Serial.println("MAX17048 nie je dostupny; meranie panela pokracuje bez SOC.");
   connectWifi();
 }
 
@@ -63,13 +69,28 @@ void loop() {
   digitalWrite(LOAD_2_LED_PIN, digitalRead(LOAD_2_PIN) == LOW);
   digitalWrite(GRID_LED_PIN, gridAvailable);
 
-  char payload[320];
+  if (!batteryReady) batteryReady = batteryGauge.begin();
+  const float batteryVoltage = batteryReady ? batteryGauge.cellVoltage() : NAN;
+  const float batterySoc = batteryReady ? batteryGauge.cellPercent() : NAN;
+  const float batteryRate = batteryReady ? batteryGauge.chargeRate() : NAN;
+  char batteryFields[160] = "";
+  if (isfinite(batteryVoltage) && batteryVoltage >= 2.5f && batteryVoltage <= 4.35f && isfinite(batterySoc)) {
+    snprintf(batteryFields, sizeof(batteryFields),
+             ",\"battery_voltage_v\":%.3f,\"battery_soc_pct\":%.2f",
+             batteryVoltage, constrain(batterySoc, 0.0f, 100.0f));
+    if (isfinite(batteryRate) && abs(batteryRate) <= 1000) {
+      size_t used = strlen(batteryFields);
+      snprintf(batteryFields + used, sizeof(batteryFields) - used,
+               ",\"battery_charge_rate_pct_h\":%.2f", batteryRate);
+    }
+  } else batteryReady = false;
+  char payload[512];
   snprintf(payload, sizeof(payload),
-           "{\"device_id\":\"energia-esp32\",\"firmware_version\":\"0.1.0\","
+           "{\"device_id\":\"energia-esp32\",\"firmware_version\":\"0.2.0\","
            "\"panel_voltage_v\":%.4f,\"panel_current_a\":%.5f,"
            "\"panel_power_w\":%.5f,\"illuminance_lux\":%.1f,"
-           "\"load_stage\":%d,\"grid_available\":%s}",
-           voltage, current, power, lux, loadStage, gridAvailable ? "true" : "false");
+           "\"load_stage\":%d,\"grid_available\":%s%s}",
+           voltage, current, power, lux, loadStage, gridAvailable ? "true" : "false", batteryFields);
 
   HTTPClient http;
   http.setConnectTimeout(2000);

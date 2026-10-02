@@ -14,13 +14,15 @@ def recommendations(sample, settings):
         context = "Bilancia importovaného intervalu ukazuje" if sample.source == "csv" else "Model ukazuje" if sample.source == "planning" else "Do siete odchádza"
         items.append({"title": "Využite prebytok", "text": f"{context} prebytok {-sample.grid_w / 1000:.2f} kW. Porovnajte podobné intervaly pri plánovaní flexibilnej spotreby.", "kind": "good"})
     if settings.battery_enabled and sample.soc_pct is not None and sample.soc_pct <= 15:
-        items.append({"title": "Batéria na rezerve", "text": f"SOC je {sample.soc_pct:.0f} %. Vybíjanie sa zastaví na 10 %.", "kind": "warning"})
-    if settings.prices_enabled and sample.buy_eur_kwh >= 0.4:
+        text = f"SOC je {sample.soc_pct:.0f} %. Nabíjanie malého článku riadi solárna nabíjačka." if sample.source == "hybrid" else f"SOC je {sample.soc_pct:.0f} %. Vybíjanie modelu sa zastaví na 10 %."
+        items.append({"title": "Batéria na rezerve", "text": text, "kind": "warning"})
+    if settings.prices_enabled and sample.buy_eur_kwh is not None and sample.buy_eur_kwh >= 0.4:
         items.append({"title": "Drahý nákup", "text": "V tomto intervale je vysoká nákupná cena. Odloženie flexibilnej spotreby môže znížiť náklady.", "kind": "warning"})
-    if settings.prices_enabled and sample.buy_eur_kwh <= 0.05:
+    if settings.prices_enabled and sample.buy_eur_kwh is not None and sample.buy_eur_kwh <= 0.05:
         items.append({"title": "Lacné tarifné okno", "text": "Porovnajte presun spotreby do podobného intervalu. Aplikácia batériu zo siete automaticky nenabíja.", "kind": "good"})
     if not items:
-        items.append({"title": "Energetická bilancia v rovnováhe", "text": "Výroba, batéria a sieť pokrývajú aktuálnu spotrebu. Sledujte vývoj počas celého dňa.", "kind": "good"})
+        text = "Modelovaná spotreba je pokrytá. Fyzické ESP a svetlá napája laboratórny zdroj; solárna batéria má samostatný okruh." if sample.source == "hybrid" else "Výroba, batéria a sieť pokrývajú aktuálnu spotrebu. Sledujte vývoj počas celého dňa."
+        items.append({"title": "Energetická bilancia v rovnováhe", "text": text, "kind": "good"})
     return {"engine": "rules", "label": "Pravidlové zhrnutie · bez LLM", "items": items}
 
 

@@ -2,7 +2,7 @@ const $ = selector => document.querySelector(selector);
 const $$ = selector => [...document.querySelectorAll(selector)];
 const number = (value, digits = 2) => value == null ? '—' : new Intl.NumberFormat('sk-SK', {minimumFractionDigits: digits, maximumFractionDigits: digits}).format(value);
 const kw = watts => `${number(watts / 1000)} kW`;
-const eur = value => value == null ? 'Vypnuté' : `${number(value)} €`;
+const eur = value => value == null ? '—' : `${number(value)} €`;
 const time = timestamp => new Date(timestamp).toLocaleTimeString('sk-SK', {hour:'2-digit', minute:'2-digit', timeZone:'Europe/Bratislava'});
 const escape = value => String(value).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let state, view = 'overview', period = 'day', settingsTab = 'source', busy = false, refreshing = false, revision = 0;
@@ -55,7 +55,7 @@ function updateModules() {
   $$('svg [data-module]').forEach(el => { el.style.display = state.settings[`${el.dataset.module}_enabled`] ? '' : 'none'; });
   if (view === 'economy' && !state.settings.prices_enabled) switchView('overview');
   $('#path-pv').style.display = state.settings.pv_enabled ? '' : 'none';
-  $('#path-battery').style.display = state.settings.battery_enabled ? '' : 'none';
+  $('#path-battery').style.display = state.settings.battery_enabled && state.demo.enabled ? '' : 'none';
 }
 
 function setFlow(id, value, reverse) {
@@ -72,7 +72,7 @@ function renderState() {
   const label = demo.enabled ? 'Demo režim' : imported ? 'Importovaná história' : 'Model domu · ESP32';
   setText('mode-title', label);
   setText('mode-pill', `◉ ${label}`);
-  setText('energy-provenance', imported ? 'Spotreba a FV pochádzajú z importovaných intervalov. Tok siete je odvodený výpočtom; zobrazený výkon je priemer posledného intervalu.' : hybrid ? state.device.online ? 'ESP32 meria malý panel a prepínače modelu. Energetika domácnosti je škálovaná; virtuálny SOC nie je meranie fyzickej batérie.' : 'ESP32 je odpojené. Čakám na meranie; posledné dostupné hodnoty môžu byť staré. Simulátor nenahrádza meranie.' : state.settings.weather_source === 'simulator' ? 'Energetické toky aj počasie pochádzajú zo simulátora.' : 'Energetické toky sú simulované. Internetové počasie je samostatný aktuálny údaj a nemení prezentačný scenár.');
+  setText('energy-provenance', imported ? 'Spotreba a FV pochádzajú z importovaných intervalov. Tok siete je odvodený výpočtom; zobrazený výkon je priemer posledného intervalu.' : hybrid ? state.device.online ? 'ESP32 meria panel a nabitie malej Li-ion batérie. Toky domácnosti sú škálovaný model; ESP a svetlá napája laboratórny zdroj.' : 'ESP32 je odpojené. Čakám na meranie; posledné dostupné hodnoty môžu byť staré. Simulátor nenahrádza meranie.' : state.settings.weather_source === 'simulator' ? 'Energetické toky aj počasie pochádzajú zo simulátora.' : 'Energetické toky sú simulované. Internetové počasie je samostatný aktuálny údaj a nemení prezentačný scenár.');
   setText('flow-heading', imported ? 'Bilancia posledného intervalu' : 'Energetické toky');
   metricValue('load-value', s.load_w / 1000, 'kW');
   metricValue('pv-value', s.pv_w / 1000, 'kW');
@@ -85,7 +85,19 @@ function renderState() {
   if (waiting) ['load-value','pv-value','soc-value','grid-value'].forEach(id => setText(id, '—'));
   const batteryAction = s.battery_w > 1 ? 'Vybíjanie' : s.battery_w < -1 ? 'Nabíjanie' : 'Pohotovosť';
   setText('battery-detail', `${number(s.battery_energy_kwh, 1)} / ${number(settings.battery_kwh, 1)} kWh · ${batteryAction.toLowerCase()} · virtuálne`);
-  $('#soc-bar').style.width = `${s.soc_pct || 0}%`;
+  setText('battery-title', hybrid ? 'Solárna Li-ion batéria' : 'Batéria domácnosti');
+  if (hybrid) setText('battery-detail', s.battery_voltage_v == null ? 'MAX17048 · nabitie zatiaľ nie je dostupné' : `${number(s.battery_voltage_v,2)} V · ${number(settings.battery_capacity_mah,0)} mAh · MAX17048`);
+  $('#physical-battery-panel').hidden = !hybrid || !settings.battery_enabled;
+  const cellAvailable = hybrid && !waiting && s.battery_voltage_v != null;
+  if (hybrid && !cellAvailable) { setText('soc-value', '—'); $('#soc-bar').style.width = '0%'; }
+  const cellRate = s.battery_charge_rate_pct_h;
+  setText('cell-soc', cellAvailable ? `${number(s.soc_pct,1)} %` : '—');
+  setText('cell-voltage', cellAvailable ? `${number(s.battery_voltage_v,2)} V` : '—');
+  setText('cell-capacity', `${number(settings.battery_capacity_mah,0)} mAh`);
+  setText('cell-energy', cellAvailable ? `${number(s.battery_energy_kwh * 1000,2)} Wh` : '—');
+  setText('cell-status', !state.device.online ? 'ESP32 OFFLINE' : cellAvailable ? 'MAX17048 · MERANIE' : 'ČAKÁM NA BATÉRIU');
+  setText('cell-trend', !cellAvailable ? 'Pripojte kompatibilnú batériu a MAX17048. Bez merača sa nabitie neodhaduje z napätia.' : `${cellRate == null ? 'Trend zatiaľ nie je dostupný' : Math.abs(cellRate) < .5 ? 'SOC sa výrazne nemení' : cellRate > 0 ? 'SOC stúpa · pravdepodobné nabíjanie' : 'SOC klesá'}${cellRate == null ? '' : ` · zmena ${number(cellRate,1)} percentuálneho bodu/h (odhad)`} · ${time(s.timestamp)}${state.device.online ? '' : ' · posledné meranie'}`);
+  $('#soc-bar').style.width = `${hybrid && !cellAvailable ? 0 : s.soc_pct || 0}%`;
   const gridAction = !s.grid_available ? 'Výpadok siete' : s.grid_w > 1 ? '↓ Odber zo siete' : s.grid_w < -1 ? '↑ Dodávka do siete' : 'Bez toku energie';
   setText('grid-detail', gridAction);
   setText('flow-load', kw(s.served_w));
@@ -97,11 +109,15 @@ function renderState() {
   setText('flow-grid', kw(Math.abs(s.grid_w)));
   setText('flow-grid-sub', gridAction);
   setText('flow-battery', `${s.battery_w > 1 ? '−' : s.battery_w < -1 ? '+' : ''}${kw(Math.abs(s.battery_w))}`);
+  setText('flow-battery-label', hybrid ? '▱ SOLÁRNA BATÉRIA' : '▱ BATÉRIA');
+  if (hybrid) setText('flow-battery', cellAvailable ? `${number(s.soc_pct,1)} %` : '—');
   $('#flow-battery').parentElement.setAttribute('aria-label', `${batteryAction}, ${s.battery_eta_hours == null ? 'odhad nedostupný' : number(s.battery_eta_hours, 1) + ' hodín do limitu'}`);
   setText('flow-wind', kw(s.wind_w));
   setText('mobile-pv', kw(s.pv_w));
   setText('mobile-load', kw(s.served_w));
   setText('mobile-battery', kw(Math.abs(s.battery_w)));
+  $('#mobile-battery').previousElementSibling.textContent = hybrid ? '▱ Solárna Li-ion batéria' : '▱ Virtuálna batéria';
+  if (hybrid) setText('mobile-battery', cellAvailable ? `${number(s.soc_pct,1)} %` : '—');
   setText('mobile-grid', kw(Math.abs(s.grid_w)));
   setText('mobile-grid-detail', gridAction);
   setFlow('pv', s.pv_w, false);
@@ -112,6 +128,10 @@ function renderState() {
   setText('balance-caption', s.unserved_w > 1 ? `Nepokrytá spotreba ${kw(s.unserved_w)}` : 'Celá spotreba pokrytá');
   const eta = s.battery_eta_hours == null ? '' : ` · do limitu ${number(s.battery_eta_hours, 1)} h`;
   setText('unserved', s.curtailed_w > 1 ? `Obmedzená výroba ${kw(s.curtailed_w)}` : `${settings.battery_enabled ? batteryAction + eta : 'Batéria vypnutá'}`);
+  if (hybrid) {
+    setText('unserved', 'Batéria má samostatný solárny okruh');
+    $('#flow-battery').parentElement.setAttribute('aria-label', 'Malá solárna batéria; ESP a svetlá napája laboratórny zdroj');
+  }
   if (waiting) {
     ['flow-load','flow-pv','flow-grid','flow-battery','flow-wind','mobile-load','mobile-pv','mobile-grid','mobile-battery'].forEach(id => setText(id,'—'));
     ['grid-detail','flow-grid-sub','mobile-grid-detail','balance-caption','unserved','battery-detail'].forEach(id => setText(id,'Čakám na meranie ESP32'));
@@ -120,10 +140,11 @@ function renderState() {
     $('#flow-battery').parentElement.setAttribute('aria-label','Čakám na meranie ESP32');
   }
   renderWeather(state.weather);
-  setText('buy-price', eur(s.buy_eur_kwh));
-  setText('sell-price', eur(s.sell_eur_kwh));
-  setText('tariff-source', demo.enabled ? 'DEMO TARIFA' : 'VLASTNÁ TARIFA');
-  setText('tariff-note', `Distribúcia ${eur(s.distribution_eur_kwh)}/kWh · fix ${eur(s.fixed_eur_day)}/deň`);
+  const internetPrice = settings.price_source === 'internet', prices = state.prices || {};
+  setText('buy-price', internetPrice ? prices.available ? `${number(prices.buy_eur_kwh,4)} €` : '—' : eur(s.buy_eur_kwh));
+  setText('sell-price', eur(settings.sell_price));
+  setText('tariff-source', internetPrice ? prices.stale ? 'SPOT SK · CACHE' : 'SPOT SK · INTERNET' : demo.enabled ? 'DEMO TARIFA' : 'VLASTNÁ TARIFA');
+  setText('tariff-note', `${internetPrice ? `Spot + prirážka, DPH ${number(settings.energy_vat_pct,0)} %. ${prices.fetched_at ? `Získané ${time(prices.fetched_at)}. ` : ''}${prices.error || 'Trhová cena sa môže líšiť od faktúry.'} ` : ''}Distribúcia ${eur(settings.distribution_price)}/kWh · fix ${eur(settings.fixed_daily)}/deň. Výkup zo zmluvy.`);
   $('#scenario').value = demo.scenario;
   $('#speed').value = demo.speed;
   setText('play', demo.paused ? '▶ Spustiť' : 'Ⅱ Pozastaviť');
@@ -153,7 +174,8 @@ function chart(id, points, lines = series(), unit = 'kW') {
   const height = container.classList.contains('tall') ? 300 : 200;
   const left = 42, right = 15, top = 16, bottom = 32;
   const scale = unit === '%' ? 1 : 1000;
-  const values = points.flatMap(p => lines.map(l => (p[l.key] ?? 0) / scale));
+  const values = points.flatMap(p => lines.filter(l => p[l.key] != null).map(l => p[l.key] / scale));
+  if (!values.length) { container.textContent = 'Meranie zatiaľ nie je dostupné.'; return; }
   const maximum = unit === '%' ? 100 : Math.max(1, Math.ceil(Math.max(...values) * 1.12));
   const minimum = Math.min(0, Math.floor(Math.min(...values)));
   const x = i => left + i / Math.max(1, points.length - 1) * (width - left - right);
@@ -165,9 +187,12 @@ function chart(id, points, lines = series(), unit = 'kW') {
   }
   content += `<text x="5" y="9">${unit}</text>`;
   lines.forEach(line => {
-    const coords = points.map((p, i) => `${x(i)},${y((p[line.key] ?? 0) / scale)}`);
-    if (line.key === 'load_w') content += `<path d="M${x(0)},${y(0)} L${coords.join(' L')} L${x(points.length - 1)},${y(0)} Z" fill="${line.color}" opacity=".035"/>`;
-    content += `<polyline class="plot-line" stroke="${line.color}" points="${coords.join(' ')}"/>`;
+    const coords = points.map((p, i) => p[line.key] == null ? null : `${x(i)},${y(p[line.key] / scale)}`);
+    if (line.key === 'load_w' && coords.every(Boolean)) content += `<path d="M${x(0)},${y(0)} L${coords.join(' L')} L${x(points.length - 1)},${y(0)} Z" fill="${line.color}" opacity=".035"/>`;
+    let path = '', connected = false;
+    coords.forEach(coord => { if (coord) { path += `${connected ? ' L' : ' M'}${coord}`; connected = true; } else connected = false; });
+    content += `<path class="plot-line" stroke="${line.color}" d="${path}"/>`;
+    if (coords.filter(Boolean).length === 1) { const [cx,cy] = coords.find(Boolean).split(','); content += `<circle cx="${cx}" cy="${cy}" r="3" fill="${line.color}"/>`; }
   });
   const ticks = width < 420 ? 4 : 6;
   for (let i = 0; i < ticks; i++) {
@@ -175,7 +200,7 @@ function chart(id, points, lines = series(), unit = 'kW') {
     content += `<text x="${x(index)}" y="${height - 7}" text-anchor="${i === 0 ? 'start' : i === ticks - 1 ? 'end' : 'middle'}">${time(points[index].timestamp)}</text>`;
   }
   points.forEach((point, i) => {
-    const tooltip = `${new Date(point.timestamp).toLocaleString('sk-SK', {timeZone:'Europe/Bratislava'})}\n${lines.map(l => `${l.name}: ${number((point[l.key] ?? 0) / scale)} ${unit}`).join('\n')}`;
+    const tooltip = `${new Date(point.timestamp).toLocaleString('sk-SK', {timeZone:'Europe/Bratislava'})}\n${lines.map(l => `${l.name}: ${number(point[l.key] == null ? null : point[l.key] / scale)} ${unit}`).join('\n')}`;
     content += `<rect aria-hidden="true" x="${x(i) - (width - left - right) / points.length / 2}" y="${top}" width="${Math.max(2,(width - left - right) / points.length)}" height="${height - top - bottom}" fill="transparent"><title>${escape(tooltip)}</title></rect>`;
   });
   container.innerHTML = `<svg viewBox="0 0 ${width} ${height}" role="img" aria-label="${escape(lines.map(l => l.name).join(', '))} v ${unit}">${content}</svg>`;
@@ -212,6 +237,7 @@ function renderHistory(history) {
   if (view === 'economy') {
     cards('economy-totals', [['Čisté náklady',t.cost_eur,'€','Po odpočítaní výkupu'], ['Prevádzková úspora',t.savings_eur,'€','Voči nákupu zo siete'], ['Príjem z exportu',t.export_revenue_eur,'€','Výkup prebytkov'], ['Referenčné náklady',t.reference_eur,'€','Bez lokálnej výroby']]);
     $('#economy-breakdown').innerHTML = [['Odber zo siete',`${number(t.import_kwh)} kWh`],['Dodávka do siete',`${number(t.export_kwh)} kWh`],['Obslúžená spotreba',`${number(t.served_kwh)} kWh`],['Dĺžka výpočtového obdobia',`${number(history.duration_hours,1)} h`],['Náklady vrátane poplatkov',eur(t.cost_eur)],['Rozdiel voči referencii',eur(t.savings_eur)]].map(([a,b]) => `<div><span>${a}</span><strong>${b}</strong></div>`).join('');
+    $('#economy-breakdown').insertAdjacentHTML('beforeend', `<p class="footnote">${t.cost_eur == null ? 'Náklady nie sú dostupné: niektorým intervalom chýba cena alebo je modul vypnutý. Chýbajúce ceny nenahrádzame nulou.' : 'Výpočet používa ceny uložené pri každom intervale. Škálovaná spotreba modelu nie je faktúra za laboratórny zdroj.'}</p>`);
   }
 }
 
@@ -304,6 +330,10 @@ function updateSettings() {
     el.hidden = !form.elements.namedItem(`${el.dataset.settingModule}_enabled`).checked;
     el.querySelector('input').disabled = el.hidden;
   });
+  $$('[data-battery-model]').forEach(el => {
+    el.hidden = !form.elements.namedItem('battery_enabled').checked || (el.dataset.batteryModel === 'physical' ? source !== 'hybrid' : source !== 'simulator');
+    el.querySelector('input').disabled = el.hidden;
+  });
   const calibration = form.elements.namedItem('pv_reference_w');
   calibration.closest('label').hidden = source !== 'hybrid' || !form.elements.namedItem('pv_enabled').checked;
   calibration.disabled = calibration.closest('label').hidden;
@@ -311,11 +341,14 @@ function updateSettings() {
   $('#price-settings').hidden = !prices;
   $('#prices-disabled').hidden = prices;
   $$('#price-settings input, #price-settings select').forEach(el => el.disabled = !prices);
-  const offpeak = prices && form.elements.namedItem('price_mode').value === 'time_of_use';
+  const internet = form.elements.namedItem('price_source').value === 'internet';
+  $$('[data-price-source]').forEach(el => { el.hidden = !prices || (el.dataset.priceSource === 'internet') !== internet; el.querySelector('input,select').disabled = el.hidden; });
+  const offpeak = prices && !internet && form.elements.namedItem('price_mode').value === 'time_of_use';
   $('#offpeak-field').hidden = !offpeak;
   form.elements.namedItem('offpeak_price').disabled = !offpeak;
+  setText('price-explainer', internet ? 'Energy-Charts: aktuálny slovenský spot v €/kWh, obnovenie každých 30 minút. Nákup = (spot + prirážka) × (1 + DPH). Výkup zadajte podľa zmluvy; distribúciu a fixné poplatky vrátane príslušných daní. SK dáta sú na súkromné použitie; na verejné demo použite ručnú tarifu. Pri výpadku používame iba platný uložený interval.' : 'Zadajte cenu zo zmluvy vrátane daní. V demo režime scenáre lacnej a drahej energie dočasne upravia ručnú nákupnú cenu.');
   const hybrid = source === 'hybrid';
-  setText('source-explainer', hybrid ? 'ESP32-S3 posiela meranie malého panela cez lokálnu Wi-Fi. Ostatné toky sú modelované.' : imported ? 'Importujte vlastné údaje tlačidlom nižšie. Import sa spracuje samostatne a zachová doterajšiu históriu.' : 'Simulátor vytvára syntetické energetické údaje a pripravené scenáre. Funguje aj bez internetu.');
+  setText('source-explainer', hybrid ? 'ESP32-S3 posiela meranie panela a MAX17048 cez Wi-Fi. Batériu nabíja solárna nabíjačka; ostatné zariadenia napája laboratórny zdroj. Toky domácnosti sú modelované.' : imported ? 'Importujte vlastné údaje tlačidlom nižšie. Import sa spracuje samostatne a zachová doterajšiu históriu.' : 'Simulátor vytvára syntetické energetické údaje a pripravené scenáre. Funguje aj bez internetu.');
   setText('settings-device-state', hybrid ? (state.device.online ? 'ESP32 pripojené' : 'ESP32 nepripojené') : imported ? 'Vlastná história' : 'Lokálny simulátor');
   setText('chosen-location', form.elements.namedItem('location_set').checked ? `${form.elements.namedItem('location_name').value} · ${number(Number(form.elements.namedItem('latitude').value),3)}°, ${number(Number(form.elements.namedItem('longitude').value),3)}°` : 'Miesto nie je nastavené');
   setText('ollama-command', `ollama pull ${form.elements.namedItem('ai_model').value}`);
@@ -525,6 +558,7 @@ async function askAssistant(question) {
       term.textContent = fact.label; value.textContent = `${fact.value} · ${fact.source}`; list.append(term,value);
     });
     details.append(summary,list); article.append(details);
+    if (!result.numeric_guard_passed) { const note = document.createElement('p'); note.className = 'footnote'; note.textContent = 'Neoverené číselné hodnoty boli označené priamo v odpovedi. Zvyšok odpovede zostal zobrazený.'; article.append(note); }
     if (result.run_id === state.demo.run_id) chatHistory.push({role:'user',content:question},{role:'assistant',content:result.answer.slice(0,1800)});
     chatHistory = chatHistory.slice(-6);
     if (result.truncated) setText('chat-error','Odpoveď dosiahla limit dĺžky. Položte kratšiu doplňujúcu otázku.');

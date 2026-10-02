@@ -21,7 +21,7 @@
   <p class="nav-label">SYSTÉM</p>
   <button id="settings-open" class="nav-item"><span>⚙</span>Nastavenia</button>
   <a class="nav-item" href="/docs" target="_blank" rel="noopener"><span>↗</span>API dokumentácia</a>
-  <div class="sidebar-bottom"><div class="demo-label"><span class="online-dot"></span>LOKÁLNE PRIPOJENIE</div><p>Energia doma,<br>prehľadne.</p><small>Dáta zostávajú vo vašej sieti.</small><div class="version">energia. <span>v0.5.0</span></div></div>
+  <div class="sidebar-bottom"><div class="demo-label"><span class="online-dot"></span>LOKÁLNE PRIPOJENIE</div><p>Energia doma,<br>prehľadne.</p><small>Dáta zostávajú vo vašej sieti.</small><div class="version">energia. <span>v0.6.0</span></div></div>
 </aside>
 <main>
   <header class="topbar"><div><span class="breadcrumb">Moja domácnosť</span><span class="separator">/</span><span id="breadcrumb">Prehľad</span></div><div class="top-status"><span id="connection" class="status"><i class="online-dot"></i>Lokálne pripojenie</span><button type="button" id="theme-toggle" class="theme-toggle" aria-label="Prepnúť na svetlý režim" aria-pressed="false" title="Zmeniť vzhľad"><span id="theme-icon" aria-hidden="true">☀</span><span id="theme-label">Svetlý režim</span></button></div></header>
@@ -34,7 +34,7 @@
     <section class="metrics" aria-label="Aktuálne hodnoty">
       <article class="metric"><div class="metric-label"><span>Spotreba domácnosti</span><span class="metric-icon mint">⌂</span></div><div class="metric-value" id="load-value">—</div><div class="metric-foot" id="load-detail">Virtuálny elektromer</div><svg class="spark mint-line" id="spark-load" viewBox="0 0 180 34" aria-hidden="true"></svg></article>
       <article class="metric" data-module="pv"><div class="metric-label"><span>Fotovoltaika</span><span class="metric-icon yellow">☼</span></div><div class="metric-value" id="pv-value">—</div><div class="metric-foot" id="pv-detail">Virtuálna elektráreň</div><svg class="spark yellow-line" id="spark-pv" viewBox="0 0 180 34" aria-hidden="true"></svg></article>
-      <article class="metric" data-module="battery"><div class="metric-label"><span>Batéria domácnosti</span><span class="metric-icon purple">▱</span></div><div class="metric-value" id="soc-value">—</div><div class="metric-foot" id="battery-detail">Virtuálny model</div><div class="battery-meter"><i id="soc-bar"></i></div></article>
+      <article class="metric" data-module="battery"><div class="metric-label"><span id="battery-title">Batéria domácnosti</span><span class="metric-icon purple">▱</span></div><div class="metric-value" id="soc-value">—</div><div class="metric-foot" id="battery-detail">Virtuálny model</div><div class="battery-meter"><i id="soc-bar"></i></div></article>
       <article class="metric"><div class="metric-label"><span>Elektrická sieť</span><span class="metric-icon blue">↗</span></div><div class="metric-value" id="grid-value">—</div><div class="metric-foot" id="grid-detail">Import / export</div><svg class="spark blue-line" id="spark-grid" viewBox="0 0 180 34" aria-hidden="true"></svg></article>
     </section>
     <div class="overview-grid">
@@ -48,7 +48,7 @@
           <g data-module="pv"><rect class="node-box" x="72" y="48" width="160" height="100" rx="14"/><text x="152" y="75" class="node-label">☼ FOTOVOLTAIKA</text><text id="flow-pv" x="152" y="109" class="node-value solar-text">—</text><text id="flow-pv-sub" x="152" y="131" class="node-sub">Výroba zo slnka</text></g>
           <g><rect class="node-box" x="528" y="48" width="160" height="100" rx="14"/><text x="608" y="75" class="node-label">↯ ELEKTRICKÁ SIEŤ</text><text id="flow-grid" x="608" y="109" class="node-value grid-text">—</text><text id="flow-grid-sub" x="608" y="131" class="node-sub">Sieť dostupná</text></g>
           <g class="house-node"><circle class="house-halo" cx="380" cy="178" r="76"/><circle class="house-core" cx="380" cy="178" r="60"/><path class="house-icon" d="m355 163 25-22 25 22v34h-18v-23h-14v23h-18z"/><text x="380" y="216" class="node-label house-label">DOMÁCNOSŤ</text><text id="flow-load" x="380" y="98" class="node-value">—</text></g>
-          <g data-module="battery"><rect class="node-box" x="300" y="278" width="160" height="72" rx="14"/><text x="380" y="301" class="node-label">▱ BATÉRIA</text><text id="flow-battery" x="380" y="330" class="node-value battery-text">—</text></g>
+          <g data-module="battery"><rect class="node-box" x="300" y="278" width="160" height="72" rx="14"/><text id="flow-battery-label" x="380" y="301" class="node-label">▱ BATÉRIA</text><text id="flow-battery" x="380" y="330" class="node-value battery-text">—</text></g>
           <g data-module="wind"><rect class="node-box" x="72" y="251" width="160" height="80" rx="14"/><text x="152" y="277" class="node-label">≋ VETERNÁ TURBÍNA</text><text id="flow-wind" x="152" y="308" class="node-value">—</text></g>
         </svg><div class="mobile-flow" aria-label="Aktuálny tok energie"><div data-module="pv"><span>☼ Fotovoltaika</span><strong id="mobile-pv">—</strong></div><div class="mobile-flow-home"><span>⌂ Domácnosť</span><strong id="mobile-load">—</strong></div><div data-module="battery"><span>▱ Virtuálna batéria</span><strong id="mobile-battery">—</strong></div><div><span>↗ Sieť</span><strong id="mobile-grid">—</strong><small id="mobile-grid-detail"></small></div></div></div><div class="flow-footer"><span><i class="legend-dot mint-bg"></i><span id="balance-caption">Výkonová bilancia</span></span><span id="unserved">Simulované merania</span></div>
       </section>
@@ -62,6 +62,11 @@
         <a class="weather-attribution" href="https://open-meteo.com/" target="_blank" rel="noopener">Počasie: Open-Meteo · modelové údaje</a>
       </section>
       <section class="panel price-panel" data-module="prices"><div class="panel-heading"><h2>Cena energie</h2><span class="subtle-tag" id="tariff-source">VLASTNÁ TARIFA</span></div><div class="price-pair"><div><span>Nákup / kWh</span><strong id="buy-price">—</strong></div><div><span>Výkup / kWh</span><strong id="sell-price">—</strong></div></div><p class="muted" id="tariff-note">Bez distribučných a fixných poplatkov</p></section></div>
+      <section class="panel physical-battery-panel" id="physical-battery-panel" data-module="battery" hidden>
+        <div class="panel-heading"><div><h2>Solárna Li-ion batéria</h2><p>Samostatný okruh: panel → nabíjačka → batéria</p></div><span id="cell-status" class="subtle-tag">MAX17048</span></div>
+        <div class="cell-values"><div><span>Nabitie · odhad merača</span><strong id="cell-soc">—</strong></div><div><span>Napätie článku</span><strong id="cell-voltage">—</strong></div><div><span>Menovitá kapacita</span><strong id="cell-capacity">—</strong></div><div><span>Zostávajúca energia · odhad</span><strong id="cell-energy">—</strong></div></div>
+        <p id="cell-trend" class="muted"></p><p class="footnote">ESP a svetlá napája laboratórny zdroj. Táto batéria sa nabíja zo solárneho panela a nenapája model domu. Stav nabitia je odhad MAX17048; nabíjací prúd batérie zatiaľ nemeriame.</p>
+      </section>
       <section class="panel chart-panel"><div class="panel-heading"><div><h2>Energia v čase</h2><p>Priemerný výkon v intervale</p></div><span class="subtle-tag">POSLEDNÝCH 24 H</span></div><div class="legend"><span><i class="legend-dot mint-bg"></i>Spotreba</span><span data-module="pv"><i class="legend-dot yellow-bg"></i>Fotovoltaika</span><span data-module="wind"><i class="legend-dot blue-bg"></i>Vietor</span></div><div id="overview-chart" class="chart"></div><div class="chart-footer"><span id="today-energy">—</span><span id="energy-data-label">Syntetické dáta</span></div></section>
       <section class="panel insight-panel"><div class="panel-heading"><h2>Odporúčania</h2></div><p class="insight-label">PODĽA AKTUÁLNYCH HODNÔT</p><div id="insights"></div><div class="insight-foot">Odporúčania vychádzajú z vypočítaných údajov.</div></section>
       <section class="panel assistant-panel" data-module="ai" aria-labelledby="assistant-title">
@@ -128,7 +133,7 @@
           </div>
         </section>
         <section data-settings-panel="model" hidden aria-labelledby="model-title">
-          <div class="settings-section-heading"><span class="section-number">04 / PARAMETRE</span><h3 id="model-title">Model domácnosti</h3><p>Hodnoty používajú výpočty výroby, bilancie a histórie. V normálnom režime meranie malého panela riadi škálovanú FV; virtuálna spotreba a batéria sú vypočítané. Pri importe sa analyzujú vlastné intervaly.</p></div>
+          <div class="settings-section-heading"><span class="section-number">04 / PARAMETRE</span><h3 id="model-title">Model domácnosti</h3><p>V normálnom režime panel riadi škálovanú FV a MAX17048 meria malú batériu. Spotreba a bilancia siete sú modelované. V deme sú všetky energetické údaje softvérové; pri importe analyzujeme vlastné intervaly.</p></div>
           <div class="form-grid">
             <label class="field">Základná spotreba (W)<input name="base_load_w" type="number" min="50" max="20000" required><small>Spotreba pri bežnej prevádzke.</small></label>
             <label class="field" data-setting-module="pv">Výkon FV (kWp)<input name="pv_kwp" type="number" min="0.1" max="100" step="0.1" required></label>
@@ -137,21 +142,25 @@
             <label class="field" data-setting-module="pv">Sklon panelov (°)<input name="tilt_deg" type="number" min="0" max="90" step="1" required></label>
 
 
-            <label class="field" data-setting-module="battery">Kapacita batérie (kWh)<input name="battery_kwh" type="number" min="0.1" max="200" step="0.1" required></label>
-            <label class="field" data-setting-module="battery">Limit batérie (kW)<input name="battery_max_kw" type="number" min="0.1" max="100" step="0.1" required></label>
+            <label class="field" data-setting-module="battery" data-battery-model="virtual">Kapacita virtuálnej batérie (kWh)<input name="battery_kwh" type="number" min="0.1" max="200" step="0.1" required></label>
+            <label class="field" data-setting-module="battery" data-battery-model="virtual">Limit virtuálnej batérie (kW)<input name="battery_max_kw" type="number" min="0.1" max="100" step="0.1" required></label>
+            <label class="field" data-setting-module="battery" data-battery-model="physical">Kapacita Li-ion článku (mAh)<input name="battery_capacity_mah" type="number" min="100" max="10000" step="1" required><small>Z etikety jednej chránenej batérie 3,7 V / 4,2 V. SOC a napätie posiela ESP cez MAX17048.</small></label>
             <label class="field" data-setting-module="wind">Výkon turbíny (kW)<input name="wind_kw" type="number" min="0.1" max="50" step="0.1" required></label>
           </div>
         </section>
         <section data-settings-panel="prices" hidden aria-labelledby="prices-title">
           <div class="settings-section-heading"><span class="section-number">05 / EKONOMIKA</span><h3 id="prices-title">Cena energie</h3><p>Nákup, výkup a poplatky sa premietnu do ekonomických štatistík.</p></div>
           <div id="price-settings"><div class="form-grid">
-            <label class="field">Tarifný režim<select name="price_mode"><option value="manual">Jednotná cena</option><option value="time_of_use">Časová tarifa</option></select></label>
-            <label class="field">Nákup (€/kWh)<input name="buy_price" type="number" min="0" max="10" step="0.001" required></label>
+            <label class="field">Zdroj nákupnej ceny<select name="price_source"><option value="manual">Zadať ručne · cena od dodávateľa</option><option value="internet">Internet · spotová cena Slovensko</option></select></label>
+            <label class="field" data-price-source="manual">Tarifný režim<select name="price_mode"><option value="manual">Jednotná cena</option><option value="time_of_use">Časová tarifa</option></select></label>
+            <label class="field" data-price-source="manual">Nákup (€/kWh)<input name="buy_price" type="number" min="0" max="10" step="0.001" required></label>
+            <label class="field" data-price-source="internet">Prirážka dodávateľa (€/kWh)<input name="supplier_markup" type="number" min="0" max="10" step="0.001" required><small>Podľa vašej zmluvy; pripočíta sa k spotovej cene.</small></label>
+            <label class="field" data-price-source="internet">DPH energie (%)<input name="energy_vat_pct" type="number" min="0" max="100" step="0.01" required><small>Zadajte sadzbu zo zmluvy. Pri 0 % zobrazujeme cenu bez dane.</small></label>
             <label class="field">Výkup (€/kWh)<input name="sell_price" type="number" min="0" max="10" step="0.001" required></label>
             <label class="field" id="offpeak-field">Nízka tarifa (€/kWh)<input name="offpeak_price" type="number" min="0" max="10" step="0.001" required><small>Platí od 22:00 do 06:00.</small></label>
             <label class="field">Distribúcia (€/kWh)<input name="distribution_price" type="number" min="0" max="10" step="0.001" required></label>
             <label class="field">Fixný poplatok (€/deň)<input name="fixed_daily" type="number" min="0" max="100" step="0.01" required></label>
-          </div><p class="footnote">Ceny sú ručné. Scenáre lacnej a drahej energie dočasne upravia nákupnú cenu.</p></div>
+          </div><p class="footnote" id="price-explainer"></p></div>
           <div id="prices-disabled" class="settings-callout" hidden>Modul cien je vypnutý. Zapnite ho v časti Moduly, ak chcete počítať náklady a úspory.</div>
         </section>
 

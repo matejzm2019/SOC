@@ -1,3 +1,20 @@
+# Overenie verzie 0.6.0
+
+Dátum: 2. 10. 2026. Windows, samostatné QA databázy.
+
+- **62 úspešných testov**: predchádzajúce funkcie, chat bez blokovania celej odpovede, overené jednotky, internetová/ručná cena, negatívny spot, DPH/prirážka, cache pri výpadku, chýbajúce historické ceny, reálny SOC a napätie článku, kompatibilita starého ESP firmvéru a export zmiešaných schém.
+- Syntaktická kontrola JavaScriptu a kompilácia Python modulov prešli.
+- Skutočný Energy-Charts SK dotaz cez PriceService: 288 štvrťhodinových intervalov, validné EUR/MWh a prepočet na EUR/kWh; aktuálny interval bol dostupný. Súkromné údaje nie sú súčasťou repozitára.
+- Skutočná lokálna Ollama s nainštalovaným qwen3:0.6b: zhrnutie a otázka o ESP cez AssistantService aj HTTP API odpovedali úspešne, bez pôvodnej blokujúcej správy. Prompt a podklady boli upravené. Malý model stále môže nesprávne slovne priradiť overenú hodnotu; kontrola čísiel nie je kontrola významu. Pri tejto skúške trvali odpovede približne 0,3–3 sekundy; nejde o záruku pre starý notebook.
+- Playwright s reálnym backendom a riadenými externými dátami: uloženie internetovej ceny/prirážky/DPH, návrat na ručnú cenu, nastavenie kapacity mAh, telemetria článku, SOC/napätie/energia, odpoveď s neovereným úsekom a zachovaným textom, oddelenie softvérového dema. PC 1440 × 1000, mobil 390 × 844, tmavý a svetlý vzhľad: bez chýb JavaScriptu a vodorovného pretečenia. Screenshoty vizuálne skontrolované.
+- Používateľská databáza nebola nahradená QA dátami. Aktualizovaná aplikácia používa port 8765.
+
+**Zatiaľ neoverené:** kompilácia firmvéru na konkrétnej doske, fyzické senzory a nabíjanie, presnosť MAX17048 na vybranom článku, dostatočný výkon pod zvolenou lampou, druhé fyzické zariadenie/router a dlhodobá prevádzka. Aktuálna schéma je v KOMPONENTY.md; staršie binárne prezentácie zachytávajú pôvodnú powerbankovú zostavu.
+
+## Historický záznam predchádzajúcej verzie
+
+Nasledujúci text opisuje vtedajší stav vrátane vtedy chýbajúceho modelu Ollamy.
+
 # Overenie verzie 0.5.0
 
 Dátum: 2. 10. 2026. Windows, Python 3.12.14, závislosti podľa `constraints.txt`.

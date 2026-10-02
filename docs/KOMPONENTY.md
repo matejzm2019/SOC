@@ -1,71 +1,80 @@
 # Komponenty a zapojenie modelu domu
 
-Zostava používa malé jednosmerné napätie. Powerbanka nabíja **skutočnú batériu modelu** cez nabíjací modul. Batéria cez modul napája ESP32-S3 a LED svetlá domu aj po odpojení powerbanky. Malý solárny panel sa meria samostatne cez INA219; pod stolovou lampou nemá dosť stabilného výkonu na napájanie celého modelu. V aplikácii je výroba veľkej FV, domáca spotreba, sieť a jej virtuálny SOC stále modelová veličina.
+**Laboratórny zdroj napája ESP32 a LED domu. Solárny panel cez nabíjačku nabíja samostatnú malú Li-ion batériu.** Batéria nenapája ESP ani svetlá. Notebook spracúva merania a poskytuje web pre PC aj mobil.
 
 ## Nákupný zoznam
 
-| Počet | Komponent | Špecifikácia a úloha |
+| Počet | Komponent | Požiadavka a účel |
 |---:|---|---|
-| 1 | ESP32-S3 DevKit | Wi-Fi, odosielanie meraní, ovládanie LED |
-| 1 | Solárny panel | 5–6 V, asi 0,5–1 W; meraný vstup osvetľovaný lampou |
-| 1 | INA219 | I²C senzor napätia, prúdu a výkonu panela |
-| 1 | BH1750 | I²C senzor osvetlenia v luxoch |
-| 1 | Výkonový rezistor | 47 Ω / aspoň 2 W ako záťaž panela |
-| 1 | PowerBoost 1000C alebo ekvivalent s **load sharing** | Nabíjanie 1-článkovej 3,7 V LiPo batérie z USB a stabilný 5 V výstup pre ESP32 |
-| 1 | Chránená LiPo batéria | 3,7 V, približne 2 000 mAh, JST-PH 2-pin, polarita zhodná s nabíjacím modulom |
-| 1 | USB-A výstupný konektor pre modul | Umožní pripojiť ESP32 bežným USB dátovým káblom k 5 V výstupu modulu |
-| 1 | Powerbanka | 5 V, aspoň 10 000 mAh; napája vstup nabíjacieho modulu a lampu |
-| 1 | USB LED lampa | 5 V, nastaviteľná; svieti na panel |
-| 2 | LED pre okná domu | napríklad teplá biela, nízky odber |
-| 1 | LED stavu siete | modrá alebo zelená |
-| 3 | Rezistor pre LED | 220–330 Ω, 0,25 W, každý v sérii s jednou LED |
-| 3 | Tlačidlo alebo prepínač | dve záťaže a simulovaný výpadok siete |
-| 1 | Breadboard a Dupont vodiče | prototypové zapojenie senzorov a prepínačov |
-| 1 | USB dátový kábel pre ESP32 | programovanie a napájanie z výstupu modulu |
-| 1 | Micro-USB kábel pre PowerBoost 1000C | 5 V vstup z powerbanky |
-| 1 | Wi-Fi router | existujúci alebo cestovný USB router; spája ESP32, notebook a mobil |
-| 1 | Notebook a materiál domu | notebook beží na vlastnej batérii; dom z kartónu alebo penovej dosky |
+| 1 | ESP32-S3 DevKit | Wi-Fi, Arduino ESP32 core, USB napájanie |
+| 1 | Solárny panel | Nominálne 6 V, približne 1–3 W; napätie naprázdno musí vyhovovať nabíjačke |
+| 1 | INA219 breakout | Napätie, prúd a výkon panela; I²C adresa 0x40 |
+| 1 | BQ24074 solar charger breakout | Adafruit Universal USB/DC/Solar Charger alebo overená ekvivalentná doska s riadením solárneho vstupu |
+| 1 | Chránený Li-ion/LiPo článok | Jeden článok: nominálne 3,7 V, nabíjanie na 4,2 V; 1 000–2 000 mAh, povolený nabíjací prúd aspoň 0,5 A, kompatibilný JST-PH konektor a polarita |
+| 1 | MAX17048 breakout | Odhad SOC a meranie napätia článku; Adafruit doska s dvoma paralelnými JST konektormi, adresa 0x36 |
+| 1 | BH1750 | Voliteľný merač osvetlenia, adresa 0x23; firmware ho podporuje |
+| 1 | Laboratórny zdroj | Stabilizovaných 5 V DC, prúdový limit podľa dosky a záťaží |
+| 1 | USB napájací adaptér/kábel | Privedenie 5 V zo zdroja do USB ESP; skontrolovaná polarita |
+| 1 | Multimeter | Kontrola napätia a polarity pred pripojením |
+| 1 | LED lampa | Napájanie podľa požiadaviek lampy, napríklad USB 5 V; dostatočné osvetlenie |
+| 3 | LED | Dve pre okná domu, jedna modrá pre stav modelovanej siete |
+| 3 | Rezistor LED | 220–330 Ω; každý v sérii so svojou LED |
+| 3 | Prepínač/tlačidlo | Dve záťaže a výpadok modelovanej siete |
+| 1 sada | Vodiče, breadboard a konektory | Izolovaný kryt batérie a materiál domu |
+| existujúce | Notebook, router a mobil | Rovnaká sieť bez izolácie Wi-Fi klientov |
 
-Batéria a PowerBoost musia mať správne zhodnú polaritu konektora JST. Odporúčaná chránená batéria [Adafruit 3,7 V / 2 000 mAh](https://www.adafruit.com/product/2011) má ochranný obvod. [PowerBoost 1000C](https://learn.adafruit.com/adafruit-powerboost-1000c-load-share-usb-charge-boost) má nabíjanie, prepínanie medzi USB a batériou a približne 5,2 V výstup. Jeho žltá a zelená LED ukazujú nabíjanie a dokončenie nabíjania; červená upozorňuje na nízke napätie batérie. Model nepočíta percentuálny SOC z tejto fyzickej batérie.
+**PowerBoost a 47 Ω záťaž z predchádzajúceho návrhu už netreba.** Panel má ako záťaž nabíjačku. Powerbanka je iba voliteľný alternatívny 5 V zdroj pre ESP; nenabíja článok v tomto zapojení.
 
-## Tok napájania a dát
+## Schéma
 
 ```text
-Powerbanka 5 V ──micro-USB──> PowerBoost 1000C <──JST── chránená LiPo 3,7 V
-                                    │ 5 V výstup cez USB-A
-                                    └──USB──> ESP32-S3 ──GPIO──> 2 LED svetlá + LED siete
+Laboratórny zdroj 5 V DC ── USB napájanie ── ESP32-S3 ── rezistory ── LED domu
+                                           │
+                        SDA 8 / SCL 9 ──────┼── INA219 (0x40)
+                                           ├── MAX17048 (0x36)
+                                           └── BH1750 (0x23, voliteľný)
 
-Powerbanka 5 V ──USB──> stolová LED lampa ──svetlo──> solárny panel
-                                                      │
-                                                      └──INA219──47 Ω záťaž
-ESP32-S3 <──I²C── INA219 + BH1750
-ESP32-S3 ──Wi-Fi──> router ──Wi-Fi──> notebook s webovou aplikáciou
-                                  └──Wi-Fi──> mobilný prehliadač
+Panel + ── INA219 VIN+ → VIN− ── BQ24074 solar/DC vstup +
+Panel − ─────────────────────── BQ24074 vstup GND
+BQ24074 BATT JST ── MAX17048 JST č. 1
+Chránená batéria ── MAX17048 JST č. 2 (paralelné JST porty)
+
+Všetky GND majú spoločnú referenciu.
+BQ24074 LOAD výstup zostane nezapojený.
+Batéria + sa NESPÁJA s laboratórnymi 5 V.
+
+ESP32 ── Wi-Fi ── router ── notebook/FastAPI/SQLite/Ollama
+                         └── mobil alebo ďalší PC v prehliadači
 ```
 
-Pri odpojení powerbanky od nabíjacieho modulu batéria ďalej napája ESP32 a LED. Lampa sa vypne, ak bola na tej istej powerbanke; panel potom prestane vyrábať a dashboard to ukáže. Router musí mať vlastné napájanie, napríklad druhú powerbanku alebo batériu, aby Wi-Fi zostala dostupná aj pri tejto ukážke. Na bežné predvedenie môže zostať router aj lampa stále napájaná.
+MAX17048 je merač, nie nabíjačka ani ochrana článku. Dva JST porty uvedenej Adafruit dosky umožňujú pripojiť batériu a nabíjačku na rovnaký článok. Pri inom breakoute overte schému a polaritu; cudzí JST konektor môže mať opačnú polaritu. [MAX17048 pinouts](https://learn.adafruit.com/adafruit-max17048-lipoly-liion-fuel-gauge-and-battery-monitor/pinouts).
 
-## Zapojenie k ESP32-S3
+## ESP32 piny
 
-| ESP32-S3 | Pripojenie |
+| Pin | Pripojenie |
 |---|---|
-| USB konektor | 5 V výstup nabíjacieho modulu cez USB-A a dátový kábel |
-| 3V3 | VCC INA219 a BH1750 |
-| GND | GND senzorov, prepínačov a troch LED |
-| GPIO 8 / GPIO 9 | spoločná I²C zbernica SDA / SCL pre INA219 a BH1750 |
-| GPIO 4 | tlačidlo simulovaného výpadku do GND |
-| GPIO 5 / GPIO 6 | prepínače dvoch záťaží do GND |
-| GPIO 7 / GPIO 10 | dve domové LED, každá cez vlastný 220–330 Ω rezistor do GND |
-| GPIO 11 | LED stavu siete cez vlastný 220–330 Ω rezistor do GND |
+| USB | Stabilných 5 V z laboratórneho zdroja |
+| 3V3 | Logické napájanie INA219, MAX17048 VIN a BH1750 |
+| GND | Senzory, nabíjačka, panel, prepínače a LED |
+| GPIO 8 / 9 | Spoločné SDA / SCL všetkých troch senzorov |
+| GPIO 4 | Tlačidlo výpadku proti GND |
+| GPIO 5 / 6 | Prepínače záťaží proti GND |
+| GPIO 7 / 10 / 11 | Tri LED, každá cez samostatný rezistor do GND |
 
-Panel: `+` → INA219 `VIN+` → `VIN-` → 47 Ω / 2 W → mínus panela. Mínus panela musí mať spoločnú referenciu GND s meracou časťou. Panel sa **nepripája** na USB, GPIO ani na batériu. LED sú pripojené na výstupy ESP32, nie priamo na panel. Pred zapojením treba skontrolovať polaritu panela a batérie.
+Skontrolujte dostupnosť GPIO na konkrétnej doske. I²C pull-up odpory musia smerovať na 3,3 V. Nikdy neposielajte 5 V na GPIO. Pri programovaní z PC odpojte USB napájanie ESP z laboratórneho zdroja; dva 5 V zdroje nespájajte bez vhodného oddelenia.
 
-## Čo bude vidieť pri ukážke
+## Nastavenie nabíjačky
 
-1. Zakrytie alebo osvetlenie panela zmení reálne nameraný výkon a lux; aplikácia podľa toho prepočíta virtuálnu FV.
-2. Dva prepínače rozsvietia domové LED a zároveň zvýšia virtuálnu spotrebu.
-3. Tlačidlo výpadku vypne LED siete a nastaví virtuálny import/export na nulu.
-4. Odpojenie powerbanky od nabíjacieho modulu ukáže, že ESP32 a domové LED bežia z fyzickej batérie. Ak sa vypne aj lampa, výkon panela klesne.
-5. Notebook a mobil otvoria ten istý lokálny dashboard. Internet nie je potrebný.
+Adafruit BQ24074 má predvolený nabíjací prúd 1 A. Pre tento návrh nastavte **0,5 A** podľa výrobcu: prerušte jumper 1 A a prepojte jumper 0,5 A. Konkrétna batéria musí takýto prúd povoľovať; kapacita sama neurčuje povolený prúd. Solárny vstup dosky je určený pre panel 6–10 V; skontrolujte maximálne napätie naprázdno. [BQ24074 nastavenie a pinouts](https://learn.adafruit.com/adafruit-bq24074-universal-usb-dc-solar-charger-breakout/pinouts).
 
-Všetky spoje a batéria majú byť upevnené v krabičke; breadboard slúži na prototyp, nie na trvalé uloženie článku. Použite iba chránenú batériu a kompatibilný nabíjací modul. Nenabíjajte LiPo článok priamo z powerbanky ani zo solárneho panela. [Výrobca výslovne upozorňuje](https://learn.adafruit.com/adafruit-powerboost-1000c-load-share-usb-charge-boost/pinouts) aj na možnú opačnú polaritu niektorých cudzích JST konektorov.
+Výstup LOAD má približne 3–4,4 V, nie 5 V; tu sa nepoužíva. Článok nikdy nepripájajte priamo na panel ani laboratórnych 5 V. Použite chránený kompatibilný článok, správnu polaritu a izolované spoje. Poškodený či nafúknutý článok nepoužívajte. Montáž a prvé nabíjanie skontrolujte s učiteľom.
+
+Na modeli sú iba nízke DC napätia. Bežný laboratórny zdroj však môže mať vstup 230 V vo svojom uzavretom prístroji; tvrdenie „celá zostava vôbec nepoužíva 230 V“ by nebolo presné. Na modeli sa so sieťovým napätím nepracuje.
+
+## Reálne meranie
+
+Normálny režim ukazuje SOC od MAX17048, napätie článku, menovitú kapacitu a orientačnú zostávajúcu energiu. Trend SOC je odhad v percentuálnych bodoch za hodinu, **nie meranie nabíjacieho prúdu**. Bez gauge/batérie sú hodnoty nedostupné; percentá nevytvárame jednoduchým pomerom napätia.
+
+Osvetlenie zmení výkon panela a môže začať nabíjanie. Pod bežnou lampou však nemusí vzniknúť dostatok energie; overte to vopred aj na slnečnom svetle. Nabíjačka pri slabom vstupe obmedzuje odber. SOC sa mení pomaly; okamžitú zmenu ukáže výkon panela, dlhšie nabíjanie história SOC. [BQ24074 solárny vstup](https://learn.adafruit.com/adafruit-bq24074-universal-usb-dc-solar-charger-breakout).
+
+Škálované kW domu a import/export sú výpočtové veličiny, nie meranie laboratórneho zdroja. V demo režime je aj batéria softvérová.

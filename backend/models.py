@@ -24,6 +24,7 @@ class Settings(StrictModel):
     location_set: bool = False
     battery_kwh: float = Field(10, ge=0.1, le=200)
     battery_max_kw: float = Field(3, ge=0.1, le=100)
+    battery_capacity_mah: int = Field(1000, ge=100, le=10000)
     wind_kw: float = Field(2, ge=0.1, le=50)
     base_load_w: float = Field(600, ge=50, le=20000)
     price_mode: Literal["manual", "time_of_use"] = "manual"
@@ -35,7 +36,9 @@ class Settings(StrictModel):
     measurement_source: Literal["simulator", "hybrid", "planning", "csv"] = "simulator"
     pv_reference_w: float = Field(0.5, gt=0, le=20)
     weather_source: Literal["simulator", "internet"] = "internet"
-    price_source: Literal["manual"] = "manual"
+    price_source: Literal["manual", "internet"] = "manual"
+    supplier_markup: float = Field(0, ge=0, le=10)
+    energy_vat_pct: float = Field(0, ge=0, le=100)
     ai_enabled: bool = True
     ai_model: Literal["qwen3:0.6b", "qwen3:1.7b"] = "qwen3:0.6b"
 
@@ -78,6 +81,17 @@ class Esp32Telemetry(StrictModel):
     temperature_c: float | None = Field(default=None, ge=-40, le=85)
     load_stage: int = Field(0, ge=0, le=3)
     grid_available: bool = True
+    battery_voltage_v: float | None = Field(default=None, ge=2.5, le=4.35)
+    battery_soc_pct: float | None = Field(default=None, ge=0, le=100)
+    battery_charge_rate_pct_h: float | None = Field(default=None, ge=-1000, le=1000)
+
+    @model_validator(mode="after")
+    def battery_pair(self):
+        if (self.battery_voltage_v is None) != (self.battery_soc_pct is None):
+            raise ValueError("Batéria musí poslať napätie aj stav nabitia, alebo obe hodnoty vynechať.")
+        if self.battery_charge_rate_pct_h is not None and self.battery_soc_pct is None:
+            raise ValueError("Rýchlosť zmeny SOC vyžaduje meranie batérie.")
+        return self
 
 
 class Sample(StrictModel):
@@ -103,6 +117,9 @@ class Sample(StrictModel):
     soc_pct: float | None = Field(default=None, ge=0, le=100)
     battery_energy_kwh: float | None = None
     battery_eta_hours: float | None = None
+    battery_voltage_v: float | None = Field(default=None, ge=2.5, le=4.35)
+    battery_charge_rate_pct_h: float | None = Field(default=None, ge=-1000, le=1000)
+    price_source: Literal["manual", "internet"] = "manual"
     temperature_c: float
     cloud_pct: float = Field(ge=0, le=100)
     wind_ms: float = Field(ge=0)

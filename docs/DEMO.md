@@ -1,6 +1,6 @@
 # Päťminútová SOČ prezentácia
 
-1. Spustite `start.cmd`, otvorte http://127.0.0.1:8765. Pred prezentáciou overte štart bez internetu. V nastaveniach zapnite **DEMO MODE**. Predvolené FV 6 kWp, batéria 10 kWh, ceny zapnuté.
+1. Spustite `start.cmd`, otvorte http://127.0.0.1:8765. Pred prezentáciou overte štart bez internetu. V nastaveniach zapnite **DEMO MODE**. Predvolené FV 6 kWp, batéria 10 kWh, ceny zapnuté; vyberte ručný zdroj cien.
 2. Vysvetlite banner **DEMO MODE** a simulačný čas. Ukážte predgenerovaný deň histórie; nejde o meranie domácnosti.
 3. **Slnečný deň**: výroba pokrýva časť spotreby a nabíja batériu, prebytok ide do siete. Výsledok závisí od času a parametrov; pri poludňajšom štarte predvolene vidno slnko.
 4. **Zamračenie**: výroba poklesne. Ukážte zmenu batériového toku alebo importu.
@@ -11,7 +11,7 @@
 9. V predikciách vysvetlite `t − 24 h`, hranice baseline a význam MAE/RMSE. Po cca 24 ďalších simulačných hodinách sa objaví hodnotenie.
 10. Exportujte CSV a ukážte zdroj `simulator`, kvalitu `synthetic`, intervaly a jednotky. V nastaveniach vypnite batériu alebo FV a vytvorte nový experiment: výpočty aj dashboard sa prispôsobia.
 
-Ak je pripojený model, na záver vypnite DEMO MODE; automaticky sa vyberie **Normálny režim · model domu s ESP32** a ukážte, že zakrytie panela, dve záťaže a tlačidlo výpadku menia dashboard v sekundovom intervale. Odpojte powerbanku od nabíjacieho modulu: ESP32 a svetlá zostanú zapnuté z fyzickej batérie. Router musí zostať napájaný.
+Ak je pripojený model, na záver vypnite DEMO MODE; automaticky sa vyberie **Normálny režim · model domu s ESP32** a ukážte, že zakrytie panela, dve záťaže a tlačidlo výpadku menia dashboard v sekundovom intervale. ESP a LED napája laboratórny zdroj. Panel cez BQ24074 nabíja samostatný článok a MAX17048 zobrazuje jeho SOC a napätie. Nabíjanie pod lampou overte vopred; zmenu SOC sledujte dlhšie. Článok nenapája model domu.
 
 ## Čo obhájiť
 

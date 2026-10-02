@@ -19,6 +19,7 @@ from .analytics import prediction, recommendations
 from .assistant import AssistantService, facts_for
 from .import_data import read_energy_csv, reprice_samples
 from .models import AssistantRequest, CsvImport, DemoCommand, Esp32Telemetry, SCENARIOS, Settings
+from .prices import PriceService
 from .simulator import Simulator
 from .storage import Storage
 from .weather import WeatherService
@@ -39,6 +40,7 @@ class Engine:
         self.device_telemetry = None
         self.device_received_at = None
         self.weather = None
+        self.prices = None
         self.run_id = self.storage.latest_run()
         latest = self.storage.latest(self.run_id) if self.run_id else None
         if latest and latest.source == self.settings.measurement_source:
@@ -59,6 +61,7 @@ class Engine:
         else:
             simulator = Simulator(settings, now - timedelta(seconds=1))
             samples = [simulator.step(seeded=True, interval_seconds=1)]
+        samples = [self.price_sample(sample, settings) for sample in samples]
         run_id = self.storage.new_run(settings, samples if settings.demo_mode else [])
         self.settings, self.simulator, self.run_id = settings, simulator, run_id
         self.sample = samples[-1]
@@ -76,6 +79,7 @@ class Engine:
             self.reset(settings)
         elif physics_changed and settings.measurement_source == "csv":
             samples = reprice_samples(self.storage.rows(self.run_id), settings)
+            samples = [self.price_sample(sample, settings) for sample in samples]
             self.run_id = self.storage.new_run(settings, samples)
             self.sample = samples[-1]
             self.settings = self.simulator.settings = settings
@@ -86,12 +90,18 @@ class Engine:
     def weather_state(self):
         return self.weather.view(self.settings) if self.weather else {"available": False, "stale": False, "source": self.settings.weather_source}
 
+    def price_sample(self, sample, settings):
+        if settings.price_source == "internet":
+            rate = self.prices.quote(datetime.fromisoformat(sample.timestamp), sample.interval_seconds, settings) if self.prices and settings.prices_enabled else None
+            return sample.model_copy(update={"buy_eur_kwh":rate,"price_source":"internet"})
+        return sample.model_copy(update={"price_source":"manual"})
+
     def prediction(self):
         since = (datetime.fromisoformat(self.sample.timestamp) - timedelta(days=2, hours=1)).isoformat()
         return prediction(self.settings, self.weather_state(), self.storage.rows(self.run_id, since))
 
     def import_csv(self, content):
-        samples = read_energy_csv(content, self.settings)
+        samples = [self.price_sample(sample,self.settings) for sample in read_energy_csv(content, self.settings)]
         updated = self.settings.model_copy(update={"configured": True, "demo_mode": False,
                                                   "measurement_source": "csv", "battery_enabled": False, "wind_enabled": False,
                                                   "pv_enabled": any(sample.pv_w > 0 for sample in samples)})
@@ -124,7 +134,7 @@ class Engine:
                 if elapsed <= 0 and not self.sample.seeded:
                     return
                 self.simulator.timestamp = now - timedelta(seconds=interval)
-            sample = self.simulator.step(measured=measured, interval_seconds=interval)
+            sample = self.price_sample(self.simulator.step(measured=measured, interval_seconds=interval), self.settings)
             self.storage.save(self.run_id, [sample])
         except Exception:
             self.simulator.timestamp, self.simulator.energy = timestamp, energy
@@ -150,6 +160,7 @@ class Engine:
 
     def state(self):
         return {"settings": self.settings, "sample": self.sample, "device": self.device_status(), "weather": self.weather_state(),
+                "prices": self.prices.view(self.settings) if self.prices else {"available":False,"source":"manual"},
                 "demo": {"enabled": self.settings.demo_mode, "scenario": self.simulator.scenario,
                          "paused": self.paused, "speed": self.speed,
                          "step_seconds": 300 if self.settings.demo_mode else 1,
@@ -174,11 +185,13 @@ def create_app(database=None, esp32_key=None, http_transport=None):
                         esp32_key or device_key(ROOT / "data" / "device_key.txt"))
         async with httpx.AsyncClient(transport=http_transport, trust_env=False, limits=httpx.Limits(max_connections=8)) as client:
             engine.weather = WeatherService(client, engine.storage)
+            engine.prices = PriceService(client, engine.storage)
             app.state.engine = engine
             app.state.assistant = AssistantService(client)
             tasks = [asyncio.create_task(engine.run())]
             if os.environ.get("SOC_OFFLINE") != "1":
                 tasks.append(asyncio.create_task(engine.weather.run(engine)))
+                tasks.append(asyncio.create_task(engine.prices.run(engine)))
             try:
                 yield
             finally:
@@ -189,7 +202,7 @@ def create_app(database=None, esp32_key=None, http_transport=None):
                         await task
                 engine.storage.connection.close()
 
-    app = FastAPI(title="Energia", version="0.5.0", lifespan=lifespan)
+    app = FastAPI(title="Energia", version="0.6.0", lifespan=lifespan)
     app.add_middleware(TrustedHostMiddleware, allowed_hosts=["*"])
 
     @app.middleware("http")
@@ -239,6 +252,7 @@ def create_app(database=None, esp32_key=None, http_transport=None):
     @app.put("/api/settings")
     async def settings(value: Settings, request: Request):
         e = request.app.state.engine
+        await e.prices.refresh(value)
         async with e.lock:
             updated = value.model_copy(update={"configured": True})
             if updated != e.settings:
@@ -264,6 +278,12 @@ def create_app(database=None, esp32_key=None, http_transport=None):
         if model:
             settings = settings.model_copy(update={"ai_model": model, "ai_enabled": True})
         return await request.app.state.assistant.status(settings, force=bool(model))
+
+    @app.get("/api/prices")
+    async def prices(request: Request):
+        engine = request.app.state.engine
+        await engine.prices.refresh(engine.settings)
+        return engine.prices.view(engine.settings)
 
     @app.post("/api/assistant/chat")
     async def assistant_chat(value: AssistantRequest, request: Request):
@@ -346,7 +366,7 @@ def create_app(database=None, esp32_key=None, http_transport=None):
         if not rows:
             raise HTTPException(404, "História neexistuje.")
         stream = io.StringIO(newline="")
-        writer = csv.DictWriter(stream, fieldnames=list(rows[0]))
+        writer = csv.DictWriter(stream, fieldnames=list(dict.fromkeys(key for row in rows for key in row)))
         writer.writeheader()
         writer.writerows(rows)
         return Response("\ufeff" + stream.getvalue(), media_type="text/csv; charset=utf-8",

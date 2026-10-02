@@ -1,13 +1,12 @@
-# Používanie na PC bez ESP32
+# Používanie na PC, demo a model s ESP32
 
 Aplikácia je určená na lokálne používanie v domácnosti. PC musí bežať; mobil a ďalší PC používajú ten istý backend cez domácu sieť. Automatické zisťovanie fyzickej spotreby bez zdroja meraní nie je možné. Preto rozhranie rozlišuje tieto režimy:
 
 | Režim | Pôvod energie | Použitie |
 |---|---|---|
-| Plánovanie | Výpočtový model spotreby a batérie, FV a vietor podľa internetového počasia | Porovnanie parametrov a orientačný výhľad bez hardvéru |
 | CSV história | Používateľské intervaly spotreby a voliteľne FV | Analýza vlastných údajov; sieť sa odvodzuje výpočtom bez batérie |
 | Demo | Simulované energetické toky, pripravené scenáre a čas | Prezentácia aj bez internetu |
-| Hybrid | Malý panel z ESP32 + model domácnosti | Voliteľná fyzická ukážka |
+| Normálny režim | Meranie panela a malej batérie z ESP32 + škálovaný model domácnosti | Fyzický model s laboratórnym zdrojom |
 
 ## Miesto a internetové počasie
 
@@ -25,7 +24,7 @@ Bezplatné Open-Meteo API povoľuje súkromné domáce používanie, vzdelávani
 
 Zapnutý Demo režim používa výhradne softvérový simulátor na notebooku, scenáre a zrýchlený čas. Meranie ESP32 nemá na tento režim vplyv. Pri vypnutí Demo režimu sa automaticky vyberie model domu s ESP32. Staršia voľba plánovania bez hardvéru sa pri načítaní prevedie na tento normálny režim; predchádzajúca história zostáva archivovaná.
 
-ESP32-S3 posiela cez Wi-Fi a router výkon malého panela, osvetlenie a stav prepínačov záťaží. Notebook spracúva údaje, škáluje FV a počíta spotrebu, virtuálnu batériu a bilanciu siete. Kalibračný výkon panela nastavte v Modeli domácnosti. Virtuálny SOC sa nesmie zamieňať za fyzické meranie batérie. Normálny režim štartuje automaticky, pri chýbajúcom ESP nevytvára energetické vzorky, zobrazí čakanie a po pripojení pokračuje. Obdobie odpojenia sa spätne nedopĺňa.
+ESP32-S3 posiela cez Wi-Fi a router výkon malého panela, osvetlenie a stav prepínačov záťaží. Notebook spracúva údaje, škáluje FV a počíta modelovanú spotrebu a bilanciu siete. Malá batéria má samostatný solárny okruh a nevstupuje do modelovej výkonovej bilancie. ESP a LED napája laboratórny zdroj. Kalibračný výkon panela nastavte v Modeli domácnosti. SOC a napätie malej batérie posiela MAX17048. Kapacitu zadajte podľa článku v mAh. Bez merača sa nabitie zobrazuje ako nedostupné. Energia je odhad z menovitej kapacity a SOC; trend SOC nie je meraný nabíjací prúd. Virtuálna domáca batéria zostáva iba v demo režime. Normálny režim štartuje automaticky, pri chýbajúcom ESP nevytvára energetické vzorky, zobrazí čakanie a po pripojení pokračuje. Obdobie odpojenia sa spätne nedopĺňa.
 
 Internetové počasie a lokálna Ollama fungujú v oboch režimoch. Normálny režim používa internetové počasie, jeho nedostupnosť však neblokuje meranie panela. CSV import je samostatná analýza histórie, nie náhrada ESP v normálnom živom režime.
 
@@ -60,3 +59,12 @@ Spúšťač inštaluje závislosti aj po aktualizácii projektu. Stav, konfigur�
 Server je pre dôveryhodnú domácu sieť. Nemá používateľské účty; každý s prístupom k tejto LAN aplikácii môže meniť nastavenia a importovať dáta. Nevystavujte port priamo do internetu. Verejné alebo viacužívateľské nasadenie vyžaduje autentifikáciu, HTTPS a ďalšie prevádzkové zabezpečenie. Túto verziu preto nepovažujeme za certifikovaný systém riadenia reálnej elektroinštalácie ani za verejnú cloudovú službu.
 
 Ollama funguje lokálne podľa [návodu asistenta](LOKALNY_ASISTENT.md). Výpočty a pravidlové odporúčania fungujú aj bez nainštalovaného modelu.
+
+
+## Cena energie: ručne alebo internet
+
+V Nastavenia → Tarifa vyberte zdroj nákupnej ceny. Ručný zdroj podporuje jednu cenu alebo časovú tarifu. Internet získava slovenský denný spotový trh z [Energy-Charts API](https://api.energy-charts.info/), prepočítava EUR/MWh na EUR/kWh a obnovuje údaje každých 30 minút. Nákup = (spot + zadaná prirážka) × (1 + zadaná DPH). DPH sa nehádá; predvolená nula znamená cenu bez dane. Výkup je vždy samostatne zadaná zmluvná cena. Distribúciu a fixné poplatky zadávajte vrátane príslušných daní.
+
+Spot je trhová cena, nie automaticky cena z faktúry. Provider uvádza pre SK dáta súkromné/interné použitie; verejné alebo komerčné zobrazovanie potrebuje povolenie poskytovateľa. Na verejné demo použite ručné syntetické ceny. Podmienky sú pri endpointe price v oficiálnej dokumentácii.
+
+Do histórie sa ukladá cena platná pre čas vzorky. Viac cenových intervalov sa váži časom pri rovnomernom odbere. Cache prežije reštart, po pol hodine je označená ako stará a po 36 hodinách od získania sa nepoužíva; vždy musí pokrývať celý požadovaný interval. Pri výpadku alebo historickom CSV mimo dostupných cenových intervalov cena zostáva nedostupná. Aktuálnou cenou spätne neoceňujeme nesúvisiacu históriu. Ak chýba cena niektorého intervalu, náklady celého obdobia sa nezobrazujú ako úplný výpočet.
