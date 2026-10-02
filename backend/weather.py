@@ -1,6 +1,5 @@
 import asyncio
 import math
-import logging
 import sqlite3
 from datetime import datetime, timedelta, timezone
 from time import monotonic
@@ -114,17 +113,6 @@ class WeatherService:
     async def run(self, engine):
         while True:
             await self.refresh(engine.settings)
-            age = (datetime.now(UTC) - datetime.fromisoformat(engine.sample.timestamp)).total_seconds()
-            if not engine.settings.demo_mode and not engine.paused and engine.settings.measurement_source == "planning" and (engine.sample.seeded or age > 60):
-                async with engine.lock:
-                    try:
-                        engine.tick()
-                    except RuntimeError as error:
-                        engine.error = str(error)
-                    except Exception:
-                        logging.getLogger(__name__).exception("Plánovanie bolo pozastavené")
-                        engine.paused = True
-                        engine.error = "Chyba výpočtu alebo ukladania. Skontrolujte log servera."
             await asyncio.sleep(60)
 
     async def search(self, query):

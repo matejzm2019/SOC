@@ -11,7 +11,7 @@
 9. V predikciách vysvetlite `t − 24 h`, hranice baseline a význam MAE/RMSE. Po cca 24 ďalších simulačných hodinách sa objaví hodnotenie.
 10. Exportujte CSV a ukážte zdroj `simulator`, kvalitu `synthetic`, intervaly a jednotky. V nastaveniach vypnite batériu alebo FV a vytvorte nový experiment: výpočty aj dashboard sa prispôsobia.
 
-Ak je pripojený model, na záver vypnite DEMO MODE, vyberte zdroj **ESP32-S3 + malý panel** a ukážte, že zakrytie panela, dve záťaže a tlačidlo výpadku menia dashboard v sekundovom intervale. Odpojte powerbanku od nabíjacieho modulu: ESP32 a svetlá zostanú zapnuté z fyzickej batérie. Router musí zostať napájaný.
+Ak je pripojený model, na záver vypnite DEMO MODE; automaticky sa vyberie **Normálny režim · model domu s ESP32** a ukážte, že zakrytie panela, dve záťaže a tlačidlo výpadku menia dashboard v sekundovom intervale. Odpojte powerbanku od nabíjacieho modulu: ESP32 a svetlá zostanú zapnuté z fyzickej batérie. Router musí zostať napájaný.
 
 ## Čo obhájiť
 
@@ -19,7 +19,7 @@ Ak je pripojený model, na záver vypnite DEMO MODE, vyberte zdroj **ESP32-S3 + 
 - kWh vznikajú integráciou výkonu za simulačný interval, nie sčítaním výkonov.
 - Import a export sa integrujú samostatne, neodpočítajú sa pred výpočtom ceny.
 - Batéria má výkonový limit, rezervný SOC a straty; pri nedostatku energia nemôže vzniknúť zo vzduchu.
-- Baseline je matematický časový model. Pravidlové zhrnutie nie je LLM; budúci LLM smie iba interpretovať schválené fakty.
+- Baseline je matematický časový model. Pravidlové zhrnutie nie je LLM; lokálny LLM cez Ollamu iba interpretuje schválené fakty.
 - Výsledky na simulátore sú dôkaz implementácie, nie dôkaz presnosti na reálnych domácnostiach.
 
 Pre vedeckú časť ďalšej iterácie porovnajte rovnaký dataset bez FV/batérie a s nimi, rovnaké počiatočné SOC, tarifné podmienky a pokrytie spotreby. Návratnosť investície zatiaľ nie je súčasťou ekonomiky MVP.

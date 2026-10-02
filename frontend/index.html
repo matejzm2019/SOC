@@ -89,7 +89,7 @@
     </header>
     <div class="settings-layout">
       <nav class="settings-nav" aria-label="Časti nastavení">
-        <button type="button" data-settings-tab="source" class="active"><span>01</span><strong>Režim a zdroj</strong><small>Plánovanie, demo, import</small></button>
+        <button type="button" data-settings-tab="source" class="active"><span>01</span><strong>Režim a zdroj</strong><small>Demo alebo model s ESP32</small></button>
         <button type="button" data-settings-tab="location"><span>02</span><strong>Miesto a počasie</strong><small>Mesto alebo poloha</small></button>
         <button type="button" data-settings-tab="modules"><span>03</span><strong>Moduly</strong><small>Čo sledujete</small></button>
         <button type="button" data-settings-tab="model"><span>04</span><strong>Model domácnosti</strong><small>Výkony a kapacita</small></button>
@@ -99,11 +99,11 @@
       </nav>
       <div class="settings-content">
         <section data-settings-panel="source" aria-labelledby="source-title">
-          <div class="settings-section-heading"><span class="section-number">01 / ZDROJ DÁT</span><h3 id="source-title">Ako získavať hodnoty</h3><p>Plánujte podľa reálneho počasia, analyzujte vlastné intervaly alebo použite simulátor s pripravenými scenármi.</p></div>
+          <div class="settings-section-heading"><span class="section-number">01 / ZDROJ DÁT</span><h3 id="source-title">Ako získavať hodnoty</h3><p>Demo spracúva všetky energetické toky softvérovo na notebooku. Normálny režim prijíma meranie z fyzického modelu domu cez ESP32 a Wi-Fi.</p></div>
           <div class="form-grid">
-            <label class="field">Zdroj merania<select name="measurement_source"><option value="planning">Plánovanie bez hardvéru</option><option value="simulator">Softvérový simulátor</option><option value="csv">Importovaná história CSV</option><option value="hybrid">ESP32-S3 + malý panel</option></select><small>Bez merania je spotreba odhad podľa zadaného profilu. CSV môže obsahovať vlastné namerané intervaly.</small></label>
+            <label class="field">Zdroj merania<select name="measurement_source"><option value="simulator">Demo · softvérový simulátor</option><option value="hybrid">Normálny režim · model domu s ESP32</option><option value="csv" hidden>Analýza importovanej histórie</option></select><small>Prepínač Demo automaticky vyberá zdroj. Import CSV slúži na samostatnú analýzu histórie.</small></label>
           </div>
-          <label class="setting-switch"><span class="switch-copy"><strong>Demo režim</strong><small>Scenáre, zrýchlený čas a ručný krok. Plánovanie používa aktuálne počasie a minútové intervaly.</small></span><input type="checkbox" name="demo_mode"><span class="switch-track" aria-hidden="true"></span></label>
+          <label class="setting-switch"><span class="switch-copy"><strong>Demo režim</strong><small>Zapnuté: všetko simuluje notebook. Vypnuté: model domu s ESP32, meranie panela a prepínače záťaží; pri odpojení čaká na dáta.</small></span><input type="checkbox" name="demo_mode"><span class="switch-track" aria-hidden="true"></span></label>
           <div class="settings-callout" id="source-explainer">Simulátor vytvára bezpečné syntetické údaje bez pripojenia zariadenia.</div>
           <div class="import-box"><h4>Vlastná história bez zariadenia</h4><p>Nahrajte intervalovú spotrebu a voliteľne výrobu FV. Import vytvorí samostatnú históriu; odber a export sa vypočítajú bez modelu batérie.</p><div class="import-actions"><a class="button secondary" href="/api/import/template">Stiahnuť vzor CSV</a><label class="button secondary file-button">Vybrať CSV<input id="csv-file" type="file" accept=".csv,text/csv"></label><button type="button" id="csv-import" class="button primary" disabled>Importovať</button></div><p id="csv-file-info" class="muted">Žiadny súbor</p><p id="csv-error" class="form-error" role="alert"></p><p class="footnote">Čas je koniec intervalu s časovým pásmom. Import použije aktuálne uloženú tarifu, nie neuložené zmeny formulára.</p></div>
         </section>
@@ -128,7 +128,7 @@
           </div>
         </section>
         <section data-settings-panel="model" hidden aria-labelledby="model-title">
-          <div class="settings-section-heading"><span class="section-number">04 / PARAMETRE</span><h3 id="model-title">Model domácnosti</h3><p>Hodnoty používajú výpočty výroby, bilancie a histórie. Spotreba a batéria sú modelované, pokiaľ používate plánovanie. Pri importe sa analyzujú vlastné intervaly.</p></div>
+          <div class="settings-section-heading"><span class="section-number">04 / PARAMETRE</span><h3 id="model-title">Model domácnosti</h3><p>Hodnoty používajú výpočty výroby, bilancie a histórie. V normálnom režime meranie malého panela riadi škálovanú FV; virtuálna spotreba a batéria sú vypočítané. Pri importe sa analyzujú vlastné intervaly.</p></div>
           <div class="form-grid">
             <label class="field">Základná spotreba (W)<input name="base_load_w" type="number" min="50" max="20000" required><small>Spotreba pri bežnej prevádzke.</small></label>
             <label class="field" data-setting-module="pv">Výkon FV (kWp)<input name="pv_kwp" type="number" min="0.1" max="100" step="0.1" required></label>

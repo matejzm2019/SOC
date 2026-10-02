@@ -61,29 +61,28 @@ function updateModules() {
 function setFlow(id, value, reverse) {
   const path = $(`#path-${id}`);
   path.classList.toggle('reverse', reverse);
-  path.classList.toggle('idle', Math.abs(value) < 1 || state.demo.paused);
+  path.classList.toggle('idle', Math.abs(value) < 1 || state.demo.paused || (!state.demo.enabled && !state.device.online));
 }
 
 function renderState() {
   const s = state.sample, settings = state.settings, demo = state.demo;
   updateModules();
   $$('[data-demo-control]').forEach(el => { el.hidden = !demo.enabled; });
-  const imported = settings.measurement_source === 'csv', planning = !demo.enabled && settings.measurement_source === 'planning';
-  const label = demo.enabled ? 'Demo režim' : imported ? 'Importovaná história' : planning ? 'Plánovanie domácnosti' : settings.measurement_source === 'hybrid' ? 'Hybridný model' : 'Simulácia v reálnom čase';
+  const imported = settings.measurement_source === 'csv', hybrid = !demo.enabled && settings.measurement_source === 'hybrid', waiting = hybrid && (s.seeded || s.source !== 'hybrid');
+  const label = demo.enabled ? 'Demo režim' : imported ? 'Importovaná história' : 'Model domu · ESP32';
   setText('mode-title', label);
   setText('mode-pill', `◉ ${label}`);
-  setText('energy-provenance', imported ? 'Spotreba a FV pochádzajú z importovaných intervalov. Tok siete je odvodený výpočtom; zobrazený výkon je priemer posledného intervalu.' : planning ? 'Spotreba a batéria sú modelované. Výroba FV a vetra je odhad podľa internetového počasia, nie meranie vašej elektrárne.' : settings.measurement_source === 'hybrid' ? 'Malý panel sa meria cez ESP32. Energetika domácnosti zostáva škálovaným modelom.' : state.settings.weather_source === 'simulator' ? 'Energetické toky aj počasie pochádzajú zo simulátora.' : 'Energetické toky sú simulované. Internetové počasie je samostatný aktuálny údaj a nemení prezentačný scenár.');
+  setText('energy-provenance', imported ? 'Spotreba a FV pochádzajú z importovaných intervalov. Tok siete je odvodený výpočtom; zobrazený výkon je priemer posledného intervalu.' : hybrid ? state.device.online ? 'ESP32 meria malý panel a prepínače modelu. Energetika domácnosti je škálovaná; virtuálny SOC nie je meranie fyzickej batérie.' : 'ESP32 je odpojené. Čakám na meranie; posledné dostupné hodnoty môžu byť staré. Simulátor nenahrádza meranie.' : state.settings.weather_source === 'simulator' ? 'Energetické toky aj počasie pochádzajú zo simulátora.' : 'Energetické toky sú simulované. Internetové počasie je samostatný aktuálny údaj a nemení prezentačný scenár.');
   setText('flow-heading', imported ? 'Bilancia posledného intervalu' : 'Energetické toky');
   metricValue('load-value', s.load_w / 1000, 'kW');
   metricValue('pv-value', s.pv_w / 1000, 'kW');
   metricValue('soc-value', s.soc_pct, '%');
   metricValue('grid-value', Math.abs(s.grid_w) / 1000, 'kW');
-  setText('load-detail', imported ? 'Priemer intervalu z CSV' : planning ? 'Odhad podľa profilu domácnosti' : `${number(s.voltage_v, 0)} V · ${number(s.current_a, 1)} A · virtuálne`);
+  setText('load-detail', imported ? 'Priemer intervalu z CSV' : hybrid ? 'Model spotreby podľa záťaží ESP32' : `${number(s.voltage_v, 0)} V · ${number(s.current_a, 1)} A · virtuálne`);
   setText('pv-detail', `${number(settings.pv_kwp, 1)} kWp inštalovaný výkon`);
   if (s.source === 'hybrid') setText('pv-detail', `${number(s.panel_power_w, 3)} W panel · ${number(s.illuminance_lux, 0)} lx · ESP32`);
-  if (planning) setText('pv-detail', 'Odhad podľa internetového počasia');
   if (imported) setText('pv-detail', 'Výroba z importovaného intervalu');
-  if (planning && s.seeded) ['load-value','pv-value','soc-value','grid-value'].forEach(id => setText(id, '—'));
+  if (waiting) ['load-value','pv-value','soc-value','grid-value'].forEach(id => setText(id, '—'));
   const batteryAction = s.battery_w > 1 ? 'Vybíjanie' : s.battery_w < -1 ? 'Nabíjanie' : 'Pohotovosť';
   setText('battery-detail', `${number(s.battery_energy_kwh, 1)} / ${number(settings.battery_kwh, 1)} kWh · ${batteryAction.toLowerCase()} · virtuálne`);
   $('#soc-bar').style.width = `${s.soc_pct || 0}%`;
@@ -92,9 +91,9 @@ function renderState() {
   setText('flow-load', kw(s.served_w));
   setText('flow-pv', kw(s.pv_w));
   setText('flow-pv-sub', `${number(settings.pv_kwp, 1)} kWp · virtuálna FV`);
-  if (planning) setText('flow-pv-sub', `${number(settings.pv_kwp,1)} kWp · odhad podľa počasia`);
+  if (hybrid) setText('flow-pv-sub', 'Výkon škálovaný z merania panela');
   if (imported) setText('flow-pv-sub', 'Priemer importovaného intervalu');
-  setText('energy-data-label', imported ? 'Importované intervaly' : planning ? 'Model podľa počasia' : 'Syntetické dáta');
+  setText('energy-data-label', imported ? 'Importované intervaly' : hybrid ? 'Meranie panela + škálovaný model' : 'Syntetické dáta');
   setText('flow-grid', kw(Math.abs(s.grid_w)));
   setText('flow-grid-sub', gridAction);
   setText('flow-battery', `${s.battery_w > 1 ? '−' : s.battery_w < -1 ? '+' : ''}${kw(Math.abs(s.battery_w))}`);
@@ -109,15 +108,16 @@ function renderState() {
   setFlow('grid', s.grid_w, s.grid_w < 0);
   setFlow('battery', s.battery_w, s.battery_w > 0);
   setFlow('wind', s.wind_w, false);
-  setText('flow-status', imported || planning ? '● VYPOČÍTANÁ BILANCIA' : s.grid_available ? '● SIEŤ DOSTUPNÁ' : '○ OSTROVNÝ REŽIM');
+  setText('flow-status', imported || hybrid ? '● VYPOČÍTANÁ BILANCIA' : s.grid_available ? '● SIEŤ DOSTUPNÁ' : '○ OSTROVNÝ REŽIM');
   setText('balance-caption', s.unserved_w > 1 ? `Nepokrytá spotreba ${kw(s.unserved_w)}` : 'Celá spotreba pokrytá');
   const eta = s.battery_eta_hours == null ? '' : ` · do limitu ${number(s.battery_eta_hours, 1)} h`;
   setText('unserved', s.curtailed_w > 1 ? `Obmedzená výroba ${kw(s.curtailed_w)}` : `${settings.battery_enabled ? batteryAction + eta : 'Batéria vypnutá'}`);
-  if (planning && s.seeded) {
+  if (waiting) {
     ['flow-load','flow-pv','flow-grid','flow-battery','flow-wind','mobile-load','mobile-pv','mobile-grid','mobile-battery'].forEach(id => setText(id,'—'));
-    ['grid-detail','flow-grid-sub','mobile-grid-detail','balance-caption','unserved','battery-detail'].forEach(id => setText(id,'Čakám na aktuálne počasie'));
+    ['grid-detail','flow-grid-sub','mobile-grid-detail','balance-caption','unserved','battery-detail'].forEach(id => setText(id,'Čakám na meranie ESP32'));
     setText('flow-status','○ ČAKÁM NA ÚDAJE');
     $('#soc-bar').style.width = '0%';
+    $('#flow-battery').parentElement.setAttribute('aria-label','Čakám na meranie ESP32');
   }
   renderWeather(state.weather);
   setText('buy-price', eur(s.buy_eur_kwh));
@@ -129,14 +129,13 @@ function renderState() {
   setText('play', demo.paused ? '▶ Spustiť' : 'Ⅱ Pozastaviť');
   $('#play').hidden = imported;
   const date = new Date(s.timestamp).toLocaleDateString('sk-SK', {day:'numeric', month:'short', timeZone:'Europe/Bratislava'});
-  setText('sim-clock', imported ? `${date} ${time(s.timestamp)} · posledný importovaný interval` : planning ? `${date} ${time(s.timestamp)} · ${s.seeded ? 'čakám na počasie' : demo.paused ? 'pozastavené' : 'odhad každú minútu'}` : demo.enabled
+  setText('sim-clock', imported ? `${date} ${time(s.timestamp)} · posledný importovaný interval` : hybrid ? waiting ? 'Čakám na prvé meranie ESP32' : `${date} ${time(s.timestamp)} · ${!state.device.online ? 'posledné meranie · ESP32 offline' : demo.paused ? 'pozastavené' : 'aktualizácia každú sekundu'}` : demo.enabled
     ? `${date} ${time(s.timestamp)} · ${demo.paused ? 'pozastavené' : `1 s ≈ ${demo.speed * 5} min`} · demo čas`
     : `${date} ${time(s.timestamp)} · ${demo.paused ? 'pozastavené' : 'vzorka každú 1 s'} · reálny čas`);
   setText('run-info', `${label} #${demo.run_id} · Europe/Bratislava`);
-  const hybrid = settings.measurement_source === 'hybrid';
-  setText('device-status', hybrid ? (state.device.online ? '● ESP32 ONLINE' : '○ ESP32 OFFLINE') : imported ? 'CSV INTERVALY' : planning ? 'ODHAD' : 'SIMULÁTOR');
+  setText('device-status', hybrid ? (state.device.online ? '● ESP32 ONLINE' : '○ ESP32 OFFLINE') : imported ? 'CSV INTERVALY' : 'SIMULÁTOR');
   $('#device-status').classList.toggle('device-offline', hybrid && !state.device.online);
-  $('#insights').innerHTML = planning && s.seeded ? '<p class="muted">Odporúčania budú dostupné po prvom výpočte podľa počasia.</p>' : state.summary.items.map(item => `<article class="insight ${escape(item.kind)}"><h3>${escape(item.title)}</h3><p>${escape(item.text)}</p></article>`).join('');
+  $('#insights').innerHTML = waiting ? '<p class="muted">Odporúčania budú dostupné po prvom meraní ESP32.</p>' : state.summary.items.map(item => `<article class="insight ${escape(item.kind)}"><h3>${escape(item.title)}</h3><p>${escape(item.text)}</p></article>`).join('');
   if (demo.error) { $('#error').textContent = demo.error; $('#error').hidden = false; }
 }
 
@@ -297,6 +296,9 @@ function formSettings() {
 function updateSettings() {
   const source = form.elements.namedItem('measurement_source').value;
   const imported = source === 'csv';
+  const weatherSource = form.elements.namedItem('weather_source');
+  weatherSource.querySelector('[value="simulator"]').disabled = source === 'hybrid';
+  if (source === 'hybrid') weatherSource.value = 'internet';
   ['battery_enabled','wind_enabled'].forEach(name => { form.elements.namedItem(name).disabled = imported; if (imported) form.elements.namedItem(name).checked = false; });
   $$('[data-setting-module]').forEach(el => {
     el.hidden = !form.elements.namedItem(`${el.dataset.settingModule}_enabled`).checked;
@@ -313,8 +315,8 @@ function updateSettings() {
   $('#offpeak-field').hidden = !offpeak;
   form.elements.namedItem('offpeak_price').disabled = !offpeak;
   const hybrid = source === 'hybrid';
-  setText('source-explainer', hybrid ? 'ESP32-S3 posiela meranie malého panela cez lokálnu Wi-Fi. Ostatné toky sú modelované.' : imported ? 'Importujte vlastné údaje tlačidlom nižšie. Import sa spracuje samostatne a zachová doterajšiu históriu.' : source === 'planning' ? 'Plánovanie používa reálne počasie a predpoveď pre zvolené miesto. Spotreba, batéria a toky sú odhady podľa nastaveného modelu. Nepotrebuje ESP32.' : 'Simulátor vytvára syntetické energetické údaje a pripravené scenáre. Funguje aj bez internetu.');
-  setText('settings-device-state', hybrid ? (state.device.online ? 'ESP32 pripojené' : 'ESP32 nepripojené') : imported ? 'Vlastná história' : source === 'planning' ? 'Plánovanie bez hardvéru' : 'Lokálny simulátor');
+  setText('source-explainer', hybrid ? 'ESP32-S3 posiela meranie malého panela cez lokálnu Wi-Fi. Ostatné toky sú modelované.' : imported ? 'Importujte vlastné údaje tlačidlom nižšie. Import sa spracuje samostatne a zachová doterajšiu históriu.' : 'Simulátor vytvára syntetické energetické údaje a pripravené scenáre. Funguje aj bez internetu.');
+  setText('settings-device-state', hybrid ? (state.device.online ? 'ESP32 pripojené' : 'ESP32 nepripojené') : imported ? 'Vlastná história' : 'Lokálny simulátor');
   setText('chosen-location', form.elements.namedItem('location_set').checked ? `${form.elements.namedItem('location_name').value} · ${number(Number(form.elements.namedItem('latitude').value),3)}°, ${number(Number(form.elements.namedItem('longitude').value),3)}°` : 'Miesto nie je nastavené');
   setText('ollama-command', `ollama pull ${form.elements.namedItem('ai_model').value}`);
   const values = formSettings();
@@ -322,7 +324,7 @@ function updateSettings() {
   const count = changed.length;
   const reset = changed.some(key => !['ai_enabled','ai_model','weather_enabled','location_name','location_set','weather_source'].includes(key));
   setText('settings-change-title', count ? `${count} ${count === 1 ? 'zmena' : count < 5 ? 'zmeny' : 'zmien'} na uloženie` : 'Žiadne neuložené zmeny');
-  setText('settings-change-detail', count ? reset ? imported ? 'Uloženie vytvorí novú analýzu importovaných údajov s touto tarifou. Pôvodná história zostane uložená.' : 'Modelové parametre vytvoria nový súbor údajov. Plánovanie sa spustí automaticky; demo začína pozastavené.' : 'Nastavenia sa uložia bez resetovania energetickej histórie.' : 'Upravte hodnotu alebo modul. Vzhľad stránky sa prepína okamžite mimo nastavení.');
+  setText('settings-change-detail', count ? reset ? imported ? 'Uloženie vytvorí novú analýzu importovaných údajov s touto tarifou. Pôvodná história zostane uložená.' : 'Zmena modelu vytvorí nový súbor údajov. Normálny režim čaká na ESP32; demo začína pozastavené.' : 'Nastavenia sa uložia bez resetovania energetickej histórie.' : 'Upravte hodnotu alebo modul. Vzhľad stránky sa prepína okamžite mimo nastavení.');
   $('#settings-save').disabled = !count || busy;
 }
 function openSetup() {
@@ -332,11 +334,6 @@ function openSetup() {
     if (field) { if (field.type === 'checkbox') field.checked = value; else field.value = value; }
   }
   selectSettingsTab('source'); setText('setup-error', ''); updateSettings();
-  if (!state.settings.configured) {
-    form.elements.namedItem('measurement_source').value = 'planning';
-    form.elements.namedItem('demo_mode').checked = false;
-    updateSettings();
-  }
   $('#setup-close').hidden = !state.settings.configured;
   $('#settings-cancel').hidden = !state.settings.configured;
   $('#setup').showModal();
@@ -348,14 +345,8 @@ $('#setup').addEventListener('cancel', event => { if (!state.settings.configured
 form.addEventListener('input', updateSettings);
 form.addEventListener('change', event => {
   const source = form.elements.namedItem('measurement_source'), demo = form.elements.namedItem('demo_mode');
-  if (event.target.name === 'demo_mode') {
-    if (demo.checked && ['planning','csv'].includes(source.value)) source.value = 'simulator';
-    if (!demo.checked && source.value === 'simulator') source.value = 'planning';
-  }
-  if (event.target.name === 'measurement_source') {
-    if (['planning','csv'].includes(source.value)) demo.checked = false;
-    if (source.value === 'simulator') demo.checked = true;
-  }
+  if (event.target.name === 'demo_mode') source.value = demo.checked ? 'simulator' : 'hybrid';
+  if (event.target.name === 'measurement_source') demo.checked = source.value === 'simulator';
   updateSettings();
 });
 form.addEventListener('submit', async event => {
@@ -367,12 +358,6 @@ form.addEventListener('submit', async event => {
     return;
   }
   const settings = formSettings();
-  if (!settings.demo_mode && settings.measurement_source === 'planning' && !settings.location_set) {
-    selectSettingsTab('location'); setText('location-error', 'Najprv vyberte mesto alebo použite polohu.'); return;
-  }
-  if (!settings.demo_mode && settings.measurement_source === 'planning' && settings.weather_source !== 'internet') {
-    selectSettingsTab('location'); setText('location-error', 'Plánovanie používa internetové počasie. Vyberte Open-Meteo.'); return;
-  }
   if (Object.keys(settings).every(key => settings[key] === state.settings[key])) return;
   revision++; busy = true; $('#settings-save').disabled = true;
   try {

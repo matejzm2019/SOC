@@ -206,21 +206,22 @@ def test_esp32_auth_status_and_hybrid_step(tmp_path):
         assert accepted.status_code == 200 and accepted.json()["accepted"]
         state = client.get("/api/state").json()
         assert state["device"]["online"] and state["device"]["telemetry"]["device_id"] == "soc-panel"
-        settings = state["settings"] | {"measurement_source":"hybrid", "pv_reference_w":.5}
+        settings = state["settings"] | {"demo_mode":False, "pv_reference_w":.5}
         hybrid = client.put("/api/settings", json=settings).json()
         assert hybrid["settings"]["measurement_source"] == "hybrid"
-        stepped = client.post("/api/demo", json={"step":True}).json()
+        client.portal.call(client.app.state.engine.tick)
+        stepped = client.get("/api/state").json()
         assert stepped["sample"]["source"] == "hybrid"
         assert stepped["sample"]["device_id"] == "soc-panel"
 
 
 def test_hybrid_step_requires_recent_device_data(tmp_path):
     with TestClient(create_app(tmp_path / "energy.sqlite3", "test-secret")) as client:
-        settings = client.get("/api/state").json()["settings"] | {"measurement_source":"hybrid"}
+        settings = client.get("/api/state").json()["settings"] | {"demo_mode":False}
         client.put("/api/settings", json=settings)
-        response = client.post("/api/demo", json={"step":True})
-        assert response.status_code == 409
-        assert "ESP32" in response.json()["detail"]
+        with pytest.raises(RuntimeError, match="ESP32"):
+            client.portal.call(client.app.state.engine.tick)
+        assert client.get("/api/history").json()["sample_count"] == 0
 
 
 def test_monitor_mode_disables_demo_controls(tmp_path):
@@ -230,7 +231,8 @@ def test_monitor_mode_disables_demo_controls(tmp_path):
         assert not state["demo"]["enabled"]
         assert state["demo"]["step_seconds"] == 1
         assert state["sample"]["interval_seconds"] == 1
-        assert client.get("/api/history?period=all").json()["sample_count"] == 1
+        assert state["settings"]["measurement_source"] == "hybrid"
+        assert client.get("/api/history?period=all").json()["sample_count"] == 0
         assert client.get("/api/health").json()["mode"] == "monitor"
         for payload in ({"scenario":"cloudy"}, {"speed":5}, {"step":True}):
             response = client.post("/api/demo", json=payload)

@@ -2,12 +2,11 @@
 
 **Inteligentný lokálny systém pre monitorovanie, predikciu a optimalizáciu energetickej spotreby a výroby domácnosti**
 
-Lokálna aplikácia používa FastAPI, SQLite a responzívny webový dashboard. Beží na PC a cez domáci router je dostupná z mobilu aj ďalšieho počítača. Režimy sa prepínajú v nastaveniach:
+Lokálna aplikácia používa FastAPI, SQLite a responzívny webový dashboard. Beží na PC a cez domáci router je dostupná z mobilu aj ďalšieho počítača. Prepínač Demo v nastaveniach automaticky volí softvérový simulátor alebo model domu s ESP32. CSV je samostatná analýza historických údajov:
 
 - **DEMO MODE:** celý experiment funguje bez hardvéru, má pripravené scenáre a zrýchlený päťminútový simulačný krok.
-- **Plánovanie bez hardvéru:** reálne internetové počasie, meteorologický výhľad FV a model spotreby/batérie. Energetické hodnoty sú označené ako odhady.
 - **CSV história:** import vlastnej intervalovej spotreby a voliteľne FV, história, výpočtová ekonomika a výhľad podľa dostupných dát. Nepotrebuje ESP32.
-- **Monitorovací režim:** prijíma ESP32-S3 alebo používa simulovaný vstup v sekundovom intervale. Malý 5–6 V panel sa meria fyzicky; energetika domácnosti zostáva matematickým modelom.
+- **Normálny režim:** model domu s ESP32-S3, malým panelom a prepínačmi záťaží cez Wi-Fi. Backend na notebooku spracúva meranie v sekundových intervaloch; pri odpojení ESP čaká na dáta a po pripojení automaticky pokračuje. Energetika domácnosti je škálovaný výpočtový model.
 
 Projekt nikdy nepotrebuje pripojenie na 230 V. ESP32 sa napája cez USB a merací model používa iba bezpečné jednosmerné napätie.
 

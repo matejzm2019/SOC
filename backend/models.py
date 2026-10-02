@@ -39,6 +39,14 @@ class Settings(StrictModel):
     ai_enabled: bool = True
     ai_model: Literal["qwen3:0.6b", "qwen3:1.7b"] = "qwen3:0.6b"
 
+    @model_validator(mode="after")
+    def mode_source(self):
+        if self.measurement_source != "csv":
+            self.measurement_source = "simulator" if self.demo_mode else "hybrid"
+            if not self.demo_mode:
+                self.weather_source = "internet"
+        return self
+
 
 SCENARIOS = {
     "sunny": "Slnečný deň",

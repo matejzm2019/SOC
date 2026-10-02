@@ -1,3 +1,5 @@
+> Aktuálne režimy: Demo = výhradne softvérový simulátor na notebooku. Normálny režim = model domu s ESP32 cez Wi-Fi; bez merania čaká. Skoršia voľba plánovania bez hardvéru bola nahradená normálnym režimom. Počasie a výhľad zostávajú internetové, CSV je samostatná analýza histórie.
+
 # Inteligentný lokálny energetický systém domácnosti
 
 Pracovný názov SOČ: „Inteligentný lokálny systém pre monitorovanie, predikciu a optimalizáciu energetickej spotreby a výroby domácnosti“.

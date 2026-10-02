@@ -2,12 +2,13 @@
 
 Dátum: 2. 10. 2026. Windows, Python 3.12.14, závislosti podľa `constraints.txt`.
 
-- `python -m pytest -q`: **56 úspešných testov**. Dve upozornenia testovacích závislostí Starlette/httpx/AnyIO.
-- Integračné testy: vyhľadanie mesta, meteorologická cache a jej obnova, zachovanie posledných dát pri chybe, plánovanie bez syntetickej histórie, atomický CSV import, tarify vážené v čase, archív a výpočtová predikcia nad súvislými časovými intervalmi.
+- `python -m pytest -q`: **57 úspešných testov**. Dve upozornenia testovacích závislostí Starlette/httpx/AnyIO.
+- Integračné testy: vyhľadanie mesta, meteorologická cache a jej obnova, zachovanie posledných dát pri chybe, normálny režim bez náhradných softvérových vzoriek, atomický CSV import, tarify vážené v čase, archív a výpočtová predikcia nad súvislými časovými intervalmi.
 - Ollama cez riadené HTTP odpovede: dostupnosť modelu, lokálny endpoint, formát promptu, úsporné parametre, timeout, odmietnutie neoverených číslic a doplnenie hodnôt cez ID faktov.
 - Skutočný internetový dotaz cez `WeatherService`: Open-Meteo pre oblasť Bratislavy poskytlo aktuálne počasie a 72 hodinových bodov; z nich vznikol 24-hodinový výhľad. Tento test používal samostatnú databázu. Verejné API potrebuje prístup na internet.
 - Playwright, reálny backend a riadené externé služby: mesto Žilina, explicitne povolená GPS, uloženie plánovania, prehľad, chat s podkladovými faktmi, meteorologická predikcia, import CSV, výber archívu a export vybranej histórie.
 - Desktop 1440 × 1000 a mobil 390 × 844: kontrola screenshotov tmavého aj svetlého režimu, nastavení lokality a Ollamy. Žiadna chyba JavaScriptu a žiadne vodorovné pretečenie stránky ani dialógu. Opravená navigácia pri zmene URL fragmentu.
+- Aktualizované režimy: Demo ignoruje telemetriu ESP a funguje čisto softvérovo. Normálny režim vyžaduje ESP, nezapisuje pri jeho odpojení, automaticky pokračuje po pripojení a zachováva oddelené histórie. Overené automatickým testom a cez Playwright na PC aj mobile vrátane prepínača a prázdnych hodnôt pri čakaní; bez chýb JavaScriptu.
 - Reálne rozhranie s nenainštalovanou Ollamou jasne zobrazilo stav nepripojeného asistenta a zablokovalo odoslanie. Pri odmietnutí GPS ponúklo výber mesta; demo aj všetky hlavné stránky zostali funkčné.
 - Reálny backend verzie 0.5.0 bol spustený na porte 8765. Používateľská databáza nie je nahradená testovacími údajmi.
 

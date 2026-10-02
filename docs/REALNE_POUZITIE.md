@@ -17,13 +17,17 @@ Počasie obsahuje teplotu, oblačnosť, vietor v m/s, zrážky, horizontálne ž
 
 GPS v prehliadači vyžaduje HTTPS alebo dôveryhodný localhost. Pri otvorení `http://192.168…` z mobilu obvykle nebude povolené. Vyhľadanie mesta funguje aj cez lokálnu HTTP adresu. Pre GPS v celej LAN treba nakonfigurovať HTTPS s certifikátom dôveryhodným na klientskych zariadeniach. Zdroj: [MDN Geolocation](https://developer.mozilla.org/en-US/docs/Web/API/Geolocation/getCurrentPosition).
 
-Počasie sa obnovuje približne každých desať minút, neúspešná obnova sa skúša v minútových intervaloch. Cache zostáva v databáze aj po reštarte. Po pol hodine od získania alebo pri starom čase pozorovania sa údaje označia ako staré. Pri výpadku internetu sa nevymenia za simulované údaje. Plánovanie zastaví tvorbu nových odhadov, kým sa neobnoví aktuálne počasie; staré hodnoty zostanú označené časom. Demo môže fungovať offline so zdrojom Počasie zo simulátora.
+Počasie sa obnovuje približne každých desať minút, neúspešná obnova sa skúša v minútových intervaloch. Cache zostáva v databáze aj po reštarte. Po pol hodine od získania alebo pri starom čase pozorovania sa údaje označia ako staré. Pri výpadku internetu sa nevymenia za simulované údaje. Internetový výhľad výroby vyžaduje aktuálnu predpoveď. Normálny režim ďalej používa meranie panela; pri nedostupnom počasí zostáva časový baseline podľa energetickej histórie. Demo môže fungovať offline so zdrojom Počasie zo simulátora.
 
 Bezplatné Open-Meteo API povoľuje súkromné domáce používanie, vzdelávanie a ďalšie nekomerčné účely. Pre komerčný produkt treba príslušnú licenciu/API plán. Atribúcia poskytovateľa je v karte počasia. [Podmienky Open-Meteo](https://open-meteo.com/en/terms).
 
-## Plánovanie a predikcia
+## Normálny režim a predikcia
 
-Vypnite Demo režim, vyberte **Plánovanie bez hardvéru** a nastavte miesto. Zadajte základnú spotrebu, kWp, orientáciu a sklon FV a prípadne kapacitu modelovanej batérie. Po uložení sa plánovanie spustí automaticky. Nové odhady vznikajú v minútových intervaloch; energetické údaje sú označené ako odhad. Počas odstávky PC sa údaje spätne nevyrábajú.
+Zapnutý Demo režim používa výhradne softvérový simulátor na notebooku, scenáre a zrýchlený čas. Meranie ESP32 nemá na tento režim vplyv. Pri vypnutí Demo režimu sa automaticky vyberie model domu s ESP32. Staršia voľba plánovania bez hardvéru sa pri načítaní prevedie na tento normálny režim; predchádzajúca história zostáva archivovaná.
+
+ESP32-S3 posiela cez Wi-Fi a router výkon malého panela, osvetlenie a stav prepínačov záťaží. Notebook spracúva údaje, škáluje FV a počíta spotrebu, virtuálnu batériu a bilanciu siete. Kalibračný výkon panela nastavte v Modeli domácnosti. Virtuálny SOC sa nesmie zamieňať za fyzické meranie batérie. Normálny režim štartuje automaticky, pri chýbajúcom ESP nevytvára energetické vzorky, zobrazí čakanie a po pripojení pokračuje. Obdobie odpojenia sa spätne nedopĺňa.
+
+Internetové počasie a lokálna Ollama fungujú v oboch režimoch. Normálny režim používa internetové počasie, jeho nedostupnosť však neblokuje meranie panela. CSV import je samostatná analýza histórie, nie náhrada ESP v normálnom živom režime.
 
 Výroba FV používa predpovedané žiarenie na rovine panelov, nominálny výkon, faktor strát a teplotnú korekciu. Veterný výhľad používa výkonovú krivku modelu a vietor z predpovede vo výške desať metrov; reálna turbína môže mať iné podmienky. Táto implementácia slúži na orientačný výhľad, jej presnosť zatiaľ nie je validovaná proti meraniu konkrétnej elektrárne.
 

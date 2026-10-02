@@ -41,13 +41,13 @@ class Engine:
         self.weather = None
         self.run_id = self.storage.latest_run()
         latest = self.storage.latest(self.run_id) if self.run_id else None
-        if latest:
+        if latest and latest.source == self.settings.measurement_source:
             self.sample = latest
             self.simulator = Simulator(self.settings, datetime.fromisoformat(latest.timestamp), latest.battery_energy_kwh)
             self.simulator.scenario = latest.scenario
         else:
             self.reset(self.settings)
-        if self.settings.configured and not self.settings.demo_mode and self.settings.measurement_source == "planning":
+        if self.settings.configured and not self.settings.demo_mode and self.settings.measurement_source == "hybrid":
             self.paused = False
 
     def reset(self, settings):
@@ -57,14 +57,12 @@ class Engine:
             simulator = Simulator(settings, end - timedelta(days=1))
             samples = [simulator.step(seeded=True) for _ in range(288)]
         else:
-            interval = 60 if settings.measurement_source == "planning" else 1
-            simulator = Simulator(settings, now - timedelta(seconds=interval))
-            samples = [simulator.step(seeded=True, interval_seconds=interval)]
-        planning = not settings.demo_mode and settings.measurement_source == "planning"
-        run_id = self.storage.new_run(settings, [] if planning else samples)
+            simulator = Simulator(settings, now - timedelta(seconds=1))
+            samples = [simulator.step(seeded=True, interval_seconds=1)]
+        run_id = self.storage.new_run(settings, samples if settings.demo_mode else [])
         self.settings, self.simulator, self.run_id = settings, simulator, run_id
         self.sample = samples[-1]
-        self.paused = not (settings.configured and not settings.demo_mode and settings.measurement_source == "planning")
+        self.paused = not (settings.configured and not settings.demo_mode and settings.measurement_source == "hybrid")
         self.error = None
 
     def configure(self, settings):
@@ -72,8 +70,6 @@ class Engine:
             raise HTTPException(422, "Pre importovanú históriu najprv nahrajte CSV v časti Zdroj dát.")
         if settings.measurement_source == "csv" and (settings.demo_mode or settings.battery_enabled or settings.wind_enabled):
             raise HTTPException(422, "Importovaná história nepodporuje demo režim ani modelovanie batérie a vetra. Pre plánovanie zmeňte zdroj údajov.")
-        if not settings.demo_mode and settings.measurement_source == "planning" and (not settings.location_set or settings.weather_source != "internet"):
-            raise HTTPException(422, "Plánovanie potrebuje zvolené mesto alebo polohu a internetové počasie.")
         independent = {"ai_enabled", "ai_model", "weather_enabled", "location_name", "location_set", "weather_source"}
         physics_changed = any(getattr(settings, key) != getattr(self.settings, key) for key in Settings.model_fields if key not in independent)
         if physics_changed and settings.measurement_source != "csv":
@@ -116,25 +112,19 @@ class Engine:
         timestamp, energy = self.simulator.timestamp, self.simulator.energy
         try:
             measured = None
-            if self.settings.measurement_source == "hybrid":
+            if not self.settings.demo_mode and self.settings.measurement_source == "hybrid":
                 status = self.device_status()
                 if not status["online"]:
                     raise RuntimeError("ESP32 neposlalo platné meranie za posledných 5 sekúnd")
                 measured = self.device_telemetry
             interval = 300 if self.settings.demo_mode else 1
-            weather = None
-            if not self.settings.demo_mode and self.settings.measurement_source == "planning":
-                online = self.weather_state()
-                if not online.get("available") or online.get("stale"):
-                    raise RuntimeError("Plánovanie čaká na aktuálne internetové počasie. Posledné hodnoty sú staré.")
+            if not self.settings.demo_mode:
                 now = datetime.now(timezone.utc).replace(microsecond=0)
                 elapsed = int((now - self.simulator.timestamp).total_seconds())
                 if elapsed <= 0 and not self.sample.seeded:
                     return
-                interval = elapsed if 1 <= elapsed <= 120 else 60
                 self.simulator.timestamp = now - timedelta(seconds=interval)
-                weather = online["current"]
-            sample = self.simulator.step(measured=measured, interval_seconds=interval, weather=weather)
+            sample = self.simulator.step(measured=measured, interval_seconds=interval)
             self.storage.save(self.run_id, [sample])
         except Exception:
             self.simulator.timestamp, self.simulator.energy = timestamp, energy
@@ -144,14 +134,14 @@ class Engine:
 
     async def run(self):
         while True:
-            await asyncio.sleep(1 / self.speed if self.settings.demo_mode else 60 if self.settings.measurement_source == "planning" else 1)
+            await asyncio.sleep(1 / self.speed if self.settings.demo_mode else 1)
             async with self.lock:
                 if not self.paused and self.settings.measurement_source != "csv":
                     try:
                         self.tick()
                     except RuntimeError as error:
                         self.error = str(error)
-                        if self.settings.measurement_source != "planning":
+                        if self.settings.measurement_source != "hybrid":
                             self.paused = True
                     except Exception:
                         logger.exception("Simulátor bol pozastavený")
@@ -266,12 +256,6 @@ def create_app(database=None, esp32_key=None, http_transport=None):
     async def weather(request: Request):
         engine = request.app.state.engine
         await engine.weather.refresh(engine.settings)
-        if not engine.settings.demo_mode and engine.settings.measurement_source == "planning" and engine.sample.seeded:
-            async with engine.lock:
-                try:
-                    engine.tick()
-                except RuntimeError as error:
-                    engine.error = str(error)
         return engine.weather_state()
 
     @app.get("/api/assistant/status")

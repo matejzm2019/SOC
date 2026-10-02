@@ -84,21 +84,19 @@ def test_city_weather_cache_and_persisted_outage(tmp_path):
         assert persisted["available"] and persisted["stale"]
 
 
-def test_planning_real_weather_no_fabricated_seed_and_forecast(tmp_path):
+def test_esp_mode_uses_internet_forecast_without_fabricated_measurements(tmp_path):
     calls = []
     app = create_app(tmp_path / "db.sqlite3", "secret", transport_fixture(calls))
     with TestClient(app) as client:
         bad = client.get("/api/state").json()["settings"] | {"measurement_source": "planning", "demo_mode": False}
-        assert client.put("/api/settings", json=bad).status_code == 422
+        assert client.put("/api/settings", json=bad).json()["settings"]["measurement_source"] == "hybrid"
         state = set_location(client, measurement_source="planning", demo_mode=False)
         assert not state["demo"]["paused"]
         assert client.get("/api/history").json()["sample_count"] == 0
         client.get("/api/weather")
         state = client.get("/api/state").json()
-        assert state["sample"]["source"] == "planning" and state["sample"]["quality"] == "estimated"
-        assert state["sample"]["temperature_c"] == 20
-        assert state["sample"]["pv_w"] == pytest.approx(6 * 600 * .86)
-        assert client.get("/api/history").json()["sample_count"] == 1
+        assert client.get("/api/weather").json()["current"]["temperature_c"] == 20
+        assert client.get("/api/history").json()["sample_count"] == 0
         result = client.get("/api/forecast").json()
         assert result["weather_based"] and result["load_assumed"] and len(result["points"]) == 24
         assert result["points"][0]["pv_w"] == pytest.approx(6 * 600 * .86)
@@ -166,6 +164,37 @@ def test_forecast_requires_duration_not_sample_count():
     full_day = [sim.step().model_dump() for _ in range(288)]
     assert forecast(full_day)["available"]
     assert not forecast(full_day[:100] + full_day[101:])["available"]
+
+
+def test_demo_is_software_and_normal_mode_requires_esp(tmp_path):
+    path = tmp_path / "modes.sqlite3"
+    app = create_app(path, "secret", transport_fixture([]))
+    telemetry = {"device_id":"panel", "firmware_version":"0.1.0", "panel_voltage_v":5,
+                 "panel_current_a":.1, "panel_power_w":.5, "illuminance_lux":50000,
+                 "load_stage":1, "grid_available":True}
+    with TestClient(app) as client:
+        initial = client.get("/api/state").json()
+        normal = client.put("/api/settings", json=initial["settings"] | {"demo_mode":False}).json()
+        assert normal["settings"]["measurement_source"] == "hybrid"
+        assert not normal["demo"]["paused"]
+        with pytest.raises(RuntimeError, match="ESP32"):
+            client.portal.call(app.state.engine.tick)
+        assert client.get("/api/history").json()["sample_count"] == 0
+        client.post("/api/device/telemetry", json=telemetry, headers={"X-Device-Key":"secret"}).raise_for_status()
+        client.portal.call(app.state.engine.tick)
+        measured = client.get("/api/state").json()
+        assert measured["sample"]["source"] == "hybrid" and not measured["sample"]["seeded"]
+        app.state.engine.device_received_at -= timedelta(seconds=10)
+        with pytest.raises(RuntimeError, match="ESP32"):
+            client.portal.call(app.state.engine.tick)
+        assert client.get("/api/history").json()["sample_count"] == 1
+        demo = client.put("/api/settings", json=measured["settings"] | {"demo_mode":True}).json()
+        assert demo["settings"]["measurement_source"] == "simulator"
+        step = client.post("/api/demo", json={"step":True}).json()
+        assert step["sample"]["source"] == "simulator" and step["sample"]["panel_power_w"] is None
+        assert client.get(f'/api/history?run_id={normal["demo"]["run_id"]}').json()["sample_count"] == 1
+    with TestClient(create_app(path, "secret", transport_fixture([]))) as restored:
+        assert restored.get("/api/state").json()["settings"]["measurement_source"] == "simulator"
 
 
 def test_assistant_local_grounded_prompt_and_settings_keep_history(tmp_path):

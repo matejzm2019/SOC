@@ -26,6 +26,8 @@ def facts_for(state, history, forecast):
 
     sample, settings = state["sample"], state["settings"]
     quality = {"synthetic": "simulované", "mixed": "zmiešané meranie a model", "estimated": "vypočítaný odhad", "imported": "importované intervaly"}[sample["quality"]]
+    if settings["measurement_source"] == "hybrid" and not history.get("sample_count", 0):
+        quality = "Čakám na prvé meranie ESP32; energetické údaje nie sú dostupné."
     add("Pôvod energetických hodnôt", quality, "systém")
     if history.get("sample_count", 0):
         add("Posledný energetický interval", sample["timestamp"], "databáza")
