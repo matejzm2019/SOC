@@ -17,6 +17,8 @@ Na model sa privádza iba nízke DC napätie. Laboratórny zdroj môže mať sie
 3. Telefón pripojte k rovnakému routeru a otvorte LAN adresu, ktorú vypíše štartovacie okno, napríklad `http://192.168.1.25:8765`.
 4. Pri prvom upozornení Windows Firewall povoľte Python pre **súkromnú sieť**.
 
+Opakovaný štart rozpozná už bežiacu Energiu a otvorí jej dashboard bez druhého servera a chyby portu 8765. LAN výpis používa aktívne fyzické adaptéry; neuvádza Hamachi ani adresy 169.254.x.x. Ak port obsadí iná aplikácia, oznámi to a jej proces neukončí.
+
 PC musí počas prezentácie bežať. Router nepotrebuje internet; vytvára iba lokálnu sieť medzi PC, ESP32 a telefónom. Dashboard sa neinštaluje ako APK, takže rovnaké rozhranie funguje na PC, Androide aj iPhone a aktualizuje sa iba na jednom mieste.
 
 Prvý štart na novom PC potrebuje internet na stiahnutie Python balíkov. Internetové počasie vyžaduje pripojenie; demo, importovaná história a časová predikcia fungujú offline. Server je určený pre dôveryhodnú domácu sieť. Nemá používateľské účty a nie je určený na vystavenie do verejného internetu.
@@ -32,6 +34,8 @@ ollama pull qwen3:0.6b
 ```
 
 Model je už prednastavený v aplikácii. Ponechajte Ollamu spustenú, v nastaveniach overte pripojenie a použite kartu asistenta na domovskej stránke. Chat a zhrnutia sú lokálne. Pre výkonnejší PC možno v nastaveniach vybrať `qwen3:1.7b`. Podrobnosti a obmedzenia číselných odpovedí sú v [návode asistenta](docs/LOKALNY_ASISTENT.md).
+
+**AI chat vie navrhnúť aj nastavenia:** „Zapni internetové ceny“, „Nastav nákup na 0,20 €/kWh“, „Vypni demo režim“ alebo „Nastav kapacitu malej batérie na 2000 mAh“. Návrh zobrazí pôvodné aj nové hodnoty; tlačidlo **Použiť zmenu** ho uloží. Bežné otázky nastavenia nemenia.
 
 ### Manuálne spustenie
 

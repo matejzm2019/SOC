@@ -36,8 +36,8 @@ function showError(error) {
 
 function setText(id, value) { const el = $(`#${id}`); if (el.textContent !== String(value)) el.textContent = value; }
 function metricValue(id, value, unit) { $(`#${id}`).innerHTML = `${number(value)}<small>${unit}</small>`; }
-function acceptState(next) {
-  if (state && state.demo.run_id !== next.demo.run_id) {
+function acceptState(next, preserveChat = false) {
+  if (!preserveChat && state && state.demo.run_id !== next.demo.run_id) {
     chatHistory = [];
     if (!chatBusy) {
       $('#chat-messages').replaceChildren();
@@ -538,6 +538,40 @@ function chatBubble(role, text) {
   return article;
 }
 
+function chatProposal(article, proposal) {
+  const panel = document.createElement('section'); panel.className = 'chat-proposal';
+  const title = document.createElement('h3'); title.textContent = 'Navrhnutá zmena';
+  const values = document.createElement('dl'); values.className = 'assistant-facts';
+  const labels = {internet:'Internet',manual:'Ručne',simulator:'Simulátor',time_of_use:'Časová tarifa'};
+  const valueText = value => typeof value === 'boolean' ? value ? 'Zapnuté' : 'Vypnuté' : typeof value === 'number' ? number(value,4).replace(/0+$/,'').replace(/,$/,'') : labels[value] || value;
+  proposal.changes.forEach(change => {
+    const name = document.createElement('dt'), value = document.createElement('dd');
+    name.textContent = change.label; value.textContent = `${valueText(change.before)} → ${valueText(change.after)}`;
+    values.append(name,value);
+  });
+  const note = document.createElement('p'); note.className = 'footnote';
+  note.textContent = 'Zmena parametrov môže začať nový súbor údajov. Predchádzajúca história zostane uložená. Chat nemení fyzické napájanie ani nabíjačku.';
+  const actions = document.createElement('div'); actions.className = 'chat-proposal-actions';
+  const apply = document.createElement('button'), cancel = document.createElement('button');
+  apply.type = cancel.type = 'button'; apply.className = 'button primary'; cancel.className = 'button secondary';
+  apply.textContent = 'Použiť zmenu'; cancel.textContent = 'Zrušiť návrh';
+  const feedback = document.createElement('p'); feedback.className = 'form-error'; feedback.setAttribute('role','status');
+  cancel.addEventListener('click', () => { panel.replaceChildren(); panel.textContent = 'Návrh zrušený. Nastavenia sa nezmenili.'; chatHistory.push({role:'assistant',content:panel.textContent}); chatHistory = chatHistory.slice(-6); });
+  apply.addEventListener('click', async () => {
+    if (busy || chatBusy) { feedback.textContent = 'Počkajte na dokončenie aktuálnej operácie.'; return; }
+    busy = true; revision++; apply.disabled = cancel.disabled = true; apply.textContent = 'Ukladám…'; feedback.textContent = '';
+    try {
+      acceptState(await api('assistant/apply',{method:'POST',body:JSON.stringify({token:proposal.token})}),true);
+      renderState(); actions.remove(); feedback.textContent = 'Zmena uložená.';
+      const message = `Uložil som: ${proposal.changes.map(change => `${change.label}: ${valueText(change.after)}`).join('; ')}. Prehľad používa nové nastavenia; môžeš sa pýtať ďalej.`;
+      chatBubble('assistant',message); chatHistory.push({role:'assistant',content:message.slice(0,1800)}); chatHistory = chatHistory.slice(-6);
+      weatherRequestKey = ''; integrationCheckedAt = 0; refreshIntegrations(); loadRuns();
+    } catch (error) { feedback.textContent = error.message; apply.disabled = cancel.disabled = false; apply.textContent = 'Použiť zmenu'; }
+    finally { busy = false; refresh(true); }
+  });
+  actions.append(apply,cancel); panel.append(title,values,note,actions,feedback); article.append(panel);
+}
+
 async function askAssistant(question) {
   if (chatBusy || !question.trim()) return;
   chatBusy = true; setText('chat-error',''); applyAssistantStatus(assistantStatus || {available:false,message:'Pripájam model…'});
@@ -549,6 +583,7 @@ async function askAssistant(question) {
     const result = await api('assistant/chat',{method:'POST',body:JSON.stringify({question,history:chatHistory.slice(-4)}),signal:controller.signal});
     pending.remove();
     const article = chatBubble('assistant',result.answer);
+    applyAssistantStatus({available:true,model:result.model,message:'Pripravený na tomto počítači.'});
     article.querySelector('small').textContent = `Lokálny asistent · údaje #${result.run_id}`;
     const details = document.createElement('details'), summary = document.createElement('summary');
     summary.textContent = 'Údaje použité pri odpovedi a ich pôvod';
@@ -558,10 +593,12 @@ async function askAssistant(question) {
       term.textContent = fact.label; value.textContent = `${fact.value} · ${fact.source}`; list.append(term,value);
     });
     details.append(summary,list); article.append(details);
+    if (result.proposal) chatProposal(article,result.proposal);
     if (!result.numeric_guard_passed) { const note = document.createElement('p'); note.className = 'footnote'; note.textContent = 'Neoverené číselné hodnoty boli označené priamo v odpovedi. Zvyšok odpovede zostal zobrazený.'; article.append(note); }
     if (result.run_id === state.demo.run_id) chatHistory.push({role:'user',content:question},{role:'assistant',content:result.answer.slice(0,1800)});
     chatHistory = chatHistory.slice(-6);
     if (result.truncated) setText('chat-error','Odpoveď dosiahla limit dĺžky. Položte kratšiu doplňujúcu otázku.');
+    $('#chat-messages').scrollTop = $('#chat-messages').scrollHeight;
   } catch (error) {
     pending.remove(); setText('chat-error', error.name === 'AbortError' ? 'Model neodpovedal v časovom limite.' : error.message);
   } finally { clearTimeout(timeout); chatBusy = false; applyAssistantStatus(assistantStatus || {available:false,message:'Skontrolujte Ollamu.'}); }
@@ -599,4 +636,5 @@ $$('[data-period]').forEach(el => el.addEventListener('click', () => { period = 
 switchView(location.hash.slice(1));
 window.addEventListener('hashchange', () => switchView(location.hash.slice(1)));
 async function poll() { await refresh(); refreshIntegrations(); setTimeout(poll, 500); }
+applyAssistantStatus({available:false,message:'Kontrolujem lokálny model…'});
 setTimeout(poll, 500);

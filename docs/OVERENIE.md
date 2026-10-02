@@ -1,3 +1,15 @@
+# Overenie verzie 0.7.0
+
+Dátum: 2. 10. 2026. Windows.
+
+- **72 úspešných testov**, syntaktická kontrola JavaScriptu a kompilácia Python modulov.
+- Spúšťač: regresný test existujúcej aplikácie preskočil spustenie druhého servera, otvoril dashboard a odfiltroval virtuálnu aj link-local adresu. Skutočný opakovaný štart proti bežiacemu backendu vrátil kód 0 bez WinError 10048 a vypísal iba LAN adresu 10.138.124.103.
+- Skutočné spustenie cez start.cmd po ukončení predchádzajúceho servera: verzia 0.7.0 úspešne počúva na porte 8765. Ďalší štart rozpoznal túto verziu a nespustil druhý server; otvorenie prehliadača bolo pri kontrole nahradené výpisom URL.
+- Chat: návrh nemení konfiguráciu pred potvrdením, potvrdenie používa existujúce configure a zachováva archív, opakované použitie tokenu sa odmietne. Testy overili neaktuálny a expirovaný návrh, pozmenenú požiadavku, zakázané kľúče, nesprávne typy a ceny mimo rozsahu.
+- Skutočný qwen3:0.6b správne extrahoval internetové ceny, ručný nákup 0,20 EUR/kWh, kapacitu článku 2000 mAh a vypnutie dema bez nesúvisiacich zmien. Otázka na cenu nevrátila návrh; odpoveď použila správnu jednotkovú cenu z podkladov. Malý model zostáva orientačný; nie je zaručené pochopenie každej formulácie.
+- Playwright: náhľad pôvodnej a novej ceny, potvrdenie, zachovaná konverzácia, nadväzujúca otázka, zrušenie, internetový zdroj, normálny režim a kapacita článku. Desktop a mobil, tmavý aj svetlý vzhľad: bez chýb JS a vodorovného pretečenia. Návrh sa posunie do viditeľnej časti chatu.
+- QA používa samostatné databázy a riadené externé odpovede; skutočná Ollama bola overená zvlášť. Používateľská konfigurácia nebola nahradená QA dátami.
+
 # Overenie verzie 0.6.0
 
 Dátum: 2. 10. 2026. Windows, samostatné QA databázy.

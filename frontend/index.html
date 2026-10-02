@@ -21,7 +21,7 @@
   <p class="nav-label">SYSTÉM</p>
   <button id="settings-open" class="nav-item"><span>⚙</span>Nastavenia</button>
   <a class="nav-item" href="/docs" target="_blank" rel="noopener"><span>↗</span>API dokumentácia</a>
-  <div class="sidebar-bottom"><div class="demo-label"><span class="online-dot"></span>LOKÁLNE PRIPOJENIE</div><p>Energia doma,<br>prehľadne.</p><small>Dáta zostávajú vo vašej sieti.</small><div class="version">energia. <span>v0.6.0</span></div></div>
+  <div class="sidebar-bottom"><div class="demo-label"><span class="online-dot"></span>LOKÁLNE PRIPOJENIE</div><p>Energia doma,<br>prehľadne.</p><small>Dáta zostávajú vo vašej sieti.</small><div class="version">energia. <span>v0.7.0</span></div></div>
 </aside>
 <main>
   <header class="topbar"><div><span class="breadcrumb">Moja domácnosť</span><span class="separator">/</span><span id="breadcrumb">Prehľad</span></div><div class="top-status"><span id="connection" class="status"><i class="online-dot"></i>Lokálne pripojenie</span><button type="button" id="theme-toggle" class="theme-toggle" aria-label="Prepnúť na svetlý režim" aria-pressed="false" title="Zmeniť vzhľad"><span id="theme-icon" aria-hidden="true">☀</span><span id="theme-label">Svetlý režim</span></button></div></header>
@@ -70,12 +70,12 @@
       <section class="panel chart-panel"><div class="panel-heading"><div><h2>Energia v čase</h2><p>Priemerný výkon v intervale</p></div><span class="subtle-tag">POSLEDNÝCH 24 H</span></div><div class="legend"><span><i class="legend-dot mint-bg"></i>Spotreba</span><span data-module="pv"><i class="legend-dot yellow-bg"></i>Fotovoltaika</span><span data-module="wind"><i class="legend-dot blue-bg"></i>Vietor</span></div><div id="overview-chart" class="chart"></div><div class="chart-footer"><span id="today-energy">—</span><span id="energy-data-label">Syntetické dáta</span></div></section>
       <section class="panel insight-panel"><div class="panel-heading"><h2>Odporúčania</h2></div><p class="insight-label">PODĽA AKTUÁLNYCH HODNÔT</p><div id="insights"></div><div class="insight-foot">Odporúčania vychádzajú z vypočítaných údajov.</div></section>
       <section class="panel assistant-panel" data-module="ai" aria-labelledby="assistant-title">
-        <div class="panel-heading"><div><p class="eyebrow">LOKÁLNY ASISTENT</p><h2 id="assistant-title">Spýtajte sa na svoju energiu</h2><p>Zhrnutie počasia, vysvetlenie predikcie a prehľad údajov.</p></div><span id="assistant-status" class="subtle-tag">OLLAMA</span></div>
+        <div class="panel-heading"><div><p class="eyebrow">LOKÁLNY ASISTENT</p><h2 id="assistant-title">AI chat</h2><p>Pýtajte sa na údaje alebo požiadajte o zmenu nastavení.</p></div><span id="assistant-status" class="subtle-tag">OLLAMA</span></div>
         <p id="assistant-connection" class="muted">Kontrolujem lokálny model…</p>
         <div class="assistant-prompts"><button type="button" data-question="Zhrň aktuálnu energetickú situáciu a pôvod údajov." class="button secondary">Zhrnúť prehľad</button><button type="button" data-question="Zhrň počasie pre zvolenú lokalitu a jeho vplyv na solárnu výrobu." class="button secondary">Počasie a slnko</button><button type="button" data-question="Vysvetli výhľad výroby a spotreby. Kedy má zmysel naplánovať flexibilnú spotrebu?" class="button secondary">Vysvetliť predikciu</button></div>
         <div id="chat-messages" class="chat-messages" role="log" aria-label="Konverzácia s lokálnym asistentom" aria-live="polite"><p class="chat-empty">Začnite otázkou alebo jedným z pripravených prehľadov. Spracovanie prebieha na počítači, kde beží aplikácia.</p></div>
-        <form id="chat-form" class="chat-composer"><label class="sr-only" for="chat-question">Otázka pre asistenta</label><textarea id="chat-question" maxlength="1200" rows="2" placeholder="Ako počasie ovplyvní výrobu?" required></textarea><button type="submit" id="chat-send" class="button primary">Odoslať ↑</button></form>
-        <p id="chat-error" class="form-error" role="alert"></p><p class="footnote">Asistent interpretuje vypočítané údaje. Hodnoty a ich pôvod sú uvedené pri odpovedi. Odporúčania modelu overte podľa meraní.</p>
+        <form id="chat-form" class="chat-composer"><label class="sr-only" for="chat-question">Otázka alebo požiadavka pre asistenta</label><textarea id="chat-question" maxlength="1200" rows="2" placeholder="Koľko stojí energia? Alebo: zapni internetové ceny." required></textarea><button type="submit" id="chat-send" class="button primary">Odoslať ↑</button></form>
+        <p id="chat-error" class="form-error" role="alert"></p><p class="footnote">Pýtajte sa prirodzene a nadväzujte na odpovede. Zmeny sa uložia až cez Použiť zmenu. Hodnoty a ich pôvod sú pod odpoveďou; odporúčania modelu overte podľa meraní.</p>
       </section>
     </div>
   </div>

@@ -6,7 +6,7 @@ Pracovný názov SOČ: „Inteligentný lokálny systém pre monitorovanie, pred
 
 ## Rozsah a rozhodnutia
 
-Jadro beží na PC a poskytuje responzívny web v domácej LAN. Verzia 0.6.0 rozlišuje softvérové demo, normálny model s ESP32 a samostatnú CSV analýzu. Normálny režim bez ESP nevytvára náhradné vzorky. Panel nabíja malý článok cez BQ24074; MAX17048 meria napätie a odhaduje SOC. ESP a LED napája laboratórny zdroj. Ceny sú ručné alebo slovenský spot Energy-Charts. Open-Meteo poskytuje počasie a lokálna Ollama interpretuje vypočítané fakty. Server používa jeden worker v dôveryhodnej LAN.
+Jadro beží na PC a poskytuje responzívny web v domácej LAN. Verzia 0.7.0 rozlišuje softvérové demo, normálny model s ESP32 a samostatnú CSV analýzu. Normálny režim bez ESP nevytvára náhradné vzorky. Panel nabíja malý článok cez BQ24074; MAX17048 meria napätie a odhaduje SOC. ESP a LED napája laboratórny zdroj. Ceny sú ručné alebo slovenský spot Energy-Charts. Open-Meteo poskytuje počasie a lokálna Ollama interpretuje vypočítané fakty. Server používa jeden worker v dôveryhodnej LAN.
 
 - Python + FastAPI: validované REST API, riadený životný cyklus simulátora, automatická dokumentácia.
 - SQLite (WAL): jedna lokálna databáza, žiadny databázový server; transakcie a index času. Výpočty a ukladanie sú serializované jedným aplikačným zámkom. Spúšťať jeden worker.
@@ -157,3 +157,7 @@ Tieto zdroje podkladajú voľbu životného cyklu servera, lokálneho úložiska
 Normálny režim používa SOC a napätie MAX17048. Článok nabíja panel cez BQ24074, ESP a svetlá napája laboratórny zdroj. Článok nevstupuje do virtuálnej bilancie domu; demo naďalej používa virtuálne úložisko. Voliteľné polia telemetrie zachovávajú kompatibilitu staršieho ESP firmvéru.
 
 `prices.py` získava SK spot z Energy-Charts cez existujúci HTTP klient, validuje jednotky a intervaly, perzistuje cache a oceňuje vzorky podľa ich skutočného času. Zdroj manual/internet je používateľská voľba. Nedostupné intervaly nemajú vymyslenú cenu. Účtovanie používa uložené intervalové ceny. Licenčné podmienky SK a rozdiel medzi spotom a tarifou sú v REALNE_POUZITIE.md.
+
+## Potvrdené nastavenia cez chat
+
+Ollama najprv extrahuje výslovne požadované nastavenia cez JSON schému; tento krátky dotaz nedostáva numerické energetické fakty. Bežná odpoveď používa podklady vybrané podľa témy otázky. Povolené kľúče sú v CHAT_SETTINGS. Model nikdy priamo nevolá nastavovacie API: backend validuje kandidáta, uloží návrh s náhodným tokenom, konfiguráciou pred zmenou a run_id a klient zobrazí náhľad. POST /api/assistant/apply prijíma iba token. Pod zámkom overí platnosť, jednorazovosť a nezmenený kontext, potom použije existujúce configure. Návrhy sú v pamäti, obmedzené na šestnásť a desať minút. Reštart ich zruší. Zariadenia, tajomstvá, súbory a ľubovoľné URL nie sú nástrojmi asistenta.

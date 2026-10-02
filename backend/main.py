@@ -8,17 +8,19 @@ import httpx
 from contextlib import asynccontextmanager, suppress
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from time import monotonic
 from typing import Literal
 
 from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
+from pydantic import ValidationError
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from .analytics import prediction, recommendations
 from .assistant import AssistantService, facts_for
 from .import_data import read_energy_csv, reprice_samples
-from .models import AssistantRequest, CsvImport, DemoCommand, Esp32Telemetry, SCENARIOS, Settings
+from .models import AssistantApplyRequest, AssistantRequest, CHAT_SETTINGS, CsvImport, DemoCommand, Esp32Telemetry, SCENARIOS, Settings
 from .prices import PriceService
 from .simulator import Simulator
 from .storage import Storage
@@ -41,6 +43,7 @@ class Engine:
         self.device_received_at = None
         self.weather = None
         self.prices = None
+        self.chat_proposals = {}
         self.run_id = self.storage.latest_run()
         latest = self.storage.latest(self.run_id) if self.run_id else None
         if latest and latest.source == self.settings.measurement_source:
@@ -202,7 +205,7 @@ def create_app(database=None, esp32_key=None, http_transport=None):
                         await task
                 engine.storage.connection.close()
 
-    app = FastAPI(title="Energia", version="0.6.0", lifespan=lifespan)
+    app = FastAPI(title="Energia", version="0.7.0", lifespan=lifespan)
     app.add_middleware(TrustedHostMiddleware, allowed_hosts=["*"])
 
     @app.middleware("http")
@@ -230,7 +233,7 @@ def create_app(database=None, esp32_key=None, http_transport=None):
     async def health(request: Request):
         e = request.app.state.engine
         e.storage.connection.execute("SELECT 1").fetchone()
-        return {"status": "degraded" if e.error else "ok",
+        return {"app": "energia", "status": "degraded" if e.error else "ok",
                 "mode": "demo" if e.settings.demo_mode else "monitor", "version": app.version}
 
     @app.get("/api/state")
@@ -296,7 +299,57 @@ def create_app(database=None, esp32_key=None, http_transport=None):
             result = engine.prediction()
             facts = facts_for(snapshot, history, result)
         result = await request.app.state.assistant.chat(settings_snapshot, value.question, value.history, facts)
-        return {**result, "run_id": snapshot["demo"]["run_id"]}
+        changes = result.pop("changes", {})
+        proposal = None
+        if changes:
+            try:
+                values = settings_snapshot.model_dump() | changes
+                if "demo_mode" in changes:
+                    values["measurement_source"] = "simulator" if changes["demo_mode"] else "hybrid"
+                if "buy_price" in changes:
+                    values["price_source"] = changes.get("price_source", "manual")
+                    values["price_mode"] = changes.get("price_mode", "manual")
+                if "offpeak_price" in changes:
+                    values["price_mode"] = changes.get("price_mode", "time_of_use")
+                if any(key.startswith(("price_","buy_","sell_","offpeak_","distribution_","fixed_","supplier_","energy_vat")) for key in changes):
+                    values["prices_enabled"] = changes.get("prices_enabled",True)
+                updated = Settings.model_validate(values | {"configured":True})
+                if updated.measurement_source == "csv" and (updated.battery_enabled or updated.wind_enabled):
+                    raise ValueError("CSV nepodporuje batériu ani vietor. Najprv zmeň režim.")
+                diff = {key:getattr(updated,key) for key in CHAT_SETTINGS if getattr(updated,key) != getattr(settings_snapshot,key)}
+                if diff:
+                    token = secrets.token_urlsafe(24)
+                    async with engine.lock:
+                        engine.chat_proposals = {k:p for k,p in engine.chat_proposals.items() if monotonic()-p["created"] < 600}
+                        if len(engine.chat_proposals) >= 16:
+                            engine.chat_proposals.pop(next(iter(engine.chat_proposals)))
+                        engine.chat_proposals[token] = {"created":monotonic(), "before":settings_snapshot, "after":updated,
+                                                       "run_id":snapshot["demo"]["run_id"]}
+                    proposal = {"token":token, "changes":[{"label":CHAT_SETTINGS[key],"before":getattr(settings_snapshot,key),"after":after} for key,after in diff.items()]}
+                    result["answer"] = "Pripravil som návrh nastavení. Skontroluj zmeny a stlač Použiť zmenu; zatiaľ sa nič nezmenilo."
+                    result["numeric_guard_passed"] = True
+                else:
+                    result["answer"] = "Tieto nastavenia už majú požadované hodnoty. Nič netreba meniť."
+            except (ValidationError,ValueError):
+                result["answer"] = "Návrh nie je platný pre aktuálny režim alebo povolený rozsah. Nič sa nezmenilo; upresni hodnotu a jednotku."
+        return {**result, "proposal":proposal, "run_id": snapshot["demo"]["run_id"]}
+
+    @app.post("/api/assistant/apply")
+    async def assistant_apply(value: AssistantApplyRequest, request: Request):
+        engine = request.app.state.engine
+        async with engine.lock:
+            proposal = engine.chat_proposals.get(value.token)
+            if not proposal or monotonic()-proposal["created"] >= 600:
+                raise HTTPException(410,"Návrh vypršal alebo už bol použitý. Požiadaj asistenta o nový návrh.")
+            if engine.settings != proposal["before"] or engine.run_id != proposal["run_id"]:
+                raise HTTPException(409,"Nastavenia sa medzitým zmenili. Požiadaj o nový návrh.")
+        await engine.prices.refresh(proposal["after"])
+        async with engine.lock:
+            if value.token not in engine.chat_proposals or engine.settings != proposal["before"] or engine.run_id != proposal["run_id"]:
+                raise HTTPException(409,"Návrh už nie je aktuálny. Požiadaj o nový návrh.")
+            engine.configure(proposal["after"])
+            del engine.chat_proposals[value.token]
+            return engine.state()
 
     @app.post("/api/import")
     async def import_csv(value: CsvImport, request: Request):

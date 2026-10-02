@@ -161,3 +161,22 @@ class ChatMessage(StrictModel):
 class AssistantRequest(StrictModel):
     question: str = Field(min_length=1, max_length=1200)
     history: list[ChatMessage] = Field(default_factory=list, max_length=6)
+
+
+# Only application configuration is editable; telemetry and device credentials are never tools.
+CHAT_SETTINGS = {
+    "demo_mode": "Demo režim", "prices_enabled": "Modul cien",
+    "price_source": "Zdroj ceny", "price_mode": "Tarifný režim",
+    "buy_price": "Nákup (€/kWh)", "sell_price": "Výkup (€/kWh)",
+    "offpeak_price": "Nízka tarifa (€/kWh)", "distribution_price": "Distribúcia (€/kWh)",
+    "fixed_daily": "Fixný poplatok (€/deň)", "supplier_markup": "Prirážka (€/kWh)",
+    "energy_vat_pct": "DPH energie (%)", "pv_enabled": "Fotovoltaika",
+    "battery_enabled": "Batéria", "wind_enabled": "Veterná turbína",
+    "weather_enabled": "Počasie", "weather_source": "Zdroj počasia",
+    "pv_kwp": "Výkon FV (kWp)", "battery_capacity_mah": "Kapacita článku (mAh)",
+    "battery_kwh": "Kapacita demo batérie (kWh)", "base_load_w": "Základná spotreba (W)",
+}
+
+
+class AssistantApplyRequest(StrictModel):
+    token: str = Field(min_length=20, max_length=64, pattern=r"^[a-zA-Z0-9_-]+$")
