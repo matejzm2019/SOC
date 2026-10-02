@@ -231,7 +231,7 @@ def create_app(database=None, esp32_key=None, http_transport=None):
         e = request.app.state.engine
         e.storage.connection.execute("SELECT 1").fetchone()
         return {"status": "degraded" if e.error else "ok",
-                "mode": "demo" if e.settings.demo_mode else "monitor", "version": "0.5.0"}
+                "mode": "demo" if e.settings.demo_mode else "monitor", "version": app.version}
 
     @app.get("/api/state")
     async def state(request: Request):
