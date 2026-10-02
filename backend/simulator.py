@@ -19,6 +19,13 @@ def turbine_power(wind_ms: float, rated_w: float) -> float:
     return rated_w
 
 
+def pv_power(settings, weather):
+    if not settings.pv_enabled:
+        return 0.0
+    temperature_loss = 1 - max(0, weather["temperature_c"] - 25) * 0.004
+    return min(settings.pv_kwp * 1000, settings.pv_kwp * weather["tilted_wm2"] * 0.86 * temperature_loss)
+
+
 class Simulator:
     def __init__(self, settings: Settings, timestamp: datetime, energy: float | None = None):
         self.settings = settings
@@ -30,7 +37,7 @@ class Simulator:
         self.scenario = scenario
         self.energy = self.settings.battery_kwh * {"empty": 0.1, "surplus": 0.98, "outage": 0.3}.get(scenario, 0.55)
 
-    def step(self, seeded=False, measured=None, interval_seconds=STEP) -> Sample:
+    def step(self, seeded=False, measured=None, interval_seconds=STEP, weather=None) -> Sample:
         s = self.settings
         self.timestamp += timedelta(seconds=interval_seconds)
         local = (self.timestamp - timedelta(seconds=interval_seconds / 2)).astimezone(LOCAL_TZ)
@@ -52,6 +59,9 @@ class Simulator:
         if self.scenario in ("evening", "empty", "outage"):
             radiation *= 0.06
         pv = s.pv_kwp * radiation * orientation * tilt * 0.9 * (1 - max(0, temperature - 25) * 0.004) if s.pv_enabled else 0.0
+        if weather and not s.demo_mode:
+            temperature, cloud, wind, radiation = (weather[k] for k in ("temperature_c", "cloud_pct", "wind_ms", "radiation_wm2"))
+            pv = pv_power(s, weather)
         if measured and s.pv_enabled:
             pv = min(measured.panel_power_w / s.pv_reference_w, 1.2) * s.pv_kwp * 1000
             if measured.temperature_c is not None:
@@ -99,7 +109,8 @@ class Simulator:
         return Sample(
             timestamp=self.timestamp.isoformat(), interval_seconds=interval_seconds,
             scenario=self.scenario, seeded=seeded,
-            source="hybrid" if measured else "simulator", quality="mixed" if measured else "synthetic",
+            source="hybrid" if measured else "planning" if not s.demo_mode and s.measurement_source == "planning" else "simulator",
+            quality="mixed" if measured else "estimated" if not s.demo_mode and s.measurement_source == "planning" else "synthetic",
             device_id=measured.device_id if measured else None,
             panel_power_w=measured.panel_power_w if measured else None,
             illuminance_lux=measured.illuminance_lux if measured else None,

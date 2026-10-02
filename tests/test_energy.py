@@ -135,7 +135,8 @@ def test_forecast_baseline_and_holdout():
     prediction = forecast(rows)
     assert datetime.fromisoformat(prediction["points"][0]["timestamp"]) > sim.timestamp
     assert prediction["points"][0]["load_w"] == pytest.approx(sum(r["load_w"] for r in rows[288:300]) / 12)
-    expected = sum(abs(rows[i]["load_w"] - rows[i-288]["load_w"]) for i in range(288,576)) / 288
+    expected = sum(abs(sum(rows[i+j]["load_w"] - rows[i+j-288]["load_w"] for j in range(12)) / 12)
+                   for i in range(288,576,12)) / 24
     assert prediction["metrics"]["load_w"]["mae_w"] == pytest.approx(expected)
 
 

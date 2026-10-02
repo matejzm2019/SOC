@@ -6,11 +6,12 @@ const eur = value => value == null ? 'Vypnuté' : `${number(value)} €`;
 const time = timestamp => new Date(timestamp).toLocaleTimeString('sk-SK', {hour:'2-digit', minute:'2-digit', timeZone:'Europe/Bratislava'});
 const escape = value => String(value).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let state, view = 'overview', period = 'day', settingsTab = 'source', busy = false, refreshing = false, revision = 0;
-let lastDataAt = 0, lastDataKey = '';
+let lastDataAt = 0, lastDataKey = '', selectedRun = '', chatBusy = false, assistantStatus, historySettings;
+let chatHistory = [], integrationsBusy = false, integrationCheckedAt = 0, weatherRequestedAt = 0, weatherRequestKey = '';
 const pages = {
   overview: ['Prehľad', 'Prehľad domácnosti', 'Spotreba, výroba a tok energie na jednom mieste.'],
   history: ['História', 'Energia v čase', 'Priebeh spotreby a výroby.'],
-  forecast: ['Predikcie', 'Predikcia na 24 hodín', 'Odhad podľa minulého dňa.'],
+  forecast: ['Predikcie', 'Predikcia na 24 hodín', 'Výhľad výroby a spotreby podľa dostupných údajov.'],
   economy: ['Ekonomika', 'Náklady na energiu', 'Odber, výkup a prevádzková úspora.']
 };
 
@@ -33,11 +34,23 @@ function showError(error) {
   $('#connection').textContent = 'Pripojenie prerušené';
 }
 
-function setText(id, value) { $(`#${id}`).textContent = value; }
+function setText(id, value) { const el = $(`#${id}`); if (el.textContent !== String(value)) el.textContent = value; }
 function metricValue(id, value, unit) { $(`#${id}`).innerHTML = `${number(value)}<small>${unit}</small>`; }
+function acceptState(next) {
+  if (state && state.demo.run_id !== next.demo.run_id) {
+    chatHistory = [];
+    if (!chatBusy) {
+      $('#chat-messages').replaceChildren();
+      const empty = document.createElement('p'); empty.className = 'chat-empty';
+      empty.textContent = 'Zdroj energetických údajov sa zmenil. Nové otázky použijú aktuálny prehľad.';
+      $('#chat-messages').append(empty);
+    }
+  }
+  state = next;
+}
 
 function updateModules() {
-  $$('[data-module]').forEach(el => { el.hidden = !state.settings[`${el.dataset.module}_enabled`]; });
+  $$('[data-module]').forEach(el => { const config = view === 'history' && el.closest('[data-page="history"]') && historySettings ? historySettings : state.settings; el.hidden = !config[`${el.dataset.module}_enabled`]; });
   // SVG elements do not consistently implement HTMLElement.hidden.
   $$('svg [data-module]').forEach(el => { el.style.display = state.settings[`${el.dataset.module}_enabled`] ? '' : 'none'; });
   if (view === 'economy' && !state.settings.prices_enabled) switchView('overview');
@@ -55,15 +68,22 @@ function renderState() {
   const s = state.sample, settings = state.settings, demo = state.demo;
   updateModules();
   $$('[data-demo-control]').forEach(el => { el.hidden = !demo.enabled; });
-  setText('mode-title', demo.enabled ? 'Demo režim' : 'Živé monitorovanie');
-  setText('mode-pill', demo.enabled ? '◉ Demo režim' : '◉ Živé údaje');
+  const imported = settings.measurement_source === 'csv', planning = !demo.enabled && settings.measurement_source === 'planning';
+  const label = demo.enabled ? 'Demo režim' : imported ? 'Importovaná história' : planning ? 'Plánovanie domácnosti' : settings.measurement_source === 'hybrid' ? 'Hybridný model' : 'Simulácia v reálnom čase';
+  setText('mode-title', label);
+  setText('mode-pill', `◉ ${label}`);
+  setText('energy-provenance', imported ? 'Spotreba a FV pochádzajú z importovaných intervalov. Tok siete je odvodený výpočtom; zobrazený výkon je priemer posledného intervalu.' : planning ? 'Spotreba a batéria sú modelované. Výroba FV a vetra je odhad podľa internetového počasia, nie meranie vašej elektrárne.' : settings.measurement_source === 'hybrid' ? 'Malý panel sa meria cez ESP32. Energetika domácnosti zostáva škálovaným modelom.' : state.settings.weather_source === 'simulator' ? 'Energetické toky aj počasie pochádzajú zo simulátora.' : 'Energetické toky sú simulované. Internetové počasie je samostatný aktuálny údaj a nemení prezentačný scenár.');
+  setText('flow-heading', imported ? 'Bilancia posledného intervalu' : 'Energetické toky');
   metricValue('load-value', s.load_w / 1000, 'kW');
   metricValue('pv-value', s.pv_w / 1000, 'kW');
   metricValue('soc-value', s.soc_pct, '%');
   metricValue('grid-value', Math.abs(s.grid_w) / 1000, 'kW');
-  setText('load-detail', `${number(s.voltage_v, 0)} V · ${number(s.current_a, 1)} A · virtuálne`);
+  setText('load-detail', imported ? 'Priemer intervalu z CSV' : planning ? 'Odhad podľa profilu domácnosti' : `${number(s.voltage_v, 0)} V · ${number(s.current_a, 1)} A · virtuálne`);
   setText('pv-detail', `${number(settings.pv_kwp, 1)} kWp inštalovaný výkon`);
   if (s.source === 'hybrid') setText('pv-detail', `${number(s.panel_power_w, 3)} W panel · ${number(s.illuminance_lux, 0)} lx · ESP32`);
+  if (planning) setText('pv-detail', 'Odhad podľa internetového počasia');
+  if (imported) setText('pv-detail', 'Výroba z importovaného intervalu');
+  if (planning && s.seeded) ['load-value','pv-value','soc-value','grid-value'].forEach(id => setText(id, '—'));
   const batteryAction = s.battery_w > 1 ? 'Vybíjanie' : s.battery_w < -1 ? 'Nabíjanie' : 'Pohotovosť';
   setText('battery-detail', `${number(s.battery_energy_kwh, 1)} / ${number(settings.battery_kwh, 1)} kWh · ${batteryAction.toLowerCase()} · virtuálne`);
   $('#soc-bar').style.width = `${s.soc_pct || 0}%`;
@@ -72,6 +92,9 @@ function renderState() {
   setText('flow-load', kw(s.served_w));
   setText('flow-pv', kw(s.pv_w));
   setText('flow-pv-sub', `${number(settings.pv_kwp, 1)} kWp · virtuálna FV`);
+  if (planning) setText('flow-pv-sub', `${number(settings.pv_kwp,1)} kWp · odhad podľa počasia`);
+  if (imported) setText('flow-pv-sub', 'Priemer importovaného intervalu');
+  setText('energy-data-label', imported ? 'Importované intervaly' : planning ? 'Model podľa počasia' : 'Syntetické dáta');
   setText('flow-grid', kw(Math.abs(s.grid_w)));
   setText('flow-grid-sub', gridAction);
   setText('flow-battery', `${s.battery_w > 1 ? '−' : s.battery_w < -1 ? '+' : ''}${kw(Math.abs(s.battery_w))}`);
@@ -86,39 +109,42 @@ function renderState() {
   setFlow('grid', s.grid_w, s.grid_w < 0);
   setFlow('battery', s.battery_w, s.battery_w > 0);
   setFlow('wind', s.wind_w, false);
-  setText('flow-status', s.grid_available ? '● SIEŤ DOSTUPNÁ' : '○ OSTROVNÝ REŽIM');
+  setText('flow-status', imported || planning ? '● VYPOČÍTANÁ BILANCIA' : s.grid_available ? '● SIEŤ DOSTUPNÁ' : '○ OSTROVNÝ REŽIM');
   setText('balance-caption', s.unserved_w > 1 ? `Nepokrytá spotreba ${kw(s.unserved_w)}` : 'Celá spotreba pokrytá');
   const eta = s.battery_eta_hours == null ? '' : ` · do limitu ${number(s.battery_eta_hours, 1)} h`;
   setText('unserved', s.curtailed_w > 1 ? `Obmedzená výroba ${kw(s.curtailed_w)}` : `${settings.battery_enabled ? batteryAction + eta : 'Batéria vypnutá'}`);
-  setText('temperature', `${number(s.temperature_c, 0)}°C`);
-  setText('weather-condition', s.cloud_pct > 65 ? 'Zamračené' : s.radiation_wm2 > 20 ? 'Prevažne slnečno' : 'Nízke slnečné žiarenie');
-  setText('wind-weather', `${number(s.wind_ms, 1)} m/s`);
-  setText('cloud-weather', `${number(s.cloud_pct, 0)} %`);
-  setText('radiation-weather', `${number(s.radiation_wm2, 0)} W/m²`);
-  setText('location', `⌖ ${number(settings.latitude)}°, ${number(settings.longitude)}° · virtuálna lokalita`);
+  if (planning && s.seeded) {
+    ['flow-load','flow-pv','flow-grid','flow-battery','flow-wind','mobile-load','mobile-pv','mobile-grid','mobile-battery'].forEach(id => setText(id,'—'));
+    ['grid-detail','flow-grid-sub','mobile-grid-detail','balance-caption','unserved','battery-detail'].forEach(id => setText(id,'Čakám na aktuálne počasie'));
+    setText('flow-status','○ ČAKÁM NA ÚDAJE');
+    $('#soc-bar').style.width = '0%';
+  }
+  renderWeather(state.weather);
   setText('buy-price', eur(s.buy_eur_kwh));
   setText('sell-price', eur(s.sell_eur_kwh));
+  setText('tariff-source', demo.enabled ? 'DEMO TARIFA' : 'VLASTNÁ TARIFA');
   setText('tariff-note', `Distribúcia ${eur(s.distribution_eur_kwh)}/kWh · fix ${eur(s.fixed_eur_day)}/deň`);
   $('#scenario').value = demo.scenario;
   $('#speed').value = demo.speed;
   setText('play', demo.paused ? '▶ Spustiť' : 'Ⅱ Pozastaviť');
+  $('#play').hidden = imported;
   const date = new Date(s.timestamp).toLocaleDateString('sk-SK', {day:'numeric', month:'short', timeZone:'Europe/Bratislava'});
-  setText('sim-clock', demo.enabled
+  setText('sim-clock', imported ? `${date} ${time(s.timestamp)} · posledný importovaný interval` : planning ? `${date} ${time(s.timestamp)} · ${s.seeded ? 'čakám na počasie' : demo.paused ? 'pozastavené' : 'odhad každú minútu'}` : demo.enabled
     ? `${date} ${time(s.timestamp)} · ${demo.paused ? 'pozastavené' : `1 s ≈ ${demo.speed * 5} min`} · demo čas`
     : `${date} ${time(s.timestamp)} · ${demo.paused ? 'pozastavené' : 'vzorka každú 1 s'} · reálny čas`);
-  setText('run-info', `${demo.enabled ? 'Demo experiment' : 'Monitorovanie'} #${demo.run_id} · Europe/Bratislava`);
+  setText('run-info', `${label} #${demo.run_id} · Europe/Bratislava`);
   const hybrid = settings.measurement_source === 'hybrid';
-  setText('device-status', hybrid ? (state.device.online ? '● ESP32 ONLINE' : '○ ESP32 OFFLINE') : 'SIMULÁTOR');
+  setText('device-status', hybrid ? (state.device.online ? '● ESP32 ONLINE' : '○ ESP32 OFFLINE') : imported ? 'CSV INTERVALY' : planning ? 'ODHAD' : 'SIMULÁTOR');
   $('#device-status').classList.toggle('device-offline', hybrid && !state.device.online);
-  $('#insights').innerHTML = state.summary.items.map(item => `<article class="insight ${escape(item.kind)}"><h3>${escape(item.title)}</h3><p>${escape(item.text)}</p></article>`).join('');
+  $('#insights').innerHTML = planning && s.seeded ? '<p class="muted">Odporúčania budú dostupné po prvom výpočte podľa počasia.</p>' : state.summary.items.map(item => `<article class="insight ${escape(item.kind)}"><h3>${escape(item.title)}</h3><p>${escape(item.text)}</p></article>`).join('');
   if (demo.error) { $('#error').textContent = demo.error; $('#error').hidden = false; }
 }
 
-function series() {
+function series(settings = state.settings) {
   const color = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
   return [{key:'load_w', color:color('--load'), name:'Spotreba'},
-    ...(state.settings.pv_enabled ? [{key:'pv_w', color:color('--solar'), name:'Fotovoltaika'}] : []),
-    ...(state.settings.wind_enabled ? [{key:'wind_w', color:color('--wind'), name:'Vietor'}] : [])];
+    ...(settings.pv_enabled ? [{key:'pv_w', color:color('--solar'), name:'Fotovoltaika'}] : []),
+    ...(settings.wind_enabled ? [{key:'wind_w', color:color('--wind'), name:'Vietor'}] : [])];
 }
 
 function chart(id, points, lines = series(), unit = 'kW') {
@@ -173,11 +199,14 @@ function renderHistory(history) {
     setText('today-energy', `24 h: spotreba ${number(t.load_kwh)} kWh${state.settings.pv_enabled ? ` · FV ${number(t.pv_kwh)} kWh` : ''}`);
   }
   if (view === 'history') {
-    chart('history-chart', history.points);
+    const config = history.config || state.settings;
+    historySettings = config;
+    $$('[data-page="history"] [data-module]').forEach(el => el.hidden = !config[`${el.dataset.module}_enabled`]);
+    chart('history-chart', history.points, series(config));
     chart('soc-chart', history.points, [{key:'soc_pct', color:getComputedStyle(document.documentElement).getPropertyValue('--battery').trim(), name:'SOC'}], '%');
     const entries = [['Spotreba',t.load_kwh,'kWh','Požadovaný odber'], ['Import zo siete',t.import_kwh,'kWh','Nakúpená energia'], ['Export do siete',t.export_kwh,'kWh','Dodaná energia'], ['Nepokrytá spotreba',t.unserved_kwh,'kWh','Počas výpadku']];
-    if (state.settings.pv_enabled) entries.push(['Výroba FV',t.pv_kwh,'kWh','Virtuálna elektráreň']);
-    if (state.settings.wind_enabled) entries.push(['Výroba vetra',t.wind_kwh,'kWh','Virtuálna turbína']);
+    if (config.pv_enabled) entries.push(['Výroba FV',t.pv_kwh,'kWh',config.measurement_source === 'csv' ? 'Importované intervaly' : 'Modelovaná elektráreň']);
+    if (config.wind_enabled) entries.push(['Výroba vetra',t.wind_kwh,'kWh','Virtuálna turbína']);
     cards('history-totals', entries);
     setText('history-coverage', `${history.sample_count} vzoriek · ${number(history.duration_hours, 1)} h · ${history.seeded_count} predgenerovaných`);
   }
@@ -188,10 +217,12 @@ function renderHistory(history) {
 }
 
 function renderForecast(result) {
+  setText('forecast-note', result.note || result.reason || 'Čakám na dostupné údaje.');
+  setText('forecast-method', result.weather_based ? 'POČASIE + MODEL' : 'ČASOVÝ MODEL');
   setText('forecast-model', result.available ? result.model : result.reason);
   chart('forecast-chart', result.points || []);
   const labels = {load_w:'Spotreba', pv_w:'Fotovoltaika', wind_w:'Vietor'};
-  setText('forecast-metrics', result.metrics ? Object.entries(result.metrics).filter(([key]) => key === 'load_w' || state.settings[key === 'pv_w' ? 'pv_enabled' : 'wind_enabled']).map(([key,m]) => `${labels[key]}: MAE ${number(m.mae_w,0)} W · RMSE ${number(m.rmse_w,0)} W`).join(' | ') : 'Hodnotenie zatiaľ nie je dostupné. Potrebných je aspoň 48 simulačných hodín; prvých 24 h je predgenerovaných.');
+  setText('forecast-metrics', result.metrics ? Object.entries(result.metrics).filter(([key]) => key === 'load_w' || state.settings[key === 'pv_w' ? 'pv_enabled' : 'wind_enabled']).map(([key,m]) => `${labels[key]}: MAE ${number(m.mae_w,0)} W · RMSE ${number(m.rmse_w,0)} W`).join(' | ') : 'Hodnotenie časového modelu potrebuje súvislých 48 hodín intervalovej histórie. Meteorologická predikcia FV sa tu nepovažuje za overenú meraním.');
 }
 
 async function refresh(forceData = false) {
@@ -202,14 +233,16 @@ async function refresh(forceData = false) {
   try {
     const nextState = await api('state');
     if (requestedRevision !== revision) return;
-    state = nextState;
+    const firstLoad = !state;
+    acceptState(nextState);
+    if (firstLoad && view === 'history') loadRuns();
     $('#error').hidden = true;
     $('#connection').innerHTML = '<i class="online-dot"></i>Lokálne pripojenie';
     renderState();
-    const dataKey = `${view}:${period}:${state.demo.run_id}`;
+    const dataKey = `${view}:${period}:${state.demo.run_id}:${selectedRun}`;
     const interval = view === 'forecast' ? 10000 : 1500;
     if (forceData || dataKey !== lastDataKey || Date.now() - lastDataAt >= interval) {
-      const data = await api(view === 'forecast' ? 'forecast' : `history?period=${view === 'history' ? period : 'day'}`);
+      const data = await api(view === 'forecast' ? 'forecast' : `history?period=${view === 'history' ? period : 'day'}${view === 'history' && selectedRun ? `&run_id=${selectedRun}` : ''}`);
       if (requestedRevision !== revision) return;
       lastDataAt = Date.now(); lastDataKey = dataKey;
       if (requestedView === view) {
@@ -226,7 +259,7 @@ async function command(payload) {
   revision++;
   busy = true;
   $$('.demo-toolbar button, .demo-toolbar select').forEach(el => el.disabled = true);
-  try { state = await api('demo', {method:'POST', body:JSON.stringify(payload)}); renderState(); }
+  try { acceptState(await api('demo', {method:'POST', body:JSON.stringify(payload)})); renderState(); }
   catch (error) { showError(error); }
   finally { busy = false; $$('.demo-toolbar button, .demo-toolbar select').forEach(el => el.disabled = false); }
   await refresh(true);
@@ -241,6 +274,8 @@ function switchView(name) {
   const [crumb,title,description] = pages[name];
   setText('breadcrumb', crumb); setText('page-title', title); setText('page-description', description);
   history.replaceState(null, '', `#${name}`);
+  if (name === 'history') loadRuns();
+  updateExportLink();
   refresh(true);
 }
 
@@ -260,10 +295,16 @@ function formSettings() {
   return values;
 }
 function updateSettings() {
+  const source = form.elements.namedItem('measurement_source').value;
+  const imported = source === 'csv';
+  ['battery_enabled','wind_enabled'].forEach(name => { form.elements.namedItem(name).disabled = imported; if (imported) form.elements.namedItem(name).checked = false; });
   $$('[data-setting-module]').forEach(el => {
     el.hidden = !form.elements.namedItem(`${el.dataset.settingModule}_enabled`).checked;
     el.querySelector('input').disabled = el.hidden;
   });
+  const calibration = form.elements.namedItem('pv_reference_w');
+  calibration.closest('label').hidden = source !== 'hybrid' || !form.elements.namedItem('pv_enabled').checked;
+  calibration.disabled = calibration.closest('label').hidden;
   const prices = form.elements.namedItem('prices_enabled').checked;
   $('#price-settings').hidden = !prices;
   $('#prices-disabled').hidden = prices;
@@ -271,13 +312,17 @@ function updateSettings() {
   const offpeak = prices && form.elements.namedItem('price_mode').value === 'time_of_use';
   $('#offpeak-field').hidden = !offpeak;
   form.elements.namedItem('offpeak_price').disabled = !offpeak;
-  const hybrid = form.elements.namedItem('measurement_source').value === 'hybrid';
-  setText('source-explainer', hybrid ? 'ESP32-S3 posiela meranie malého panela cez lokálnu Wi-Fi. Kým nie je pripojené, zobrazí sa stav zariadenia; ostatné toky ostávajú simulované.' : 'Simulátor vytvára bezpečné syntetické údaje bez pripojenia zariadenia. Funguje na počítači aj mobile v rovnakej lokálnej sieti.');
-  setText('settings-device-state', hybrid ? (state.device.online ? 'ESP32 pripojené' : 'ESP32 nepripojené') : 'Lokálny simulátor');
-  const changed = Object.keys(state.settings).filter(key => formSettings()[key] !== state.settings[key]);
+  const hybrid = source === 'hybrid';
+  setText('source-explainer', hybrid ? 'ESP32-S3 posiela meranie malého panela cez lokálnu Wi-Fi. Ostatné toky sú modelované.' : imported ? 'Importujte vlastné údaje tlačidlom nižšie. Import sa spracuje samostatne a zachová doterajšiu históriu.' : source === 'planning' ? 'Plánovanie používa reálne počasie a predpoveď pre zvolené miesto. Spotreba, batéria a toky sú odhady podľa nastaveného modelu. Nepotrebuje ESP32.' : 'Simulátor vytvára syntetické energetické údaje a pripravené scenáre. Funguje aj bez internetu.');
+  setText('settings-device-state', hybrid ? (state.device.online ? 'ESP32 pripojené' : 'ESP32 nepripojené') : imported ? 'Vlastná história' : source === 'planning' ? 'Plánovanie bez hardvéru' : 'Lokálny simulátor');
+  setText('chosen-location', form.elements.namedItem('location_set').checked ? `${form.elements.namedItem('location_name').value} · ${number(Number(form.elements.namedItem('latitude').value),3)}°, ${number(Number(form.elements.namedItem('longitude').value),3)}°` : 'Miesto nie je nastavené');
+  setText('ollama-command', `ollama pull ${form.elements.namedItem('ai_model').value}`);
+  const values = formSettings();
+  const changed = Object.keys(state.settings).filter(key => values[key] !== state.settings[key]);
   const count = changed.length;
+  const reset = changed.some(key => !['ai_enabled','ai_model','weather_enabled','location_name','location_set','weather_source'].includes(key));
   setText('settings-change-title', count ? `${count} ${count === 1 ? 'zmena' : count < 5 ? 'zmeny' : 'zmien'} na uloženie` : 'Žiadne neuložené zmeny');
-  setText('settings-change-detail', count ? 'Uloženie vytvorí nový experiment. Doterajšia história zostane uložená; nový experiment začne pozastavený.' : 'Upravte hodnotu alebo modul. Vzhľad stránky sa prepína okamžite mimo nastavení.');
+  setText('settings-change-detail', count ? reset ? imported ? 'Uloženie vytvorí novú analýzu importovaných údajov s touto tarifou. Pôvodná história zostane uložená.' : 'Modelové parametre vytvoria nový súbor údajov. Plánovanie sa spustí automaticky; demo začína pozastavené.' : 'Nastavenia sa uložia bez resetovania energetickej histórie.' : 'Upravte hodnotu alebo modul. Vzhľad stránky sa prepína okamžite mimo nastavení.');
   $('#settings-save').disabled = !count || busy;
 }
 function openSetup() {
@@ -287,6 +332,11 @@ function openSetup() {
     if (field) { if (field.type === 'checkbox') field.checked = value; else field.value = value; }
   }
   selectSettingsTab('source'); setText('setup-error', ''); updateSettings();
+  if (!state.settings.configured) {
+    form.elements.namedItem('measurement_source').value = 'planning';
+    form.elements.namedItem('demo_mode').checked = false;
+    updateSettings();
+  }
   $('#setup-close').hidden = !state.settings.configured;
   $('#settings-cancel').hidden = !state.settings.configured;
   $('#setup').showModal();
@@ -296,7 +346,18 @@ $('#setup-close').addEventListener('click', () => $('#setup').close());
 $('#settings-cancel').addEventListener('click', () => $('#setup').close());
 $('#setup').addEventListener('cancel', event => { if (!state.settings.configured) event.preventDefault(); });
 form.addEventListener('input', updateSettings);
-form.addEventListener('change', updateSettings);
+form.addEventListener('change', event => {
+  const source = form.elements.namedItem('measurement_source'), demo = form.elements.namedItem('demo_mode');
+  if (event.target.name === 'demo_mode') {
+    if (demo.checked && ['planning','csv'].includes(source.value)) source.value = 'simulator';
+    if (!demo.checked && source.value === 'simulator') source.value = 'planning';
+  }
+  if (event.target.name === 'measurement_source') {
+    if (['planning','csv'].includes(source.value)) demo.checked = false;
+    if (source.value === 'simulator') demo.checked = true;
+  }
+  updateSettings();
+});
 form.addEventListener('submit', async event => {
   event.preventDefault();
   const invalid = $$('[data-settings-panel] input, [data-settings-panel] select').find(field => !field.disabled && !field.checkValidity());
@@ -306,15 +367,190 @@ form.addEventListener('submit', async event => {
     return;
   }
   const settings = formSettings();
+  if (!settings.demo_mode && settings.measurement_source === 'planning' && !settings.location_set) {
+    selectSettingsTab('location'); setText('location-error', 'Najprv vyberte mesto alebo použite polohu.'); return;
+  }
+  if (!settings.demo_mode && settings.measurement_source === 'planning' && settings.weather_source !== 'internet') {
+    selectSettingsTab('location'); setText('location-error', 'Plánovanie používa internetové počasie. Vyberte Open-Meteo.'); return;
+  }
   if (Object.keys(settings).every(key => settings[key] === state.settings[key])) return;
   revision++; busy = true; $('#settings-save').disabled = true;
   try {
-    state = await api('settings', {method:'PUT', body:JSON.stringify(settings)});
+    acceptState(await api('settings', {method:'PUT', body:JSON.stringify(settings)}));
     $('#setup').close(); renderState();
+    weatherRequestKey = ''; integrationCheckedAt = 0; refreshIntegrations(); loadRuns();
   } catch (error) { setText('setup-error', error.message); }
   finally { busy = false; updateSettings(); }
   refresh(true);
 });
+
+function renderWeather(weather = {}) {
+  const synthetic = state.settings.weather_source === 'simulator';
+  const current = synthetic ? state.sample : weather.available ? weather.current : null;
+  setText('weather-source', synthetic ? 'SIMULÁTOR' : weather.stale ? 'STARŠIE ÚDAJE' : weather.available ? 'OPEN-METEO' : 'ČAKÁM NA ÚDAJE');
+  setText('temperature', current ? `${number(current.temperature_c,0)}°C` : '—');
+  const description = current?.condition || (current ? current.cloud_pct > 65 ? 'Zamračené' : current.radiation_wm2 > 20 ? 'Prevažne slnečno' : 'Nízke slnečné žiarenie' : state.settings.location_set ? 'Počasie zatiaľ nie je dostupné' : 'Vyberte miesto v nastaveniach');
+  setText('weather-condition', description);
+  setText('weather-icon', description === 'Jasno' || description === 'Prevažne slnečno' ? '☀' : description.includes('Dážď') ? '☂' : '☁');
+  for (const [id,key,unit,digits] of [['wind-weather','wind_ms','m/s',1],['cloud-weather','cloud_pct','%',0],['radiation-weather','radiation_wm2','W/m²',0]]) setText(id, current ? `${number(current[key],digits)} ${unit}` : '—');
+  setText('location', synthetic ? 'Virtuálne počasie scenára' : state.settings.location_name || 'Miesto nie je nastavené');
+  setText('weather-update', !synthetic && weather.available ? `Platnosť ${time(current.timestamp)} · získané ${time(weather.fetched_at)}` : '');
+  setText('weather-error', synthetic ? '' : weather.stale ? 'Údaje sú staršie ako pol hodiny. Aktuálne počasie sa nepodarilo obnoviť.' : weather.error || '');
+  $('.weather-attribution').hidden = synthetic;
+  const now = Date.now();
+  const hours = !synthetic && weather.available ? weather.hourly.filter(p => new Date(p.timestamp).getTime() > now).slice(0,6) : [];
+  $('#weather-forecast').innerHTML = hours.map(p => `<div><span>${time(p.timestamp)}</span><strong>${number(p.temperature_c,0)}°</strong><small>${number(p.precipitation_mm,1)} mm</small></div>`).join('');
+}
+
+function updateExportLink() {
+  $('#export-link').href = `/api/export${view === 'history' && selectedRun ? `?run_id=${selectedRun}` : ''}`;
+}
+
+async function loadRuns() {
+  if (!state) return;
+  try {
+    const {runs} = await api('runs');
+    const select = $('#history-run');
+    select.innerHTML = '<option value="">Aktuálny súbor údajov</option>' + runs.filter(run => run.id !== state.demo.run_id).map(run => `<option value="${run.id}">#${run.id} · ${run.config.measurement_source === 'csv' ? 'CSV' : run.config.demo_mode ? 'demo' : 'model'} · ${run.end ? escape(new Date(run.end).toLocaleDateString('sk-SK')) : 'bez záznamov'} · ${run.count} vzoriek</option>`).join('');
+    if (selectedRun && !runs.some(run => String(run.id) === selectedRun)) selectedRun = '';
+    select.value = selectedRun;
+  } catch (error) { setText('history-coverage', error.message); }
+}
+
+function applyAssistantStatus(result) {
+  assistantStatus = result;
+  setText('assistant-status', result.available ? result.model.toUpperCase() : 'NEPRIPOJENÝ');
+  setText('assistant-connection', result.message);
+  $$('.assistant-prompts button, #chat-send').forEach(el => el.disabled = chatBusy || !result.available);
+  setText('chat-send', chatBusy ? 'Spracúva…' : 'Odoslať ↑');
+  $('.assistant-panel').setAttribute('aria-busy', String(chatBusy));
+}
+
+async function refreshIntegrations() {
+  if (!state || integrationsBusy) return;
+  integrationsBusy = true;
+  try {
+    const key = `${state.settings.latitude}:${state.settings.longitude}:${state.settings.weather_source}:${state.settings.tilt_deg}:${state.settings.azimuth_deg}:${state.settings.location_set}`;
+    const tasks = [];
+    if (state.settings.location_set && state.settings.weather_source === 'internet' && (key !== weatherRequestKey || Date.now() - weatherRequestedAt > 600000)) {
+      weatherRequestKey = key; weatherRequestedAt = Date.now();
+      tasks.push(api('weather').then(result => {
+        if (state && key === `${state.settings.latitude}:${state.settings.longitude}:${state.settings.weather_source}:${state.settings.tilt_deg}:${state.settings.azimuth_deg}:${state.settings.location_set}`) { state.weather = result; renderWeather(result); lastDataAt = 0; }
+      }).catch(error => setText('weather-error', error.message)));
+    }
+    if (Date.now() - integrationCheckedAt > 30000) {
+      integrationCheckedAt = Date.now();
+      tasks.push(api('assistant/status').then(applyAssistantStatus).catch(error => applyAssistantStatus({available:false,message:error.message})));
+    }
+    await Promise.allSettled(tasks);
+  } finally { integrationsBusy = false; }
+}
+
+function setLocation(latitude, longitude, label) {
+  form.elements.namedItem('latitude').value = Number(latitude).toFixed(3);
+  form.elements.namedItem('longitude').value = Number(longitude).toFixed(3);
+  form.elements.namedItem('location_name').value = label.slice(0,120);
+  form.elements.namedItem('location_set').checked = true;
+  $('#location-results').replaceChildren();
+  setText('location-error', ''); updateSettings();
+}
+
+$('#city-search').addEventListener('click', async () => {
+  const query = $('#city-query').value.trim();
+  if (query.length < 2) { setText('location-error', 'Zadajte aspoň dva znaky názvu mesta.'); return; }
+  $('#city-search').disabled = true; setText('location-error', '');
+  try {
+    const result = await api(`locations?q=${encodeURIComponent(query)}`);
+    $('#location-results').replaceChildren();
+    if (!result.locations.length) setText('location-error', 'Mesto sa nenašlo. Skúste dlhší alebo iný názov.');
+    result.locations.forEach(location => {
+      const button = document.createElement('button'); button.type = 'button';
+      button.textContent = [location.name,location.region,location.country].filter(Boolean).join(' · ');
+      button.addEventListener('click', () => setLocation(location.latitude,location.longitude,[location.name,location.country].filter(Boolean).join(', ')));
+      $('#location-results').append(button);
+    });
+  } catch (error) { setText('location-error', error.message); }
+  finally { $('#city-search').disabled = false; }
+});
+$('#city-query').addEventListener('keydown', event => { if (event.key === 'Enter') { event.preventDefault(); $('#city-search').click(); } });
+$('#gps-location').addEventListener('click', () => {
+  if (!window.isSecureContext || !navigator.geolocation) { setText('location-error', 'Prehliadač povoľuje polohu iba cez HTTPS alebo localhost. Zadajte mesto.'); return; }
+  $('#gps-location').disabled = true; setText('location-error', 'Čakám na povolenie polohy…');
+  navigator.geolocation.getCurrentPosition(position => {
+    setLocation(position.coords.latitude,position.coords.longitude,'Moja oblasť (GPS)'); $('#gps-location').disabled = false;
+  }, error => {
+    setText('location-error', error.code === 1 ? 'Prístup k polohe ste nepovolili. Môžete zadať mesto.' : 'Polohu sa nepodarilo určiť. Zadajte mesto.');
+    $('#gps-location').disabled = false;
+  }, {enableHighAccuracy:false,timeout:12000,maximumAge:300000});
+});
+$('#weather-location-button').addEventListener('click', () => { openSetup(); selectSettingsTab('location'); });
+
+$('#assistant-check').addEventListener('click', async () => {
+  $('#assistant-check').disabled = true;
+  try { const result = await api(`assistant/status?model=${encodeURIComponent(form.elements.namedItem('ai_model').value)}`); setText('assistant-check-result', result.message); }
+  catch (error) { setText('assistant-check-result', error.message); }
+  finally { $('#assistant-check').disabled = false; }
+});
+
+$('#csv-file').addEventListener('change', event => {
+  const file = event.target.files[0];
+  $('#csv-import').disabled = !file || file.size > 3000000;
+  setText('csv-file-info', file ? `${file.name} · ${number(file.size / 1024,0)} kB` : 'Žiadny súbor');
+  setText('csv-error', file?.size > 3000000 ? 'Maximálna veľkosť CSV je 3 MB.' : '');
+});
+$('#csv-import').addEventListener('click', async () => {
+  const file = $('#csv-file').files[0];
+  if (!file || busy || file.size > 3000000) return;
+  busy = true; revision++; $('#csv-import').disabled = true;
+  try {
+    acceptState(await api('import', {method:'POST',body:JSON.stringify({content:await file.text()})}));
+    $('#setup').close(); chatHistory = []; renderState(); loadRuns();
+  } catch (error) { setText('csv-error', error.message); }
+  finally { busy = false; $('#csv-import').disabled = false; }
+  refresh(true);
+});
+
+function chatBubble(role, text) {
+  $('.chat-empty')?.remove();
+  const article = document.createElement('article'); article.className = `chat-bubble ${role}`;
+  const caption = document.createElement('small'); caption.textContent = role === 'user' ? 'Vy' : 'Lokálny asistent';
+  const paragraph = document.createElement('p'); paragraph.textContent = text;
+  article.append(caption,paragraph); $('#chat-messages').append(article);
+  $('#chat-messages').scrollTop = $('#chat-messages').scrollHeight;
+  return article;
+}
+
+async function askAssistant(question) {
+  if (chatBusy || !question.trim()) return;
+  chatBusy = true; setText('chat-error',''); applyAssistantStatus(assistantStatus || {available:false,message:'Pripájam model…'});
+  chatBubble('user',question);
+  const pending = chatBubble('assistant','Lokálny model spracúva otázku. Na staršom počítači to môže chvíľu trvať.');
+  pending.classList.add('pending');
+  const controller = new AbortController(), timeout = setTimeout(() => controller.abort(),125000);
+  try {
+    const result = await api('assistant/chat',{method:'POST',body:JSON.stringify({question,history:chatHistory.slice(-4)}),signal:controller.signal});
+    pending.remove();
+    const article = chatBubble('assistant',result.answer);
+    article.querySelector('small').textContent = `Lokálny asistent · údaje #${result.run_id}`;
+    const details = document.createElement('details'), summary = document.createElement('summary');
+    summary.textContent = 'Údaje použité pri odpovedi a ich pôvod';
+    const list = document.createElement('dl'); list.className = 'assistant-facts';
+    result.facts.forEach(fact => {
+      const term = document.createElement('dt'), value = document.createElement('dd');
+      term.textContent = fact.label; value.textContent = `${fact.value} · ${fact.source}`; list.append(term,value);
+    });
+    details.append(summary,list); article.append(details);
+    if (result.run_id === state.demo.run_id) chatHistory.push({role:'user',content:question},{role:'assistant',content:result.answer.slice(0,1800)});
+    chatHistory = chatHistory.slice(-6);
+    if (result.truncated) setText('chat-error','Odpoveď dosiahla limit dĺžky. Položte kratšiu doplňujúcu otázku.');
+  } catch (error) {
+    pending.remove(); setText('chat-error', error.name === 'AbortError' ? 'Model neodpovedal v časovom limite.' : error.message);
+  } finally { clearTimeout(timeout); chatBusy = false; applyAssistantStatus(assistantStatus || {available:false,message:'Skontrolujte Ollamu.'}); }
+}
+$('#chat-form').addEventListener('submit', event => { event.preventDefault(); const question = $('#chat-question').value.trim(); if (question) { $('#chat-question').value = ''; askAssistant(question); } });
+$$('[data-question]').forEach(button => button.addEventListener('click', () => askAssistant(button.dataset.question)));
+$('#chat-question').addEventListener('keydown', event => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); $('#chat-form').requestSubmit(); } });
+$('#history-run').addEventListener('change', event => { selectedRun = event.target.value; revision++; updateExportLink(); refresh(true); });
 
 function renderTheme() {
   const light = document.documentElement.dataset.theme === 'light';
@@ -342,5 +578,6 @@ $('#play').addEventListener('click', () => state && command({paused:!state.demo.
 $('#step').addEventListener('click', () => command({step:true}));
 $$('[data-period]').forEach(el => el.addEventListener('click', () => { period = el.dataset.period; $$('[data-period]').forEach(button => button.classList.toggle('active', button === el)); refresh(true); }));
 switchView(location.hash.slice(1));
-async function poll() { await refresh(); setTimeout(poll, 500); }
+window.addEventListener('hashchange', () => switchView(location.hash.slice(1)));
+async function poll() { await refresh(); refreshIntegrations(); setTimeout(poll, 500); }
 setTimeout(poll, 500);

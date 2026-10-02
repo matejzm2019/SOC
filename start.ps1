@@ -22,13 +22,13 @@ if (-not (Test-Path -LiteralPath $venvPython)) {
     }
     if ($LASTEXITCODE -ne 0) { throw 'Nepodarilo sa vytvorit .venv. Nainstalujte Python 3.12+.' }
 }
-& $venvPython -c 'import fastapi, uvicorn, tzdata'
+& $venvPython -c 'import fastapi, uvicorn, tzdata, httpx'
 if ($LASTEXITCODE -ne 0) {
     & $venvPython -m pip install -r requirements.txt -c constraints.txt
     if ($LASTEXITCODE -ne 0) { throw 'Instalacia zlyhala. Pri prvom spusteni je potrebny internet.' }
 }
 Write-Host ''
-Write-Host 'ENERGIA - LOKALNY DASHBOARD' -ForegroundColor Green
+Write-Host 'ENERGIA - LOKALNY DASHBOARD' -ForegroundColor Cyan
 Write-Host 'Dashboard: http://127.0.0.1:8765'
 $lanAddresses = Get-NetIPAddress -AddressFamily IPv4 -AddressState Preferred -ErrorAction SilentlyContinue |
     Where-Object { $_.IPAddress -notlike '127.*' -and $_.InterfaceAlias -notlike '*Loopback*' } |

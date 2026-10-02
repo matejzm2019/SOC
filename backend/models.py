@@ -18,8 +18,10 @@ class Settings(StrictModel):
     pv_kwp: float = Field(6, ge=0.1, le=100)
     azimuth_deg: float = Field(180, ge=0, le=360)
     tilt_deg: float = Field(35, ge=0, le=90)
-    latitude: float = Field(48.15, ge=-65, le=65)
+    latitude: float = Field(48.15, ge=-90, le=90)
     longitude: float = Field(17.11, ge=-180, le=180)
+    location_name: str = Field("", max_length=120)
+    location_set: bool = False
     battery_kwh: float = Field(10, ge=0.1, le=200)
     battery_max_kw: float = Field(3, ge=0.1, le=100)
     wind_kw: float = Field(2, ge=0.1, le=50)
@@ -30,10 +32,12 @@ class Settings(StrictModel):
     offpeak_price: float = Field(0.11, ge=0, le=10)
     distribution_price: float = Field(0.05, ge=0, le=10)
     fixed_daily: float = Field(0.25, ge=0, le=100)
-    measurement_source: Literal["simulator", "hybrid"] = "simulator"
+    measurement_source: Literal["simulator", "hybrid", "planning", "csv"] = "simulator"
     pv_reference_w: float = Field(0.5, gt=0, le=20)
-    weather_source: Literal["simulator"] = "simulator"
+    weather_source: Literal["simulator", "internet"] = "internet"
     price_source: Literal["manual"] = "manual"
+    ai_enabled: bool = True
+    ai_model: Literal["qwen3:0.6b", "qwen3:1.7b"] = "qwen3:0.6b"
 
 
 SCENARIOS = {
@@ -71,8 +75,8 @@ class Esp32Telemetry(StrictModel):
 class Sample(StrictModel):
     timestamp: str
     interval_seconds: int = Field(300, gt=0)
-    source: Literal["simulator", "hybrid"] = "simulator"
-    quality: Literal["synthetic", "mixed"] = "synthetic"
+    source: Literal["simulator", "hybrid", "planning", "csv"] = "simulator"
+    quality: Literal["synthetic", "mixed", "estimated", "imported"] = "synthetic"
     device_id: str | None = None
     panel_power_w: float | None = Field(default=None, ge=0)
     illuminance_lux: float | None = Field(default=None, ge=0)
@@ -86,8 +90,8 @@ class Sample(StrictModel):
     battery_w: float
     unserved_w: float = Field(ge=0)
     curtailed_w: float = Field(ge=0)
-    voltage_v: float = Field(ge=0)
-    current_a: float = Field(ge=0)
+    voltage_v: float | None = Field(default=None, ge=0)
+    current_a: float | None = Field(default=None, ge=0)
     soc_pct: float | None = Field(default=None, ge=0, le=100)
     battery_energy_kwh: float | None = None
     battery_eta_hours: float | None = None
@@ -107,3 +111,28 @@ class Sample(StrictModel):
         if abs(residual) > 0.01 or abs(self.load_w - self.served_w - self.unserved_w) > 0.01:
             raise ValueError("Energetická bilancia nesedí")
         return self
+
+
+class WeatherPoint(StrictModel):
+    timestamp: str
+    temperature_c: float = Field(ge=-100, le=70)
+    cloud_pct: float = Field(ge=0, le=100)
+    wind_ms: float = Field(ge=0, le=150)
+    radiation_wm2: float = Field(ge=0, le=2000)
+    tilted_wm2: float = Field(ge=0, le=2500)
+    precipitation_mm: float = Field(0, ge=0, le=1000)
+    weather_code: int = Field(0, ge=0, le=99)
+
+
+class CsvImport(StrictModel):
+    content: str = Field(min_length=10, max_length=3_000_000)
+
+
+class ChatMessage(StrictModel):
+    role: Literal["user", "assistant"]
+    content: str = Field(min_length=1, max_length=1800)
+
+
+class AssistantRequest(StrictModel):
+    question: str = Field(min_length=1, max_length=1200)
+    history: list[ChatMessage] = Field(default_factory=list, max_length=6)
