@@ -24,7 +24,7 @@ class Settings(StrictModel):
     location_set: bool = False
     battery_kwh: float = Field(10, ge=0.1, le=200)
     battery_max_kw: float = Field(3, ge=0.1, le=100)
-    battery_capacity_mah: int = Field(1000, ge=100, le=10000)
+    battery_capacity_mah: int = Field(2500, ge=100, le=10000)
     wind_kw: float = Field(2, ge=0.1, le=50)
     base_load_w: float = Field(600, ge=50, le=20000)
     price_mode: Literal["manual", "time_of_use"] = "manual"
@@ -71,9 +71,19 @@ class DemoCommand(StrictModel):
     step: bool = False
 
 
+class WaterTelemetry(StrictModel):
+    source_ok: bool
+    target_low: bool
+    target_full: bool
+    leak_detected: bool
+    pump_running: bool
+    fault: Literal["none", "source_empty", "leak", "sensor_conflict", "timeout", "link_lost", "main_lost"] = "none"
+
+
 class Esp32Telemetry(StrictModel):
     device_id: str = Field("energia-esp32", min_length=1, max_length=48, pattern=r"^[a-zA-Z0-9_-]+$")
     firmware_version: str = Field("dev", min_length=1, max_length=24)
+    telemetry_origin: Literal["hardware", "software_test"] = "hardware"
     panel_voltage_v: float = Field(ge=0, le=26)
     panel_current_a: float = Field(ge=0, le=5)
     panel_power_w: float = Field(ge=0, le=20)
@@ -84,6 +94,9 @@ class Esp32Telemetry(StrictModel):
     battery_voltage_v: float | None = Field(default=None, ge=2.5, le=4.35)
     battery_soc_pct: float | None = Field(default=None, ge=0, le=100)
     battery_charge_rate_pct_h: float | None = Field(default=None, ge=-1000, le=1000)
+    battery_current_a: float | None = Field(default=None, ge=-5, le=5)
+    battery_soc_method: Literal["max17048", "voltage_estimate"] | None = None
+    water: WaterTelemetry | None = None
 
     @model_validator(mode="after")
     def battery_pair(self):
@@ -91,6 +104,8 @@ class Esp32Telemetry(StrictModel):
             raise ValueError("Batéria musí poslať napätie aj stav nabitia, alebo obe hodnoty vynechať.")
         if self.battery_charge_rate_pct_h is not None and self.battery_soc_pct is None:
             raise ValueError("Rýchlosť zmeny SOC vyžaduje meranie batérie.")
+        if (self.battery_current_a is not None or self.battery_soc_method is not None) and self.battery_soc_pct is None:
+            raise ValueError("Prúd a metóda SOC vyžadujú meranie batérie.")
         return self
 
 
@@ -100,6 +115,7 @@ class Sample(StrictModel):
     source: Literal["simulator", "hybrid", "planning", "csv"] = "simulator"
     quality: Literal["synthetic", "mixed", "estimated", "imported"] = "synthetic"
     device_id: str | None = None
+    telemetry_origin: Literal["hardware", "software_test"] | None = None
     panel_power_w: float | None = Field(default=None, ge=0)
     illuminance_lux: float | None = Field(default=None, ge=0)
     scenario: Scenario
@@ -119,6 +135,8 @@ class Sample(StrictModel):
     battery_eta_hours: float | None = None
     battery_voltage_v: float | None = Field(default=None, ge=2.5, le=4.35)
     battery_charge_rate_pct_h: float | None = Field(default=None, ge=-1000, le=1000)
+    battery_current_a: float | None = Field(default=None, ge=-5, le=5)
+    battery_soc_method: Literal["max17048", "voltage_estimate"] | None = None
     price_source: Literal["manual", "internet"] = "manual"
     temperature_c: float
     cloud_pct: float = Field(ge=0, le=100)

@@ -1,5 +1,7 @@
 # Päťminútová SOČ prezentácia
 
+> Aktualizácia 0.10.0-house: fyzická stavba a pinová tabuľka sú v [ZAPOJENIE.md](ZAPOJENIE.md), opis AI/servera v [AKO-TO-FUNGUJE.md](AKO-TO-FUNGUJE.md). Staršie hardvérové poznámky nižšie sú historické; výsledky aktuálnych kontrol sú v OVERENIE-STAVBY.md.
+
 1. Spustite `start.cmd`, otvorte http://127.0.0.1:8765. Pred prezentáciou overte štart bez internetu. V nastaveniach zapnite **DEMO MODE**. Predvolené FV 6 kWp, batéria 10 kWh, ceny zapnuté; vyberte ručný zdroj cien.
 2. Vysvetlite banner **DEMO MODE** a simulačný čas. Ukážte predgenerovaný deň histórie; nejde o meranie domácnosti.
 3. **Slnečný deň**: výroba pokrýva časť spotreby a nabíja batériu, prebytok ide do siete. Výsledok závisí od času a parametrov; pri poludňajšom štarte predvolene vidno slnko.

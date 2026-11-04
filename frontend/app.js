@@ -1,3 +1,5 @@
+import {createHouseView} from './house-view.js';
+import {createWaterView} from './water-view.js';
 const $ = selector => document.querySelector(selector);
 const $$ = selector => [...document.querySelectorAll(selector)];
 const number = (value, digits = 2) => value == null ? '—' : new Intl.NumberFormat('sk-SK', {minimumFractionDigits: digits, maximumFractionDigits: digits}).format(value);
@@ -9,11 +11,16 @@ let state, view = 'overview', period = 'day', settingsTab = 'source', busy = fal
 let lastDataAt = 0, lastDataKey = '', selectedRun = '', chatBusy = false, assistantStatus, historySettings;
 let chatHistory = [], integrationsBusy = false, integrationCheckedAt = 0, weatherRequestedAt = 0, weatherRequestKey = '';
 const pages = {
+  house: ['3D model','Drevený smart dom','Celé steny, odnímateľná strecha a komponenty na svojom mieste.'],
+  water: ['Voda','Voda a filtrácia','Prečerpávanie medzi nádržami s miestnymi ochranami na ESP32.'],
   overview: ['Prehľad', 'Prehľad domácnosti', 'Spotreba, výroba a tok energie na jednom mieste.'],
   history: ['História', 'Energia v čase', 'Priebeh spotreby a výroby.'],
   forecast: ['Predikcie', 'Predikcia na 24 hodín', 'Výhľad výroby a spotreby podľa dostupných údajov.'],
   economy: ['Ekonomika', 'Náklady na energiu', 'Odber, výkup a prevádzková úspora.']
 };
+
+const houseView = createHouseView(document.querySelector('[data-page="house"]'));
+const waterView = createWaterView(document.querySelector('[data-page="water"]'), api);
 
 async function api(path, options = {}) {
   const response = await fetch(`/api/${path}`, {cache:'no-store', ...options, headers:{'Content-Type':'application/json', ...options.headers}});
@@ -35,7 +42,7 @@ function showError(error) {
 }
 
 function setText(id, value) { const el = $(`#${id}`); if (el.textContent !== String(value)) el.textContent = value; }
-function metricValue(id, value, unit) { $(`#${id}`).innerHTML = `${number(value)}<small>${unit}</small>`; }
+function metricValue(id, value, unit, digits=2) { $(`#${id}`).innerHTML = `${number(value,digits)}<small>${unit}</small>`; }
 function acceptState(next, preserveChat = false) {
   if (!preserveChat && state && state.demo.run_id !== next.demo.run_id) {
     chatHistory = [];
@@ -72,11 +79,14 @@ function renderState() {
   const label = demo.enabled ? 'Demo režim' : imported ? 'Importovaná história' : 'Model domu · ESP32';
   setText('mode-title', label);
   setText('mode-pill', `◉ ${label}`);
-  setText('energy-provenance', imported ? 'Spotreba a FV pochádzajú z importovaných intervalov. Tok siete je odvodený výpočtom; zobrazený výkon je priemer posledného intervalu.' : hybrid ? state.device.online ? 'ESP32 meria panel a nabitie malej Li-ion batérie. Toky domácnosti sú škálovaný model; ESP a svetlá napája laboratórny zdroj.' : 'ESP32 je odpojené. Čakám na meranie; posledné dostupné hodnoty môžu byť staré. Simulátor nenahrádza meranie.' : state.settings.weather_source === 'simulator' ? 'Energetické toky aj počasie pochádzajú zo simulátora.' : 'Energetické toky sú simulované. Internetové počasie je samostatný aktuálny údaj a nemení prezentačný scenár.');
+  setText('energy-provenance', imported ? 'Spotreba a FV pochádzajú z importovaných intervalov. Tok siete je odvodený výpočtom; zobrazený výkon je priemer posledného intervalu.' : hybrid ? state.device.online ? 'ESP32 posiela meranie panela, batérie a hlavného 5 V zdroja. Relé pri výpadku prepína LED na batériovú zálohu; čerpadlo je iba na hlavnom zdroji. Toky domácnosti v kW sú škálovaný model.' : 'ESP32 je odpojené. Čakám na meranie; posledné dostupné hodnoty môžu byť staré. Simulátor nenahrádza meranie.' : state.settings.weather_source === 'simulator' ? 'Energetické toky aj počasie pochádzajú zo simulátora.' : 'Energetické toky sú simulované. Internetové počasie je samostatný aktuálny údaj a nemení prezentačný scenár.');
+  if (hybrid && s.telemetry_origin === 'software_test') setText('energy-provenance', 'TESTOVACIA TELEMETRIA · Údaje vytvára softvérový simulátor. Nejde o meranie fyzického domu.');
   setText('flow-heading', imported ? 'Bilancia posledného intervalu' : 'Energetické toky');
   metricValue('load-value', s.load_w / 1000, 'kW');
   metricValue('pv-value', s.pv_w / 1000, 'kW');
-  metricValue('soc-value', s.soc_pct, '%');
+  const voltageEstimate = s.battery_soc_method === 'voltage_estimate';
+  const method = voltageEstimate ? 'odhad z napätia' : 'MAX17048';
+  metricValue('soc-value', s.soc_pct, '%', voltageEstimate ? 0 : 2);
   metricValue('grid-value', Math.abs(s.grid_w) / 1000, 'kW');
   setText('load-detail', imported ? 'Priemer intervalu z CSV' : hybrid ? 'Model spotreby podľa záťaží ESP32' : `${number(s.voltage_v, 0)} V · ${number(s.current_a, 1)} A · virtuálne`);
   setText('pv-detail', `${number(settings.pv_kwp, 1)} kWp inštalovaný výkon`);
@@ -86,17 +96,19 @@ function renderState() {
   const batteryAction = s.battery_w > 1 ? 'Vybíjanie' : s.battery_w < -1 ? 'Nabíjanie' : 'Pohotovosť';
   setText('battery-detail', `${number(s.battery_energy_kwh, 1)} / ${number(settings.battery_kwh, 1)} kWh · ${batteryAction.toLowerCase()} · virtuálne`);
   setText('battery-title', hybrid ? 'Solárna Li-ion batéria' : 'Batéria domácnosti');
-  if (hybrid) setText('battery-detail', s.battery_voltage_v == null ? 'MAX17048 · nabitie zatiaľ nie je dostupné' : `${number(s.battery_voltage_v,2)} V · ${number(settings.battery_capacity_mah,0)} mAh · MAX17048`);
+  if (hybrid) setText('battery-detail', s.battery_voltage_v == null ? 'Nabitie zatiaľ nie je dostupné' : `${number(s.battery_voltage_v,2)} V · ${number(settings.battery_capacity_mah,0)} mAh · ${method}`);
   $('#physical-battery-panel').hidden = !hybrid || !settings.battery_enabled;
   const cellAvailable = hybrid && !waiting && s.battery_voltage_v != null;
   if (hybrid && !cellAvailable) { setText('soc-value', '—'); $('#soc-bar').style.width = '0%'; }
   const cellRate = s.battery_charge_rate_pct_h;
-  setText('cell-soc', cellAvailable ? `${number(s.soc_pct,1)} %` : '—');
+  setText('cell-soc', cellAvailable ? `${number(s.soc_pct,voltageEstimate ? 0 : 1)} %` : '—');
   setText('cell-voltage', cellAvailable ? `${number(s.battery_voltage_v,2)} V` : '—');
   setText('cell-capacity', `${number(settings.battery_capacity_mah,0)} mAh`);
   setText('cell-energy', cellAvailable ? `${number(s.battery_energy_kwh * 1000,2)} Wh` : '—');
-  setText('cell-status', !state.device.online ? 'ESP32 OFFLINE' : cellAvailable ? 'MAX17048 · MERANIE' : 'ČAKÁM NA BATÉRIU');
-  setText('cell-trend', !cellAvailable ? 'Pripojte kompatibilnú batériu a MAX17048. Bez merača sa nabitie neodhaduje z napätia.' : `${cellRate == null ? 'Trend zatiaľ nie je dostupný' : Math.abs(cellRate) < .5 ? 'SOC sa výrazne nemení' : cellRate > 0 ? 'SOC stúpa · pravdepodobné nabíjanie' : 'SOC klesá'}${cellRate == null ? '' : ` · zmena ${number(cellRate,1)} percentuálneho bodu/h (odhad)`} · ${time(s.timestamp)}${state.device.online ? '' : ' · posledné meranie'}`);
+  setText('cell-status', !state.device.online ? 'ESP32 OFFLINE' : cellAvailable ? voltageEstimate ? 'INA219 · ODHAD %' : 'MAX17048 · ODHAD %' : 'ČAKÁM NA BATÉRIU');
+  setText('cell-current', cellAvailable && s.battery_current_a != null ? `${number(s.battery_current_a*1000,0)} mA` : '—');
+  setText('backup-status', !hybrid || waiting || !state.device.online ? 'Živý stav napájania nie je dostupný' : `${s.telemetry_origin === 'software_test' ? 'TEST · ' : ''}${s.grid_available ? 'Hlavný 5 V zdroj dostupný · LED na hlavnej vetve' : 'Výpadok hlavného zdroja · zvolená batériová vetva LED'}`);
+  setText('cell-trend', !cellAvailable ? 'Čakám na batériový INA219 na adrese 0x41.' : `${s.battery_current_a == null ? 'Trend prúdu nedostupný' : s.battery_current_a>.01 ? 'Batéria sa nabíja' : s.battery_current_a<-.01 ? 'Batéria sa vybíja' : 'Prúd je blízko nuly'} · ${method}${voltageEstimate ? ' · počas nabíjania a pod záťažou môže byť odhad nepresný' : ''}${s.soc_pct<20 ? ' · nízke nabitie' : ''} · ${time(s.timestamp)}${state.device.online ? '' : ' · posledné meranie'}`);
   $('#soc-bar').style.width = `${hybrid && !cellAvailable ? 0 : s.soc_pct || 0}%`;
   const gridAction = !s.grid_available ? 'Výpadok siete' : s.grid_w > 1 ? '↓ Odber zo siete' : s.grid_w < -1 ? '↑ Dodávka do siete' : 'Bez toku energie';
   setText('grid-detail', gridAction);
@@ -110,14 +122,14 @@ function renderState() {
   setText('flow-grid-sub', gridAction);
   setText('flow-battery', `${s.battery_w > 1 ? '−' : s.battery_w < -1 ? '+' : ''}${kw(Math.abs(s.battery_w))}`);
   setText('flow-battery-label', hybrid ? '▱ SOLÁRNA BATÉRIA' : '▱ BATÉRIA');
-  if (hybrid) setText('flow-battery', cellAvailable ? `${number(s.soc_pct,1)} %` : '—');
+  if (hybrid) setText('flow-battery', cellAvailable ? `${number(s.soc_pct,voltageEstimate ? 0 : 1)} %` : '—');
   $('#flow-battery').parentElement.setAttribute('aria-label', `${batteryAction}, ${s.battery_eta_hours == null ? 'odhad nedostupný' : number(s.battery_eta_hours, 1) + ' hodín do limitu'}`);
   setText('flow-wind', kw(s.wind_w));
   setText('mobile-pv', kw(s.pv_w));
   setText('mobile-load', kw(s.served_w));
   setText('mobile-battery', kw(Math.abs(s.battery_w)));
   $('#mobile-battery').previousElementSibling.textContent = hybrid ? '▱ Solárna Li-ion batéria' : '▱ Virtuálna batéria';
-  if (hybrid) setText('mobile-battery', cellAvailable ? `${number(s.soc_pct,1)} %` : '—');
+  if (hybrid) setText('mobile-battery', cellAvailable ? `${number(s.soc_pct,voltageEstimate ? 0 : 1)} %` : '—');
   setText('mobile-grid', kw(Math.abs(s.grid_w)));
   setText('mobile-grid-detail', gridAction);
   setFlow('pv', s.pv_w, false);
@@ -130,7 +142,7 @@ function renderState() {
   setText('unserved', s.curtailed_w > 1 ? `Obmedzená výroba ${kw(s.curtailed_w)}` : `${settings.battery_enabled ? batteryAction + eta : 'Batéria vypnutá'}`);
   if (hybrid) {
     setText('unserved', 'Batéria má samostatný solárny okruh');
-    $('#flow-battery').parentElement.setAttribute('aria-label', 'Malá solárna batéria; ESP a svetlá napája laboratórny zdroj');
+    $('#flow-battery').parentElement.setAttribute('aria-label', 'Malá batéria cez MT3608 zálohuje LED a napája ESP; čerpadlo je na hlavnom zdroji');
   }
   if (waiting) {
     ['flow-load','flow-pv','flow-grid','flow-battery','flow-wind','mobile-load','mobile-pv','mobile-grid','mobile-battery'].forEach(id => setText(id,'—'));
@@ -139,6 +151,7 @@ function renderState() {
     $('#soc-bar').style.width = '0%';
     $('#flow-battery').parentElement.setAttribute('aria-label','Čakám na meranie ESP32');
   }
+  houseView.update(state); waterView.update(state);
   renderWeather(state.weather);
   const internetPrice = settings.price_source === 'internet', prices = state.prices || {};
   setText('buy-price', internetPrice ? prices.available ? `${number(prices.buy_eur_kwh,4)} €` : '—' : eur(s.buy_eur_kwh));
@@ -348,7 +361,7 @@ function updateSettings() {
   form.elements.namedItem('offpeak_price').disabled = !offpeak;
   setText('price-explainer', internet ? 'Energy-Charts: aktuálny slovenský spot v €/kWh, obnovenie každých 30 minút. Nákup = (spot + prirážka) × (1 + DPH). Výkup zadajte podľa zmluvy; distribúciu a fixné poplatky vrátane príslušných daní. SK dáta sú na súkromné použitie; na verejné demo použite ručnú tarifu. Pri výpadku používame iba platný uložený interval.' : 'Zadajte cenu zo zmluvy vrátane daní. V demo režime scenáre lacnej a drahej energie dočasne upravia ručnú nákupnú cenu.');
   const hybrid = source === 'hybrid';
-  setText('source-explainer', hybrid ? 'ESP32-S3 posiela meranie panela a MAX17048 cez Wi-Fi. Batériu nabíja solárna nabíjačka; ostatné zariadenia napája laboratórny zdroj. Toky domácnosti sú modelované.' : imported ? 'Importujte vlastné údaje tlačidlom nižšie. Import sa spracuje samostatne a zachová doterajšiu históriu.' : 'Simulátor vytvára syntetické energetické údaje a pripravené scenáre. Funguje aj bez internetu.');
+  setText('source-explainer', hybrid ? 'ESP32-S3 posiela meranie panela, batérie a stavu hlavného zdroja cez Wi-Fi. CN3791 nabíja batériu a MT3608 vytvára záložných 5 V; relé prepína LED. Čerpadlo zostáva na hlavnom zdroji. Toky domácnosti sú modelované.' : imported ? 'Importujte vlastné údaje tlačidlom nižšie. Import sa spracuje samostatne a zachová doterajšiu históriu.' : 'Simulátor vytvára syntetické energetické údaje a pripravené scenáre. Funguje aj bez internetu.');
   setText('settings-device-state', hybrid ? (state.device.online ? 'ESP32 pripojené' : 'ESP32 nepripojené') : imported ? 'Vlastná história' : 'Lokálny simulátor');
   setText('chosen-location', form.elements.namedItem('location_set').checked ? `${form.elements.namedItem('location_name').value} · ${number(Number(form.elements.namedItem('latitude').value),3)}°, ${number(Number(form.elements.namedItem('longitude').value),3)}°` : 'Miesto nie je nastavené');
   setText('ollama-command', `ollama pull ${form.elements.namedItem('ai_model').value}`);
