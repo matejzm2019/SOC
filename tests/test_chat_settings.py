@@ -55,7 +55,7 @@ def test_stale_expired_and_tampered_proposals_do_not_change_settings(chat_app):
     current=client.get('/api/state').json()
     client.put('/api/settings',json=current['settings'] | {'base_load_w':800}).raise_for_status()
     assert client.post('/api/assistant/apply',json={'token':token}).status_code==409
-    assert client.get('/api/state').json()['settings']['battery_capacity_mah']==1000
+    assert client.get('/api/state').json()['settings']['battery_capacity_mah']==2500
     assert client.post('/api/assistant/apply',json={'token':token,'changes':{'buy_price':0}}).status_code==422
     proposal=client.post('/api/assistant/chat',json={'question':'Nastav kapacitu clanku 2000 mAh'}).json()['proposal']
     client.app.state.engine.chat_proposals[proposal['token']]['created']-=601

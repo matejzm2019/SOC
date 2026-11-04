@@ -10,6 +10,17 @@ Lokálna aplikácia používa FastAPI, SQLite a responzívny webový dashboard. 
 
 Na model sa privádza iba nízke DC napätie. Laboratórny zdroj môže mať sieťový vstup vo svojom uzavretom prístroji; so sieťovým napätím sa na modeli nepracuje.
 
+## Aktuálna stavba: smart dom s odnímateľnou strechou
+
+Verzia **0.10.0-house**: celé steny, bez nábytku, podstava 600 × 450 mm, dom 480 × 330 mm. Malé moduly CN3791 a MT3608, LiPo 2500 mAh, dva INA219, automatické prepnutie LED pri výpadku a vodný okruh s miestnymi ochranami. AI zostáva na PC/serveri cez Ollamu, ESP komunikuje cez Wi-Fi.
+
+- **[Stavebný návod PDF](model-domu/STAVEBNY-NAVOD.pdf)**, [rezací plán](model-domu/rezaci-plan.csv), [vodiče](model-domu/dlzky-vodicov.csv), [hadičky](model-domu/hadicky.csv).
+- **[3D Blender](model-domu/3d/dom.blend)**, [GLB](model-domu/3d/dom.glb), [pôdorys](model-domu/vykresy/podorys.svg), šablóny dielov 1:1 v model-domu/vykresy/.
+- **[Kusovník](docs/KOMPONENTY.md)**, **[zapojenie](docs/ZAPOJENIE.md)** a **[čo celý systém robí](docs/AKO-TO-FUNGUJE.md)**.
+- V aplikácii karty **3D model a stavba** a **Voda a filtrácia**. Výrobné súbory otvoríš aj na `/stavba/`.
+
+Moduly a nádoby sú v 3D modeli rozmerové rezervy; presné montážne otvory treba preniesť zo zakúpených dielov. Úprava nabíjacieho prúdu CN3791 a konkrétne vodné priechodky zostávajú kontrolou pred fyzickou montážou, nie garantovanými parametrami z obrázka. Návod a pripravené súbory simulácie sú na želanie používateľa v samostatnom balíku mimo projektu.
+
 ## Spustenie
 
 1. Na Windows spustite **`start.cmd`**.
@@ -49,17 +60,15 @@ py -3 -m venv .venv
 
 ## ESP32-S3 a fyzický model
 
-ESP32-S3 a LED napája laboratórny zdroj 5 V. Panel 6 V / približne 1–3 W cez INA219 a BQ24074 nabíja samostatný chránený Li-ion článok. MAX17048 meria napätie a odhaduje nabitie; voliteľný BH1750 meria osvetlenie. Batéria nenapája ESP ani LED. Stará rezistorová záťaž a PowerBoost sa nepoužívajú.
+Hlavný 5 V zdroj napája čerpadlo a cez relé LED. Pri výpadku LED prejdú na MT3608 z chránenej LiPo. ESP je stále na tomto zálohovanom výstupe; CN3791 nabíja článok zo soláru. Percentá sú orientačný odhad z napätia, prúd sa meria druhým INA219. Čerpadlo cez DRV8833 má miestne plavákové ochrany a časový limit.
 
-Firmvér, zapojenie a nastavenie Wi-Fi sú v [firmware/esp32-s3/README.md](firmware/esp32-s3/README.md). Presný nákupný zoznam je v [docs/KOMPONENTY.md](docs/KOMPONENTY.md) a priebeh ukážky v [docs/DEMO.md](docs/DEMO.md).
-
-Pri prvom štarte server vytvorí tajný kľúč v `data/device_key.txt`. Skopírujte `firmware/esp32-s3/secrets.example.h` na `secrets.h`, doplňte Wi-Fi, LAN adresu PC a tento kľúč. Súbor `secrets.h` je ignorovaný Gitom. ESP32 odosiela JSON každú sekundu na `POST /api/device/telemetry`; dashboard jasne ukazuje online/offline stav.
+Postup firmvéru je v [firmware/esp32-s3/README.md](firmware/esp32-s3/README.md), schéma v [docs/ZAPOJENIE.md](docs/ZAPOJENIE.md). Server pri prvom štarte vytvorí `data/device_key.txt`; do ignorovaného `secrets.h` doplň Wi-Fi, LAN URL PC a tento kľúč. Arduino AI nespúšťa, jeho úlohou je meranie a bezpečné miestne riadenie. Úplný popis: [AKO-TO-FUNGUJE.md](docs/AKO-TO-FUNGUJE.md).
 
 ## Funkcie
 
 - Nastavenia pre zdroj dát, miesto a počasie, moduly, model domácnosti, tarifu a lokálneho asistenta. Zmena modelu vytvorí nový súbor údajov; zmena asistenta alebo zobrazenia zachová históriu.
 - Tmavý a svetlý vzhľad s predvoleným tmavým režimom. Voľba sa ukladá len v prehliadači a nemení experiment.
-- Živé modelované energetické toky; v deme virtuálna batéria s odhadom do limitu, v normálnom režime reálny výstup MAX17048: SOC, napätie článku, trend a odhad energie.
+- Živé modelované energetické toky; v deme virtuálna batéria s odhadom do limitu, v normálnom režime meranie INA219: napätie, znamienkový prúd a orientačné percentá článku.
 - Osem prezentačných scenárov vrátane prebytku, večernej špičky a výpadku siete.
 - História 24 h, 7 dní, 30 dní a celého experimentu, intervalové kWh a CSV export.
 - Ručná/časová tarifa alebo aktuálny slovenský spot Energy-Charts, zadaná prirážka a DPH; nezávislý výkup, distribúcia a fixný poplatok. Spot nie je automaticky cena z faktúry. SK dáta sú na súkromné použitie; verejné demo používa ručné ceny.
@@ -72,7 +81,7 @@ Pri prvom štarte server vytvorí tajný kľúč v `data/device_key.txt`. Skopí
 
 V DEMO MODE predstavuje krok päť minút. V monitorovacom režime vzniká vzorka každú sekundu a prehliadač aktualizuje živé hodnoty približne každých 0,5 sekundy. Pri zdroji ESP32 pomer aktuálneho výkonu malého panela ku kalibračnému výkonu riadi virtuálnu FV elektráreň. Ide o názorný model správania výroby, nie o tvrdenie, že malý panel fyzicky vyrába kilowatty. Dáta majú označenie `source=hybrid` a `quality=mixed`.
 
-Aktuálna správa pre učiteľa je v [docs/SPRAVA_PRE_UCITELA.md](docs/SPRAVA_PRE_UCITELA.md). Staršie súbory v `deliverables/` a ilustrácia modelu zachytávajú pôvodné powerbankové zapojenie; pre aktuálnu zostavu použite KOMPONENTY.md.
+Aktuálna správa pre učiteľa je v [docs/SPRAVA_PRE_UCITELA.md](docs/SPRAVA_PRE_UCITELA.md). Staršie súbory v `deliverables/` zachytávajú pôvodný návrh; na stavbu používaj nové ZAPOJENIE.md a model-domu/.
 
 ## Testy
 

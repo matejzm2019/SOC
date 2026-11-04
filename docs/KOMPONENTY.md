@@ -1,80 +1,47 @@
-# Komponenty a zapojenie modelu domu
+# Jednotný kusovník – menšia zostava
 
-**Laboratórny zdroj napája ESP32 a LED domu. Solárny panel cez nabíjačku nabíja samostatnú malú Li-ion batériu.** Batéria nenapája ESP ani svetlá. Notebook spracúva merania a poskytuje web pre PC aj mobil.
+Platný návrh 4. 11. 2026. Ceny orientačne podľa overenia 2. 11. 2026, bez dopravy; nie potvrdenie dnešnej skladovej dostupnosti. Vybraný je CN3791 + MT3608. Nekombinovať náhodne so starším návrhom BQ24074/MAX17048 alebo Waveshare Power Manager.
 
-## Nákupný zoznam
+| ID | Ks | Diel | Cena spolu | Umiestnenie / poznámka |
+|---|---:|---|---:|---|
+| E01 | 1 | [ESP32-S3 N16R8](https://techfun.sk/produkt/esp32-s3-n16r8-wifi-a-bluetooth-5-0-vyvojova-doska/) | 9,95 € | technická doska; už objednaný nekupovať znovu; naposledy vypredaný |
+| E02 | 1 | [Chránená LiPo 104050 – 2500 mAh](https://techfun.sk/produkt/li-pol-bateria-kablik-ochranny-obvod/) | 5,80 € podľa fotografie | 3,7 V / 4,2 V, 50×40×10 mm, PH2.0; už vybraná |
+| E03 | 1 | [CN3791, variant 6 V](https://techfun.sk/produkt/solarna-nabijacka-cn3791-pre-litiove-baterie/) | 4,40 € | solárna nabíjačka, prúd overiť/nastaviť podľa článku |
+| E04 | 1 | [MT3608 bez USB](https://techfun.sk/produkt/step-up-menic-mt3608/) | 0,85–0,95 € | nastaviť 5,00 V; údaj 2 A nie je zaručený výstup pri všetkých podmienkach |
+| E05 | 1 | [Panel 6 V / 5 W](https://techfun.sk/produkt/waveshare-solarny-panel-6v-5w/) | 14,25 € | 230×195×17 mm, cca 533 g, samostatný stojan |
+| E06/E07 | 2 | [INA219](https://techfun.sk/produkt/snimac-prudu-ina219-obojsmerny/) | 9,00 € | panel 0x40, batéria 0x41, logické napájanie 3,3 V |
+| E08 | 1 | [REL300 relé 5 V s optočlenom](https://techfun.sk/produkt/rele-modul-1-kanal-5v-so-zabudovanym-optoclenom/) | 1,40 € | spínanie LOW, NO/NC prepínajú LED |
+| E09/E10 | 2 | [2N2222A](https://techfun.sk/produkt/bjt-npn-tranzistor-2n2222-800ma/) | 0,10 € | dve vetvy po 3 LED; overiť poradie vývodov |
+| E11 | 1 | [DRV8833](https://techfun.sk/produkt/motor-driver-3v-10v-dual-h-bridge-drv8833/) | 1,60 € | ovládanie pumpy, vstupy kompatibilné s logikou 3,3 V |
+| W01 | 1 | [Sada na zavlažovanie](https://techfun.sk/produkt/sada-suciastok-pre-automaticke-zavlazovanie-kvetinaca/) | 3,95 € | použiť pumpu a 50 cm hadičku; ostatné diely sú rezerva, AA držiak sa nepoužíva |
+| W02–W05 | 4 | [Plavákový snímač](https://techfun.sk/produkt/plavakovy-senzor-hladiny/) | 7,60 € | zdroj, cieľ low/full, záchytná vanička |
+| L01–L06 | 6 + 4 rezerva | [Biele LED 3 mm](https://techfun.sk/produkt/led-ka-1-kus-3mm-rozne-farby/) | 0,30 € za 10 | po tri na každý svetelný okruh |
+| L07 | 1 + 1 rezerva | Modrá LED z rovnakej ponuky | 0,06 € za 2 | stav hlavného zdroja |
+| S01/S02 | 2 | [SMTS-102](https://techfun.sk/produkt/kovovy-dvojpolohovy-prepinac-smts-102/) | 0,80 € | prepínače svetiel, logické kontakty proti GND |
+| R | 4 balenia | [Rezistory ¼ W](https://techfun.sk/produkt/rezistor-rozne-hodnoty-1-4w-10-kusov/): 330 Ω, 1 kΩ, 10 kΩ, 22 kΩ | 1,00 € | 10 ks každej hodnoty; rezerva zostane |
+| C | 2 | [470 µF / 25 V](https://techfun.sk/produkt/elektrolyticky-kondenzator-47uf-25v/) | podľa variantu | pri ESP 5 V a DRV8833 VM, dodržať polaritu |
+| J | 1 | [PH2.0 2-pin protikus/káblik](https://techfun.sk/produkt/ph2-0-kablik-samecsamica-2p/) | 0,40 € | naposledy vypredaný; XH2.54 ani JST1.25 nesedia |
+| K | 2 balenia | [Dupont 20 cm](https://techfun.sk/produkt/kabliky-40-kusov-20-cm/), M–F a F–F | 4,40 € | na signály, nie motorové/hlavné napájanie |
 
-| Počet | Komponent | Požiadavka a účel |
-|---:|---|---|
-| 1 | ESP32-S3 DevKit | Wi-Fi, Arduino ESP32 core, USB napájanie |
-| 1 | Solárny panel | Nominálne 6 V, približne 1–3 W; napätie naprázdno musí vyhovovať nabíjačke |
-| 1 | INA219 breakout | Napätie, prúd a výkon panela; I²C adresa 0x40 |
-| 1 | BQ24074 solar charger breakout | Adafruit Universal USB/DC/Solar Charger alebo overená ekvivalentná doska s riadením solárneho vstupu |
-| 1 | Chránený Li-ion/LiPo článok | Jeden článok: nominálne 3,7 V, nabíjanie na 4,2 V; 1 000–2 000 mAh, povolený nabíjací prúd aspoň 0,5 A, kompatibilný JST-PH konektor a polarita |
-| 1 | MAX17048 breakout | Odhad SOC a meranie napätia článku; Adafruit doska s dvoma paralelnými JST konektormi, adresa 0x36 |
-| 1 | BH1750 | Voliteľný merač osvetlenia, adresa 0x23; firmware ho podporuje |
-| 1 | Laboratórny zdroj | Stabilizovaných 5 V DC, prúdový limit podľa dosky a záťaží |
-| 1 | USB napájací adaptér/kábel | Privedenie 5 V zo zdroja do USB ESP; skontrolovaná polarita |
-| 1 | Multimeter | Kontrola napätia a polarity pred pripojením |
-| 1 | LED lampa | Napájanie podľa požiadaviek lampy, napríklad USB 5 V; dostatočné osvetlenie |
-| 3 | LED | Dve pre okná domu, jedna modrá pre stav modelovanej siete |
-| 3 | Rezistor LED | 220–330 Ω; každý v sérii so svojou LED |
-| 3 | Prepínač/tlačidlo | Dve záťaže a výpadok modelovanej siete |
-| 1 sada | Vodiče, breadboard a konektory | Izolovaný kryt batérie a materiál domu |
-| existujúce | Notebook, router a mobil | Rovnaká sieť bez izolácie Wi-Fi klientov |
+## Ďalšie montážne diely
 
-**PowerBoost a 47 Ω záťaž z predchádzajúceho návrhu už netreba.** Panel má ako záťaž nabíjačku. Powerbanka je iba voliteľný alternatívny 5 V zdroj pre ESP; nenabíja článok v tomto zapojení.
+- Jedna univerzálna spájkovacia doska približne 50×30 mm (vyrezať z väčšej univerzálky), pinové lišty 2,54 mm a malé skrutkové svorky. ESP má podľa predajcu lišty pribalené, treba ich prispájkovať.
+- Dátový USB-C kábel na programovanie ESP; samostatný napájací USB-C kábel/prepojka od overených 5 V meniča. Neprepájať dve USB napájania bez overenia dosky.
+- DC zásuvka/adaptér 3,5×1,35 mm k panelu na skrutkové svorky; presný konektor CN3791 nepredpokladať bez porovnania dielov.
+- Izolované vodiče približne 5 m červených a 5 m čiernych 0,25–0,5 mm², približne 10 m farebných 0,14–0,25 mm². Predstrihy sú v `model-domu/dlzky-vodicov.csv`; používaj z existujúcich zásob, netreba kupovať každú farbu zvlášť.
+- Servisná rozpojiteľná dvojpinová prepojka medzi batériovým uzlom a MT3608, aby bolo možné pri úplnom prednabití odpojiť všetky záťaže.
+- Izolačné stĺpiky pod PCB 4 mm, skrutky, sťahovacie pásky, príchytky vodičov, zmršťovacia bužírka. Batériu upevni mäkkým pásikom; nezovri ani neprepichni obal.
+- Štyri nožičky pod dom, výška 10 mm, aby sa nestrihali vodiče pod podstavou.
+- Dve nádržky do obálky 80×80×110 mm, približne 0,5 l, a záchytná vanička do 280×160 mm s výškou aspoň 60 mm. Nádrže musia byť upevnené proti prevráteniu; objem v modeli nie je výrobná nádoba.
+- Priehľadné teleso uzavretého nízkotlakového inline filtra vhodného pre vodu, vložka, vhodné hadicové priechodky, tesnenia, matice k plavákom a neutrálny tesniaci materiál podľa skutočných dielov. Vhodný hotový filter na Techfune nebol overený. Tieto položky nie sú potvrdený kompletný košík Techfun.
+- Materiál domu: preglejka 8, 6 a 4 mm, lišta 10×10, lepidlo na drevo, brúsny papier, difúzny papier za okná a páska/tenká krycia lišta na spoj strechy. Presné diely Pxx/Lxx sú v rezacom pláne.
+- Existujúci laboratórny zdroj, multimeter, spájkovačka, píla a vrtáky. Notebook a router nemusíš kupovať, ak ich už máš.
 
-## Schéma
+Hlavné moduly bez ESP a batérie vychádzajú približne na 43,20 €. S drobnosťami približne 55–65 €, bez dreva, nádrží, filtra a dopravy. Pri nákupe všetkého pripočítaj ESP a batériu. Cena batérie 5,80 € je z používateľovej fotografie, nie novo overená cena konkrétneho variantu.
 
-```text
-Laboratórny zdroj 5 V DC ── USB napájanie ── ESP32-S3 ── rezistory ── LED domu
-                                           │
-                        SDA 8 / SCL 9 ──────┼── INA219 (0x40)
-                                           ├── MAX17048 (0x36)
-                                           └── BH1750 (0x23, voliteľný)
+## Otvorené parametre pred dokončením zapojenia
 
-Panel + ── INA219 VIN+ → VIN− ── BQ24074 solar/DC vstup +
-Panel − ─────────────────────── BQ24074 vstup GND
-BQ24074 BATT JST ── MAX17048 JST č. 1
-Chránená batéria ── MAX17048 JST č. 2 (paralelné JST porty)
-
-Všetky GND majú spoločnú referenciu.
-BQ24074 LOAD výstup zostane nezapojený.
-Batéria + sa NESPÁJA s laboratórnymi 5 V.
-
-ESP32 ── Wi-Fi ── router ── notebook/FastAPI/SQLite/Ollama
-                         └── mobil alebo ďalší PC v prehliadači
-```
-
-MAX17048 je merač, nie nabíjačka ani ochrana článku. Dva JST porty uvedenej Adafruit dosky umožňujú pripojiť batériu a nabíjačku na rovnaký článok. Pri inom breakoute overte schému a polaritu; cudzí JST konektor môže mať opačnú polaritu. [MAX17048 pinouts](https://learn.adafruit.com/adafruit-max17048-lipoly-liion-fuel-gauge-and-battery-monitor/pinouts).
-
-## ESP32 piny
-
-| Pin | Pripojenie |
-|---|---|
-| USB | Stabilných 5 V z laboratórneho zdroja |
-| 3V3 | Logické napájanie INA219, MAX17048 VIN a BH1750 |
-| GND | Senzory, nabíjačka, panel, prepínače a LED |
-| GPIO 8 / 9 | Spoločné SDA / SCL všetkých troch senzorov |
-| GPIO 4 | Tlačidlo výpadku proti GND |
-| GPIO 5 / 6 | Prepínače záťaží proti GND |
-| GPIO 7 / 10 / 11 | Tri LED, každá cez samostatný rezistor do GND |
-
-Skontrolujte dostupnosť GPIO na konkrétnej doske. I²C pull-up odpory musia smerovať na 3,3 V. Nikdy neposielajte 5 V na GPIO. Pri programovaní z PC odpojte USB napájanie ESP z laboratórneho zdroja; dva 5 V zdroje nespájajte bez vhodného oddelenia.
-
-## Nastavenie nabíjačky
-
-Adafruit BQ24074 má predvolený nabíjací prúd 1 A. Pre tento návrh nastavte **0,5 A** podľa výrobcu: prerušte jumper 1 A a prepojte jumper 0,5 A. Konkrétna batéria musí takýto prúd povoľovať; kapacita sama neurčuje povolený prúd. Solárny vstup dosky je určený pre panel 6–10 V; skontrolujte maximálne napätie naprázdno. [BQ24074 nastavenie a pinouts](https://learn.adafruit.com/adafruit-bq24074-universal-usb-dc-solar-charger-breakout/pinouts).
-
-Výstup LOAD má približne 3–4,4 V, nie 5 V; tu sa nepoužíva. Článok nikdy nepripájajte priamo na panel ani laboratórnych 5 V. Použite chránený kompatibilný článok, správnu polaritu a izolované spoje. Poškodený či nafúknutý článok nepoužívajte. Montáž a prvé nabíjanie skontrolujte s učiteľom.
-
-Na modeli sú iba nízke DC napätia. Bežný laboratórny zdroj však môže mať vstup 230 V vo svojom uzavretom prístroji; tvrdenie „celá zostava vôbec nepoužíva 230 V“ by nebolo presné. Na modeli sa so sieťovým napätím nepracuje.
-
-## Reálne meranie
-
-Normálny režim ukazuje SOC od MAX17048, napätie článku, menovitú kapacitu a orientačnú zostávajúcu energiu. Trend SOC je odhad v percentuálnych bodoch za hodinu, **nie meranie nabíjacieho prúdu**. Bez gauge/batérie sú hodnoty nedostupné; percentá nevytvárame jednoduchým pomerom napätia.
-
-Osvetlenie zmení výkon panela a môže začať nabíjanie. Pod bežnou lampou však nemusí vzniknúť dostatok energie; overte to vopred aj na slnečnom svetle. Nabíjačka pri slabom vstupe obmedzuje odber. SOC sa mení pomaly; okamžitú zmenu ukáže výkon panela, dlhšie nabíjanie história SOC. [BQ24074 solárny vstup](https://learn.adafruit.com/adafruit-bq24074-universal-usb-dc-solar-charger-breakout).
-
-Škálované kW domu a import/export sú výpočtové veličiny, nie meranie laboratórneho zdroja. V demo režime je aj batéria softvérová.
+1. Predajca pri článku nezverejňuje dovolený nabíjací prúd. Potvrď jeho hodnotu a zmeraj/nastav limit konkrétneho CN3791. Čip má maximum 4 A, ale to neurčuje ani skutočné nastavenie dosky, ani povolený prúd batérie.
+2. Ak sa limit CN3791 musí meniť, používa sa merací rezistor: podľa datasheetu I = 0,120 V / RCS. Pre príklad 0,5 A je RCS = 0,24 Ω. Presné puzdro prenes z dosky; vhodný rezistor nebol v ponuke Techfun overený. Bežné rezistory 330 Ω/1 kΩ túto úpravu nenahrádzajú. Toto je reálna chýbajúca položka, ak má dodaná doska nevhodný limit; nedá sa poctivo predpokladať hotové zapojenie bez kontroly.
+3. Potvrď rozmery a konektory fyzických modulov, závity a spínaciu výšku plavákov, tesnenia a hadicové priechodky. Na ich montáž sú v 3D modeli rezervované obálky, nie garantované presné vrtné šablóny.
+4. Over rozbehový prúd čerpadla a stabilitu meniča pri Wi-Fi špičkách. Údaj 180 mA zo samostatnej podobnej pumpy nie je garantovaný rozbehový prúd pumpy zo sady.

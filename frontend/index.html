@@ -14,6 +14,8 @@
   <p class="nav-label">PRACOVNÝ PRIESTOR</p>
   <nav aria-label="Hlavná navigácia">
     <button data-view="overview" class="nav-item active"><span>▦</span>Prehľad</button>
+    <button data-view="house" class="nav-item"><span>⌂</span>3D model a stavba</button>
+    <button data-view="water" class="nav-item"><span>◉</span>Voda a filtrácia</button>
     <button data-view="history" class="nav-item"><span>◷</span>História a štatistiky</button>
     <button data-view="forecast" class="nav-item"><span>⌁</span>Predikcie <small>24 h</small></button>
     <button data-view="economy" class="nav-item" data-module="prices"><span>€</span>Ekonomika</button>
@@ -21,7 +23,7 @@
   <p class="nav-label">SYSTÉM</p>
   <button id="settings-open" class="nav-item"><span>⚙</span>Nastavenia</button>
   <a class="nav-item" href="/docs" target="_blank" rel="noopener"><span>↗</span>API dokumentácia</a>
-  <div class="sidebar-bottom"><div class="demo-label"><span class="online-dot"></span>LOKÁLNE PRIPOJENIE</div><p>Energia doma,<br>prehľadne.</p><small>Dáta zostávajú vo vašej sieti.</small><div class="version">energia. <span>v0.7.1</span></div></div>
+  <div class="sidebar-bottom"><div class="demo-label"><span class="online-dot"></span>LOKÁLNE PRIPOJENIE</div><p>Energia doma,<br>prehľadne.</p><small>Dáta zostávajú vo vašej sieti.</small><div class="version">energia. <span>v0.10.0 · smart dom</span></div></div>
 </aside>
 <main>
   <header class="topbar"><div><span class="breadcrumb">Moja domácnosť</span><span class="separator">/</span><span id="breadcrumb">Prehľad</span></div><div class="top-status"><span id="connection" class="status"><i class="online-dot"></i>Lokálne pripojenie</span><button type="button" id="theme-toggle" class="theme-toggle" aria-label="Prepnúť na svetlý režim" aria-pressed="false" title="Zmeniť vzhľad"><span id="theme-icon" aria-hidden="true">☀</span><span id="theme-label">Svetlý režim</span></button></div></header>
@@ -63,9 +65,9 @@
       </section>
       <section class="panel price-panel" data-module="prices"><div class="panel-heading"><h2>Cena energie</h2><span class="subtle-tag" id="tariff-source">VLASTNÁ TARIFA</span></div><div class="price-pair"><div><span>Nákup / kWh</span><strong id="buy-price">—</strong></div><div><span>Výkup / kWh</span><strong id="sell-price">—</strong></div></div><p class="muted" id="tariff-note">Bez distribučných a fixných poplatkov</p></section></div>
       <section class="panel physical-battery-panel" id="physical-battery-panel" data-module="battery" hidden>
-        <div class="panel-heading"><div><h2>Solárna Li-ion batéria</h2><p>Samostatný okruh: panel → nabíjačka → batéria</p></div><span id="cell-status" class="subtle-tag">MAX17048</span></div>
-        <div class="cell-values"><div><span>Nabitie · odhad merača</span><strong id="cell-soc">—</strong></div><div><span>Napätie článku</span><strong id="cell-voltage">—</strong></div><div><span>Menovitá kapacita</span><strong id="cell-capacity">—</strong></div><div><span>Zostávajúca energia · odhad</span><strong id="cell-energy">—</strong></div></div>
-        <p id="cell-trend" class="muted"></p><p class="footnote">ESP a svetlá napája laboratórny zdroj. Táto batéria sa nabíja zo solárneho panela a nenapája model domu. Stav nabitia je odhad MAX17048; nabíjací prúd batérie zatiaľ nemeriame.</p>
+        <div class="panel-heading"><div><h2>Batéria a záloha svetiel</h2><p>Samostatný okruh: panel → nabíjačka → batéria</p></div><span id="cell-status" class="subtle-tag">INA219</span></div>
+        <div class="cell-values"><div><span>Nabitie · orientačný odhad</span><strong id="cell-soc">—</strong></div><div><span>Napätie článku</span><strong id="cell-voltage">—</strong></div><div><span>Menovitá kapacita</span><strong id="cell-capacity">—</strong></div><div><span>Zostávajúca energia · odhad</span><strong id="cell-energy">—</strong></div></div>
+        <p id="backup-status" class="data-provenance" role="status"></p><p>Prúd batérie: <strong id="cell-current">—</strong></p><p id="cell-trend" class="muted"></p><p class="footnote">LED prepína relé medzi hlavným zdrojom a batériovým meničom. ESP32 je stále na zálohovaných 5 V; čerpadlo je iba na hlavnom zdroji. Dva INA219 merajú panel a batériu. Percentá z napätia sú hrubý odhad ovplyvnený nabíjaním a záťažou. Stav kontaktov relé sa samostatne nemeria.</p>
       </section>
       <section class="panel chart-panel"><div class="panel-heading"><div><h2>Energia v čase</h2><p>Priemerný výkon v intervale</p></div><span class="subtle-tag">POSLEDNÝCH 24 H</span></div><div class="legend"><span><i class="legend-dot mint-bg"></i>Spotreba</span><span data-module="pv"><i class="legend-dot yellow-bg"></i>Fotovoltaika</span><span data-module="wind"><i class="legend-dot blue-bg"></i>Vietor</span></div><div id="overview-chart" class="chart"></div><div class="chart-footer"><span id="today-energy">—</span><span id="energy-data-label">Syntetické dáta</span></div></section>
       <section class="panel insight-panel"><div class="panel-heading"><h2>Odporúčania</h2></div><p class="insight-label">PODĽA AKTUÁLNYCH HODNÔT</p><div id="insights"></div><div class="insight-foot">Odporúčania vychádzajú z vypočítaných údajov.</div></section>
@@ -79,6 +81,24 @@
       </section>
     </div>
   </div>
+
+  <section data-page="house" hidden>
+    <section class="panel house-panel">
+      <div class="panel-heading"><div><h2>Dom s odnímateľnou strechou</h2><p>Podstava 600 × 450 mm · dom 480 × 330 mm · celé steny, bez nábytku</p></div><a class="button secondary" href="/stavba/" target="_blank" rel="noopener">Výrobné podklady ↗</a></div>
+      <div class="house-toolbar"><label>Strecha zdvihnutá o <output data-roof-value>145 mm</output><input data-roof type="range" min="0" max="180" value="145" aria-label="Zdvih celej strechy"></label><label><input type="checkbox" data-roof-hide> Strecha odložená</label><button class="button secondary" data-house-top>Pohľad zhora</button><button class="button secondary" data-house-reset>Celý model</button><label>Súčiastka <select aria-label="Vybrať súčiastku"><option value="-1">Celý model</option></select></label></div>
+      <canvas class="house-canvas" tabindex="0" aria-label="Interaktívny 3D model dreveného domu"></canvas><p data-house-status class="muted" role="status">Načítavam 3D model…</p><p data-house-live class="data-provenance" role="status"></p>
+      <p class="footnote">Model zodpovedá rezaciemu plánu. Elektronické dosky a nádržky sú rozmerové rezervy; otvory držiakov prenes podľa zakúpených dielov. Filter je ukážkový mechanický filter, nie úprava vody na pitie.</p>
+    </section>
+  </section>
+  <section data-page="water" hidden>
+    <section class="panel"><div class="panel-heading"><div><h2>Voda a filtrácia</h2><p>Zdrojová nádrž → pumpa → mechanický filter → cieľová nádrž</p></div><span class="subtle-tag" data-water-origin>ČAKÁM NA ÚDAJE</span></div>
+      <div class="water-grid"><div><span>Čerpadlo</span><strong data-water-pump>—</strong></div><div><span>Zdrojová nádrž</span><strong data-water-source>—</strong></div><div><span>Cieľová nádrž</span><strong data-water-target>—</strong></div></div>
+      <p class="data-provenance" data-water-fault role="status"></p><div class="house-toolbar"><button class="button primary" data-water-action="manual">Prečerpať časovaný cyklus</button><button class="button secondary" data-water-action="auto">Automatické dopĺňanie</button><button class="button secondary" data-water-action="stop">Zastaviť</button><button class="button secondary" data-water-action="reset">Resetovať poruchu</button></div>
+      <p class="form-error" data-water-error role="status"></p><p class="muted" data-water-service></p><button class="button secondary" data-water-action="filter_replaced">Potvrdiť kontrolu filtra</button>
+      <form class="water-config"><label><input type="checkbox" name="enabled"> Povoliť skutočné čerpadlo po zapojení ochrán</label><label>Maximálny súvislý chod (s)<input type="number" name="max_run_seconds" min="2" max="60" value="15" required></label><label>Kontrola filtra po minútach chodu<input type="number" name="filter_service_minutes" min="1" max="10000" value="60" required></label><button class="button secondary">Uložiť nastavenie vody</button></form>
+      <p class="footnote">ESP32 samo zastaví motor pri prázdnom zdroji, hornej hladine, uniknutej vode, výpadku hlavného napájania, prekročení času alebo strate povelu. Pri rozpojení kontaktu STOP nezaniká energia okamžite: miestna ochrana beží každých 20 ms, platnosť serverového povelu je 1,5 s. Odpojenie napájania čerpadla je fyzický núdzový STOP. Čas chodu je prevádzkový údaj, nie meranie prietoku ani kvality vody. Po reštarte servera zostáva čerpadlo vypnuté.</p>
+    </section>
+  </section>
 
   <section data-page="history" hidden><div class="section-toolbar"><div class="segmented" id="periods"><button data-period="day" class="active">24 hodín</button><button data-period="week">7 dní</button><button data-period="month">30 dní</button><button data-period="all">Celá história</button></div><label class="run-select">Zdroj histórie<select id="history-run" aria-label="Uložená história"><option value="">Aktuálny súbor údajov</option></select></label><span class="muted" id="history-coverage"></span></div><div class="metrics" id="history-totals"></div><section class="panel"><div class="panel-heading"><h2>Spotreba a výroba</h2></div><div class="legend"><span><i class="legend-dot mint-bg"></i>Spotreba</span><span data-module="pv"><i class="legend-dot yellow-bg"></i>FV</span><span data-module="wind"><i class="legend-dot blue-bg"></i>Vietor</span></div><div id="history-chart" class="chart tall"></div></section><section class="panel spaced" data-module="battery"><div class="panel-heading"><h2>História stavu batérie</h2><span class="muted">SOC v %</span></div><div id="soc-chart" class="chart"></div></section><p class="footnote">Obdobia sú pohyblivé okná podľa simulačného času. Demo obsahuje pripravenú históriu. Importy a plánovanie používajú svoje vlastné intervaly. Staršie súbory údajov vyberiete vyššie.</p></section>
   <section data-page="forecast" hidden><div class="notice"><strong>Výpočtová predikcia</strong><span><span id="forecast-note">Načítavam metódu predikcie…</span></span></div><section class="panel"><div class="panel-heading"><div><h2>Výhľad na ďalších 24 hodín</h2><p id="forecast-model">Načítavam model…</p></div><span id="forecast-method" class="pill">VÝPOČET</span></div><div class="legend"><span><i class="legend-dot mint-bg"></i>Spotreba</span><span data-module="pv"><i class="legend-dot yellow-bg"></i>FV</span><span data-module="wind"><i class="legend-dot blue-bg"></i>Vietor</span></div><div id="forecast-chart" class="chart tall"></div></section><section class="panel spaced"><h2>Overenie predikcie</h2><p class="muted" id="forecast-metrics">Hodnotenie vyžaduje 48 hodín dát.</p><p class="footnote">MAE a RMSE porovnávajú posledný deň s predchádzajúcim dňom. Pri internetovom počasí výroba používa meteorologickú predpoveď. Predikcia spotreby vychádza z histórie alebo zo zadaného profilu domácnosti.</p></section></section>
@@ -133,7 +153,7 @@
           </div>
         </section>
         <section data-settings-panel="model" hidden aria-labelledby="model-title">
-          <div class="settings-section-heading"><span class="section-number">04 / PARAMETRE</span><h3 id="model-title">Model domácnosti</h3><p>V normálnom režime panel riadi škálovanú FV a MAX17048 meria malú batériu. Spotreba a bilancia siete sú modelované. V deme sú všetky energetické údaje softvérové; pri importe analyzujeme vlastné intervaly.</p></div>
+          <div class="settings-section-heading"><span class="section-number">04 / PARAMETRE</span><h3 id="model-title">Model domácnosti</h3><p>V normálnom režime panel riadi škálovanú FV a dva INA219 merajú panel a malú batériu. Spotreba a bilancia siete sú modelované. V deme sú všetky energetické údaje softvérové; pri importe analyzujeme vlastné intervaly.</p></div>
           <div class="form-grid">
             <label class="field">Základná spotreba (W)<input name="base_load_w" type="number" min="50" max="20000" required><small>Spotreba pri bežnej prevádzke.</small></label>
             <label class="field" data-setting-module="pv">Výkon FV (kWp)<input name="pv_kwp" type="number" min="0.1" max="100" step="0.1" required></label>
@@ -144,7 +164,7 @@
 
             <label class="field" data-setting-module="battery" data-battery-model="virtual">Kapacita virtuálnej batérie (kWh)<input name="battery_kwh" type="number" min="0.1" max="200" step="0.1" required></label>
             <label class="field" data-setting-module="battery" data-battery-model="virtual">Limit virtuálnej batérie (kW)<input name="battery_max_kw" type="number" min="0.1" max="100" step="0.1" required></label>
-            <label class="field" data-setting-module="battery" data-battery-model="physical">Kapacita Li-ion článku (mAh)<input name="battery_capacity_mah" type="number" min="100" max="10000" step="1" required><small>Z etikety jednej chránenej batérie 3,7 V / 4,2 V. SOC a napätie posiela ESP cez MAX17048.</small></label>
+            <label class="field" data-setting-module="battery" data-battery-model="physical">Kapacita Li-ion článku (mAh)<input name="battery_capacity_mah" type="number" min="100" max="10000" step="1" required><small>Z etikety jednej chránenej batérie 3,7 V / 4,2 V. Napätie a prúd meria INA219; percentá sú orientačný odhad z napätia.</small></label>
             <label class="field" data-setting-module="wind">Výkon turbíny (kW)<input name="wind_kw" type="number" min="0.1" max="50" step="0.1" required></label>
           </div>
         </section>

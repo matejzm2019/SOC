@@ -1,0 +1,17 @@
+﻿ID,diel,kusy,dlzka_mm,sirka_mm,hrubka_mm,material,poznamka
+P01,Podstava domu,1,600,450,8,preglejka,4 nožičky 10 mm; otvory káblov podľa pôdorysu
+P02,Predná stena,1,480,120,6,preglejka,3 okná 40x35; dvere iba naznačiť
+P03,Zadná stena,1,480,120,6,preglejka,káblový otvor Ø8 pri technickej miestnosti
+P04,Ľavá stena,1,318,120,6,preglejka,2 okná 40x35
+P05,Pravá stena,1,318,120,6,preglejka,1 okno 40x35
+P06,Pozdĺžna priečka,1,318,100,6,preglejka,výška 100; horných 20 mm necháva prístup
+P07,Ľavá priečna priečka,1,304,100,6,preglejka,kolmo medzi ľavú stenu a P06
+P08,Pravá priečna priečka,1,158,100,6,preglejka,oddeľuje technickú miestnosť
+P09,Vyberateľná doska elektroniky,1,150,132,4,preglejka,dosky uchytiť na dištančné stĺpiky
+P10,Rovina strechy,2,504,196,4,preglejka,sklon 25°; spoj prekryť páskou 20 mm
+P11,Štít strechy,2,330,77,4,preglejka,"trojuholník, vrchol uprostred 165 mm"
+P12,Podstava solára,1,250,150,8,preglejka,samostatná odnímateľná časť
+P13,Podstava vody,1,280,160,8,preglejka,vanička a nádržky sú kúpené nádoby
+P14,Bočnica solárneho stojana,2,112,167,6,preglejka,"tvar podľa SVG, predná výška 7 mm, zadná 167 mm"
+L01,Nosník strechy,2,316,10,10,lišta,spája štíty a tvorí jeden kus strechy
+L02,Vodiaci doraz strechy,4,30,10,6,lišta,"len dorazy, vôľa aspoň 0,5–1 mm"
