@@ -12,14 +12,14 @@ Na model sa privádza iba nízke DC napätie. Laboratórny zdroj môže mať sie
 
 ## Aktuálna stavba: smart dom s odnímateľnou strechou
 
-Verzia **0.10.0-house**: celé steny, bez nábytku, podstava 600 × 450 mm, dom 480 × 330 mm. Malé moduly CN3791 a MT3608, LiPo 2500 mAh, dva INA219, automatické prepnutie LED pri výpadku a vodný okruh s miestnymi ochranami. AI zostáva na PC/serveri cez Ollamu, ESP komunikuje cez Wi-Fi.
+Verzia **0.11.0-roof**: celé steny, bez nábytku, podstava 600 × 450 mm, dom 480 × 330 mm. Malé moduly CN3791 a MT3608, LiPo 2500 mAh, dva INA219, automatické prepnutie LED pri výpadku; panel 230 × 195 mm priamo na streche so sklonom 35°. AI zostáva na PC/serveri cez Ollamu, ESP komunikuje cez Wi-Fi.
 
-- **[Stavebný návod PDF](model-domu/STAVEBNY-NAVOD.pdf)**, [rezací plán](model-domu/rezaci-plan.csv), [vodiče](model-domu/dlzky-vodicov.csv), [hadičky](model-domu/hadicky.csv).
+- **[Stavebný návod PDF](model-domu/STAVEBNY-NAVOD.pdf)**, [rezací plán](model-domu/rezaci-plan.csv), [vodiče](model-domu/dlzky-vodicov.csv) a [detaily fasády](model-domu/detaily-fasady.csv).
 - **[3D Blender](model-domu/3d/dom.blend)**, [GLB](model-domu/3d/dom.glb), [pôdorys](model-domu/vykresy/podorys.svg), šablóny dielov 1:1 v model-domu/vykresy/.
 - **[Kusovník](docs/KOMPONENTY.md)**, **[zapojenie](docs/ZAPOJENIE.md)** a **[čo celý systém robí](docs/AKO-TO-FUNGUJE.md)**.
-- V aplikácii karty **3D model a stavba** a **Voda a filtrácia**. Výrobné súbory otvoríš aj na `/stavba/`.
+- V aplikácii karta **3D model a stavba**. Výrobné súbory otvoríš aj na `/stavba/`.
 
-Moduly a nádoby sú v 3D modeli rozmerové rezervy; presné montážne otvory treba preniesť zo zakúpených dielov. Úprava nabíjacieho prúdu CN3791 a konkrétne vodné priechodky zostávajú kontrolou pred fyzickou montážou, nie garantovanými parametrami z obrázka. Návod a pripravené súbory simulácie sú na želanie používateľa v samostatnom balíku mimo projektu.
+Elektronické moduly sú v 3D modeli rozmerové rezervy; presné montážne otvory treba preniesť zo zakúpených dielov. Úprava nabíjacieho prúdu CN3791 zostáva kontrolou pred fyzickou montážou, nie garantovanými parametrami z obrázka. Návod a pripravené súbory simulácie sú na želanie používateľa v samostatnom balíku mimo projektu.
 
 ## Spustenie
 
@@ -60,7 +60,7 @@ py -3 -m venv .venv
 
 ## ESP32-S3 a fyzický model
 
-Hlavný 5 V zdroj napája čerpadlo a cez relé LED. Pri výpadku LED prejdú na MT3608 z chránenej LiPo. ESP je stále na tomto zálohovanom výstupe; CN3791 nabíja článok zo soláru. Percentá sú orientačný odhad z napätia, prúd sa meria druhým INA219. Čerpadlo cez DRV8833 má miestne plavákové ochrany a časový limit.
+Hlavný 5 V zdroj napája cez relé LED. Pri výpadku LED prejdú na MT3608 z chránenej LiPo. ESP je stále na tomto zálohovanom výstupe; CN3791 nabíja článok zo soláru. Percentá sú orientačný odhad z napätia, prúd sa meria druhým INA219.
 
 Postup firmvéru je v [firmware/esp32-s3/README.md](firmware/esp32-s3/README.md), schéma v [docs/ZAPOJENIE.md](docs/ZAPOJENIE.md). Server pri prvom štarte vytvorí `data/device_key.txt`; do ignorovaného `secrets.h` doplň Wi-Fi, LAN URL PC a tento kľúč. Arduino AI nespúšťa, jeho úlohou je meranie a bezpečné miestne riadenie. Úplný popis: [AKO-TO-FUNGUJE.md](docs/AKO-TO-FUNGUJE.md).
 
@@ -91,7 +91,7 @@ Aktuálna správa pre učiteľa je v [docs/SPRAVA_PRE_UCITELA.md](docs/SPRAVA_PR
 node --check frontend/app.js
 ```
 
-Testy overujú bilanciu výkonov, SOC a účinnosť batérie, tarify, výpadok, predikciu, persistenciu, API validáciu, autentifikáciu ESP32 a hybridný prepočet panela. Záznam kontrol je v [docs/OVERENIE.md](docs/OVERENIE.md).
+Testy overujú bilanciu výkonov, SOC a účinnosť batérie, tarify, výpadok, predikciu, persistenciu, API validáciu, autentifikáciu ESP32 a hybridný prepočet panela. Aktuálne kontroly sú v [docs/OVERENIE-STAVBY.md](docs/OVERENIE-STAVBY.md).
 
 Integračné testy používajú riadené HTTP odpovede pre počasie a Ollamu. Overujú cache pri výpadku internetu, záznamy plánovania, atomický CSV import, časovú tarifu, archívy, modelové nastavenia a označenie neoverených číselných veličín bez zablokovania odpovede. Skutočnú kvalitu a rýchlosť nainštalovaného LLM treba overiť na konkrétnom PC.
 

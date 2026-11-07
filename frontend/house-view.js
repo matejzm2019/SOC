@@ -2,7 +2,7 @@
 export function createHouseView(root) {
  const canvas=root.querySelector('canvas'),status=root.querySelector('[data-house-status]');
  const gl=canvas.getContext('webgl',{antialias:true});
- let meshes=[],groups={},selected=-1,roof=145,hideRoof=false,yaw=-.63,pitch=.78,zoom=1.4,focus=[330,230,80],drag=null,lastState=null;
+ let meshes=[],groups={},selected=-1,roof=0,hideRoof=false,yaw=-.63,pitch=.78,zoom=2,focus=[300,225,115],drag=null,lastState=null;
  const set=(s,t)=>{const n=root.querySelector(s);if(n)n.textContent=t;};
  if(!gl){status.textContent='3D zobrazenie nie je dostupné. Použi obrázky a pôdorys v stavebných podkladoch.';return {update(){}};}
  const shader=(type,src)=>{const s=gl.createShader(type);gl.shaderSource(s,src);gl.compileShader(s);if(!gl.getShaderParameter(s,gl.COMPILE_STATUS))throw Error(gl.getShaderInfoLog(s));return s;};
@@ -19,22 +19,22 @@ export function createHouseView(root) {
   gl.viewport(0,0,canvas.width,canvas.height);gl.clearColor(.91,.93,.96,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
   gl.uniform3fv(loc.uFocus,focus);gl.uniform2f(loc.uAngles,yaw,pitch);gl.uniform1f(loc.uScale,zoom/650);gl.uniform1f(loc.uAspect,w/h);
   for(const m of meshes){
-   if(hideRoof && m.g===1)continue;
+   if(hideRoof && (m.g===1||m.g===2))continue;
    gl.bindBuffer(gl.ARRAY_BUFFER,m.pb);gl.vertexAttribPointer(ap,3,gl.FLOAT,false,0,0);gl.enableVertexAttribArray(ap);
    gl.bindBuffer(gl.ARRAY_BUFFER,m.nb);gl.vertexAttribPointer(an,3,gl.FLOAT,false,0,0);gl.enableVertexAttribArray(an);
    let color=m.c;
    const t=lastState&&!lastState.demo.enabled&&lastState.device.online?lastState.device.telemetry:null;
    if(m.g===12||m.g===13){const on=t?Boolean(t.load_stage&(m.g===12?1:2)):false;color=on?[1,.8,.25]:[.35,.3,.22];}
    if(m.g===selected)color=color.map((v,i)=>Math.min(1,v*.65+[.2,.3,.35][i]));
-   gl.uniform3fv(loc.uColor,color);gl.uniform1f(loc.uLift,m.g===1?roof:0);gl.drawArrays(gl.TRIANGLES,0,m.count);
+   gl.uniform3fv(loc.uColor,color);gl.uniform1f(loc.uLift,(m.g===1||m.g===2)?roof:0);gl.drawArrays(gl.TRIANGLES,0,m.count);
   }
  }
- function reset(){yaw=-.63;pitch=.78;zoom=1.4;focus=[330,230,80];selected=-1;root.querySelector('select').value='-1';draw();}
+ function reset(){yaw=-.63;pitch=.78;zoom=2;focus=[300,225,115];selected=-1;roof=0;hideRoof=false;root.querySelector('[data-roof]').value='0';root.querySelector('[data-roof-hide]').checked=false;set('[data-roof-value]','0 mm');root.querySelector('select').value='-1';draw();}
  root.querySelector('[data-roof]').addEventListener('input',e=>{roof=Number(e.target.value);set('[data-roof-value]',`${roof} mm`);draw();});
  root.querySelector('[data-roof-hide]').addEventListener('change',e=>{hideRoof=e.target.checked;draw();});
  root.querySelector('[data-house-reset]').addEventListener('click',reset);
- root.querySelector('[data-house-top]').addEventListener('click',()=>{pitch=Math.PI/2;yaw=0;draw();});
- root.querySelector('select').addEventListener('change',e=>{selected=Number(e.target.value);if(selected<0){reset();return;}const points=meshes.filter(m=>m.g===selected).flatMap(m=>m.positions);const xs=[],ys=[],zs=[];for(let i=0;i<points.length;i+=3){xs.push(points[i]);ys.push(points[i+1]);zs.push(points[i+2]);}focus=[(Math.min(...xs)+Math.max(...xs))/2,(Math.min(...ys)+Math.max(...ys))/2,(Math.min(...zs)+Math.max(...zs))/2];zoom=(selected>=3&&selected<=10)||selected===16?5:1.4;draw();});
+ root.querySelector('[data-house-top]').addEventListener('click',()=>{pitch=Math.PI/2;yaw=0;hideRoof=true;root.querySelector('[data-roof-hide]').checked=true;draw();});
+ root.querySelector('select').addEventListener('change',e=>{selected=Number(e.target.value);if(selected<0){reset();return;}hideRoof=selected>=3;root.querySelector('[data-roof-hide]').checked=hideRoof;if(!hideRoof){roof=0;root.querySelector('[data-roof]').value='0';set('[data-roof-value]','0 mm');}const points=meshes.filter(m=>m.g===selected).flatMap(m=>m.positions);const xs=[],ys=[],zs=[];for(let i=0;i<points.length;i+=3){xs.push(points[i]);ys.push(points[i+1]);zs.push(points[i+2]);}focus=[(Math.min(...xs)+Math.max(...xs))/2,(Math.min(...ys)+Math.max(...ys))/2,(Math.min(...zs)+Math.max(...zs))/2];zoom=(selected>=3&&selected<=10)||selected===16?5:2;draw();});
  canvas.addEventListener('pointerdown',e=>{drag=[e.clientX,e.clientY];canvas.setPointerCapture(e.pointerId);});
  canvas.addEventListener('pointermove',e=>{if(!drag)return;yaw+=(e.clientX-drag[0])*.007;pitch=Math.max(.1,Math.min(1.57,pitch+(e.clientY-drag[1])*.006));drag=[e.clientX,e.clientY];draw();});
  canvas.addEventListener('pointerup',()=>{drag=null;});canvas.addEventListener('pointercancel',()=>{drag=null;});

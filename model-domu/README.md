@@ -1,48 +1,39 @@
-# Drevený dom – výrobný balík
+# Drevený dom so strešným panelom – výrobný balík
 
-Aktuálna konštrukcia má **celé steny a strechu odnímateľnú v jednom kuse**, bez nábytku. Solárny stojan a vodný modul sú vedľa domu a odnímateľné na prenášanie. 3D model nie je iba ilustračný generovaný obrázok: geometria vychádza z milimetrových rozmerov rezacieho plánu.
-
-## Čo otvoriť
-
-- **STAVEBNY-NAVOD.pdf:** A3 prehľad montáže a zapojenia.
-- **3d/dom.blend:** editovateľný Blender 4.3 model, strecha v uzavretej polohe. Všetky diely strechy majú prefix ROOF a tvoria jeden odnímateľný kus. Pri upravovaní označ všetky ROOF diely spolu.
-- **3d/dom.glb:** výmenný 3D model, jednotky metre podľa glTF; aplikácia používa exportované model.json v mm.
-- **3d/dom-mm.stl:** geometria celej zostavy v mm na vizuálny import. Je to viacdielna zostava vrátane rozmerových rezerv, nie jeden vodotesný tlačiteľný objekt ani hydraulická nádoba.
-- **vykresy/Pxx-1ku1.svg:** šablóny jednotlivých drevených dielov v mm, tlač 100 %. Over modrú 100 mm mierku. Čierny obrys/otvory sú geometria, text a modrá mierka sú iba poznámky. Väčšie diely treba tlačiť na vhodný formát alebo dlaždicovo; A4 „prispôsobiť strane“ by zmenšilo rozmery.
-- **vykresy/podorys.svg:** rozmiestnenie na podstave; samostatné šablóny sú určené na presnú mierku.
-- **rezaci-plan.csv, dlzky-vodicov.csv, hadicky.csv:** diely a predstrihy.
-
-## Rozmery
+Verzia 0.11.0-roof, 7. 11. 2026. Celé steny, žiadny nábytok. Teplá biela fasáda, cédrový obklad, okenné rámy a parapety, pevné dvere, antracitová strecha s naznačenými falcami a skutočný panel 230 × 195 × 17 mm. Geometria je rozmerová; nie je to iba ilustračný obrázok.
 
 | Časť | Rozmer |
 |---|---|
-| Podstava domu | 600 × 450 × 8 mm |
-| Dom, vonkajší pôdorys | 480 × 330 mm, začiatok X60/Y70 na podstave |
-| Vonkajšie steny | 120 mm vysoké, preglejka 6 mm |
-| Vnútorné priečky | 100 mm vysoké, preglejka 6 mm |
-| Strecha | sklon 25°, dve roviny 504 × 196 × 4 mm |
-| Výška zostaveného domu | približne 219 mm vrátane 10 mm nožičiek |
-| Technická miestnosť | vnútorný priestor 158 × 138 mm |
-| Vyberateľná doska elektroniky | 150 × 132 × 4 mm |
-| Solárny stojan, podstava | 250 × 150 × 8 mm, panel 230 × 195 mm |
-| Podstava vodného modulu | 280 × 160 × 8 mm |
-| Dve nádrže, rozmerová rezerva | každá do 80 × 80 × 110 mm |
+| Celá podstava | 600 × 450 × 8 mm |
+| Dom | 480 × 330 mm; X60–540, Y70–400 |
+| Steny / priečky | 120 / 100 mm, hrúbka 6 mm |
+| Strecha | 35°, dve roviny 504 × 230 × 4 mm |
+| Štít | základňa 330, výška 115,53 mm (výroba 115,5) |
+| Technická miestnosť | 158 × 138 mm |
+| Vyberateľná doska | 150 × 132 × 4 mm; X380 Y257 |
+| Panel | 230 × 195 × 17 mm, približne 533 g |
+| Výška s nožičkami a panelom | približne 27 cm |
 
-Pri bočnom rozmiestnení ako v 3D zaberie komplet približne **1 150 × 450 mm**, nie iba 600 × 450. Na stole nechaj rezervu na káble. Na prenášanie sa bočné moduly odpoja. Samotné drevené diely majú pri bežnej hustote preglejky rádovo 3 kg; celá zostava môže mať približne 4–6 kg podľa materiálu, nádob a vody. Hmotnosť nie je overená fyzickým vážením.
+Celý model ostáva na podstave 60 × 45 cm. Hmotnosť podľa materiálu približne 4–5 kg, fyzicky nezvážená. Preglejka: orientačne 600×450×8, 600×900×6, 600×600×4 mm, plus lišty podľa oboch CSV. Výrez rozlož s rezervou na šírku rezu a smer vlákien.
 
-Na drevo orientačne stačí po jednej tabuli: 600×900×8 mm, 600×900×6 mm a 600×600×4 mm, plus približne 1 m lišty 10×10 mm. Je to nákupný odhad s rezervou, nie automaticky optimalizovaný kladačský plán. Diely rozlož s prihliadnutím na smer vlákien a šírku rezu píly.
+## Súbory
 
-## Poradie drevenej montáže
+- STAVEBNY-NAVOD.pdf: sedemstranový A3 prehľad, nie šablóna 1:1.
+- 3d/dom.blend: editovateľná uzavretá zostava; všetky ROOF a SOLAR objekty patria k jednej odnímateľnej streche.
+- 3d/dom.glb: výmenný model v metroch podľa glTF; model.json v aplikácii používa mm.
+- 3d/dom-mm.stl: viacdielna vizuálna zostava v mm, nie jeden vodotesný tlačiteľný objekt.
+- rezaci-plan.csv: nosné diely. detaily-fasady.csv: všetky doplnkové lišty a ich dĺžky.
+- dlzky-vodicov.csv: predstrihy s rezervou. W18 zahŕňa pôvodný kábel a servisnú slučku.
+- vykresy/Pxx-1ku1.svg: šablóny v mm; tlač 100 %, skontroluj 100 mm mierku. Väčšie diely tlač na vhodný formát alebo dlaždicovo. podorys.svg je 1:2.
 
-1. Over hrúbku zakúpenej preglejky. Bočné steny P04/P05 dĺžky 318 sú medzi čelnými stenami pri hrúbke 6. Ak materiál nie je 6 mm, prepočítaj ich ako 330 − 2×hrúbka.
-2. Vyrež P01–P14, okná a otvory, obrús hrany. Predná stena je na Y70, zadná na Y394. Bočné steny sa zmestia medzi ne.
-3. Priečky: X370, ľavá priečna na Y235, pravá priečna na Y250; presne podľa pôdorysu. Nevyžadujú nábytok ani zložitý interiér.
-4. Do zadnej pravej miestnosti vlož vyberateľnú dosku elektroniky. Pod PCB použi približne 4 mm izolačné stĺpiky; batériu uchyť mäkkým pásikom v jej vlastnej rezerve.
-5. Dva trojuholníkové štíty, nosníky 316 mm a dve roviny strechy zlep do jedného kusu. Horný spoj prekry 20 mm páskou alebo ľahkou krycou lištou. Strecha sa nelepí k stenám. Dorazy dolaď s vôľou 0,5–1 mm; nosníky majú pri 318 mm vnútornom rozpätí 1 mm vôľu na každom konci.
-6. LED a ich vedenie upevni na pevné steny, nie strechu. Za okná môžeš dať difúzny papier. Dvere sú iba naznačené, netreba ich vyrábať ako otvárací prvok.
-7. Vodiče veď cez priechody a po spodnej strane podstavy, chráň hrany otvorov. Nožičky vysoké 10 mm nechajú miesto na vedenie; nič nezvieraj medzi podstavu a stôl.
-8. Vodnú vaničku a solárny stojan zostav samostatne. Tesnenie a montážne otvory plavákov dokonči až podľa skutočných nádob a závitov.
+## Montáž
 
-Elektronické moduly sú rezervované obálky. ESP32 64×28 a batéria 50×40×10 sú podľa uvedených výrobkov; ostatné PCB obálky sú návrhové rezervy. **Neber ich ako garantované výrobné rozmery dosiek alebo vrtné šablóny.** Nádržky a filter sa podľa tohto 3D modelu nemajú tlačiť ako tlakové alebo vodotesné výrobky.
+1. P01–P09 nasucho zostav pri skutočnej hrúbke materiálu. Bočné steny 318 mm sú medzi čelnými pri hrúbke 6 mm. LED a vodiče sú na pevných stenách.
+2. Pridaj priečky, povrch podlahy môže byť len vyznačený. Elektronika je na odnímateľnej doske s 4 mm izolačnými stĺpikmi. Rozmery PCB sú rezervované obálky, nie vrtné šablóny.
+3. Jednoduché nalepené detaily A01–A10 sú v samostatnom CSV: bez pántov, posuvných okien či nábytku. Okenné výplne môžu byť papier alebo tenký akrylát. Falce sa dajú len nakresliť, ak chceš znížiť prácnosť.
+4. P10/P11, L01/L02 zlep do jedného odnímateľného rámu. Dorazy ponechaj s vôľou 0,5–1 mm. L03 vystužujú prednú strešnú rovinu pod panelom. Hrebeň zakry lištami A07.
+5. Dve lišty L04 sú na prednej streche; štyri príchytky držia kovový rám panela. Konkrétne otvory prenes zo skutočného rámu. Nevŕtaj články ani zadnú fóliu, over dĺžky skrutiek. Strecha sa nelepí k stenám.
+6. Panel má rozpojiteľný označený konektor a aspoň 200 mm voľnú servisnú slučku. Pred úplným odložením ho rozpoj. Nezdvíhaj za kábel ani panel. LED sa pri odložení neodpájajú.
+7. Elektrické uzly, prúdy a zálohu najprv otestuj mimo dreva podľa docs/ZAPOJENIE.md. Dĺžky vodičov skráť až po uložení do trasy, pod podstavou nechaj 10 mm nožičky.
 
-Aktuálny kusovník a elektrické skúšky sú v ../docs/KOMPONENTY.md a ../docs/ZAPOJENIE.md. Na obnovu 3D použi `blender -b --python tools/build_house.py` z koreňa projektu; na PDF potom `python tools/build_documents.py` s requirements-build.txt. Simulačné návody sú zámerne mimo repozitára.
+Obnova modelu: blender -b --python tools/build_house.py. PDF a šablóny: python tools/build_documents.py s requirements-build.txt; Unicode font sa hľadá na Linuxe, Windows aj macOS alebo cez SOC_PDF_FONT. Panel, elektronika a spojky sú vizuálne modely podľa menovitých rozmerov, nie garantované detaily konkrétneho dodaného výrobku.

@@ -1,6 +1,6 @@
 # Overenie verzie 0.7.1
 
-> Aktualizácia 0.10.0-house: fyzická stavba a pinová tabuľka sú v [ZAPOJENIE.md](ZAPOJENIE.md), opis AI/servera v [AKO-TO-FUNGUJE.md](AKO-TO-FUNGUJE.md). Staršie hardvérové poznámky nižšie sú historické; výsledky aktuálnych kontrol sú v OVERENIE-STAVBY.md.
+> Aktualizácia 0.11.0-roof: fyzická stavba a pinová tabuľka sú v [ZAPOJENIE.md](ZAPOJENIE.md), opis AI/servera v [AKO-TO-FUNGUJE.md](AKO-TO-FUNGUJE.md). Staršie hardvérové poznámky nižšie sú historické; výsledky aktuálnych kontrol sú v OVERENIE-STAVBY.md.
 
 Dátum: 2. 10. 2026. Windows.
 

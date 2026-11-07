@@ -25,7 +25,6 @@ from .prices import PriceService
 from .simulator import Simulator
 from .storage import Storage
 from .weather import WeatherService
-from .water import WaterAction, WaterConfig, WaterController
 
 ROOT = Path(__file__).resolve().parent.parent
 logger = logging.getLogger(__name__)
@@ -34,7 +33,6 @@ logger = logging.getLogger(__name__)
 class Engine:
     def __init__(self, path, device_key="test-device-key"):
         self.storage = Storage(path)
-        self.water = WaterController(self.storage)
         self.settings = self.storage.settings()
         self.lock = asyncio.Lock()
         self.paused = True
@@ -69,7 +67,6 @@ class Engine:
         samples = [self.price_sample(sample, settings) for sample in samples]
         run_id = self.storage.new_run(settings, samples if settings.demo_mode else [])
         self.settings, self.simulator, self.run_id = settings, simulator, run_id
-        self.water.stop()
         self.sample = samples[-1]
         self.paused = not (settings.configured and not settings.demo_mode and settings.measurement_source == "hybrid")
         self.error = None
@@ -152,7 +149,6 @@ class Engine:
         while True:
             await asyncio.sleep(1 / self.speed if self.settings.demo_mode else 1)
             async with self.lock:
-                self.water.tick(self.settings, self.device_telemetry, self.device_status()["online"])
                 if not self.paused and self.settings.measurement_source != "csv":
                     try:
                         self.tick()
@@ -167,7 +163,6 @@ class Engine:
 
     def state(self):
         return {"settings": self.settings, "sample": self.sample, "device": self.device_status(), "weather": self.weather_state(),
-                "water": self.water.view(self.settings, self.device_telemetry, self.device_status()["online"]),
                 "prices": self.prices.view(self.settings) if self.prices else {"available":False,"source":"manual"},
                 "demo": {"enabled": self.settings.demo_mode, "scenario": self.simulator.scenario,
                          "paused": self.paused, "speed": self.speed,
@@ -210,7 +205,7 @@ def create_app(database=None, esp32_key=None, http_transport=None):
                         await task
                 engine.storage.connection.close()
 
-    app = FastAPI(title="Energia", version="0.10.0-house", lifespan=lifespan)
+    app = FastAPI(title="Energia", version="0.11.0-roof", lifespan=lifespan)
     app.add_middleware(TrustedHostMiddleware, allowed_hosts=["*"])
 
     @app.middleware("http")
@@ -255,28 +250,7 @@ def create_app(database=None, esp32_key=None, http_transport=None):
         async with e.lock:
             e.device_telemetry = value
             e.device_received_at = datetime.now(timezone.utc)
-            return {"accepted": True, "server_time": e.device_received_at.isoformat(),
-                    "water_command": e.water.command(value, True, e.settings)}
-
-    @app.get("/api/water")
-    async def water_state(request: Request):
-        e = request.app.state.engine
-        async with e.lock:
-            return e.water.view(e.settings, e.device_telemetry, e.device_status()["online"])
-
-    @app.put("/api/water/config")
-    async def water_config(value: WaterConfig, request: Request):
-        e = request.app.state.engine
-        async with e.lock:
-            e.water.configure(value)
-            return e.water.view(e.settings, e.device_telemetry, e.device_status()["online"])
-
-    @app.post("/api/water/command")
-    async def water_action(value: WaterAction, request: Request):
-        e = request.app.state.engine
-        async with e.lock:
-            e.water.action(value, e.settings, e.device_telemetry, e.device_status()["online"])
-            return e.water.view(e.settings, e.device_telemetry, e.device_status()["online"])
+            return {"accepted": True, "server_time": e.device_received_at.isoformat()}
 
     @app.put("/api/settings")
     async def settings(value: Settings, request: Request):

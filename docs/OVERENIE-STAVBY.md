@@ -1,23 +1,21 @@
-# Overenie návrhu a aplikácie
+# Overenie verzie 0.11.0-roof
 
-Dátum: 4. 11. 2026, verzia 0.10.0-house. Toto je záznam softvérových kontrol návrhu, nie protokol skúšok hotového fyzického zariadenia.
+7. 11. 2026. Toto je overenie softvéru a rozmerového návrhu, nie skúška postaveného fyzického domu.
 
-## Vykonané kontroly
+- Python: **76 úspešných testov, 1 preskočený** (Windows spúšťač na Linuxe). Dve upozornenia testovacích knižníc sa týkajú zastarávajúcich rozhraní.
+- Overený príjem svetelnej/solárnej telemetrie, autentifikácia, chýbajúce odstránené API a odmietnutie starých nadbytočných telemetrických polí. Pri prechode na túto verziu nahraj aj nový firmvér.
+- C++ skúška používa priamo backup_power.h: napäťový odhad nabitia, neplatné hodnoty, monotónnosť a hysterézia detekcie hlavného zdroja.
+- Arduino CLI 1.5.1, ESP32 core 3.3.12, ESP32S3 Dev Module, flash 16 MB, OPI PSRAM; Adafruit INA219 1.2.3 a ArduinoJson 7.4.3. Produkčný firmvér zostavený: **1 055 123 B programu, 48 804 B globálnych dát**. Simulátorová verzia zostavená: **420 804 B / 29 256 B**.
+- Chromium/WebGL: geometria domu a panel na streche, spoločný zdvih/skrytie strechy a panela, automatické odkrytie elektroniky pri výbere, reset, klávesnica, šírka 390 px bez horizontálneho pretečenia, stiahnutie PDF/GLB. Bez zachytených JavaScriptových chýb pri týchto krokoch.
+- Rozmerové testy: podstava 600 × 450, panel v pôdoryse strechy, odstup jeho spodnej strany od strešnej plochy, presné rozmery rezacieho plánu a zhodnosť CAD exportu s modelom aplikácie. Návrh má 381 geometrických objektov; detaily sú aj v GLB/STL a nie iba v renderi.
+- Výstupy Blender 4.3.2; sedemstranové A3 PDF; nosné diely P01–P11 a L01–L04; samostatný kusovník drobných líšt; šablóny SVG 1:1 a pôdorys 1:2. Okná sú v geometrickom modeli skutočné otvory.
 
-- `python -m pytest -q -rs`: **77 úspešných, 1 preskočený** test. Preskočený je test spúšťača pre Windows, pretože kontrola prebehla na Linuxe. Dve upozornenia sa týkajú zastarávajúcich rozhraní testovacích knižníc.
-- C++ skúška používa priamo hlavičky `water_guard.h` a `backup_power.h` z firmvéru: bezpečné zastavenie čerpadla, strata povelu, maximálny čas, zablokovanie poruchy, reset, pretečenie časovača a orientačný odhad nabitia.
-- Arduino CLI 1.5.1, ESP32 core 3.3.12, cieľ ESP32-S3 s 16 MB flash a OPI PSRAM: zostavenie produkčného firmvéru úspešné s vypnutou aj zapnutou podporou vody. Zapnutá voda: 1 062 363 B programu, 48 844 B globálnych dát. Knižnice Adafruit INA219 1.2.3 a ArduinoJson 7.4.3.
-- Zostavená aj samostatná simulátorová verzia so simulovanými snímačmi a vypnutou WiFi: 422 092 B programu, 29 280 B globálnych dát. Táto verzia nie je určená na fyzické meranie.
-- Chromium/WebGL: načítanie skutočnej geometrie, otáčanie, zdvih/odloženie strechy, pohľad zhora, výber komponentu, ovládanie klávesnicou a zobrazenie pri šírke 390 px. Bez JavaScriptových chýb pri kontrolovaných krokoch. Overené aj základné ovládanie vodného dema a stiahnutie stavebných súborov.
-- Geometria a kusovník: rozmer podstavy, počet dielov odnímateľnej strechy, umiestnenie modulov v technickej miestnosti a zhodnosť CAD exportu s modelom aplikácie sú kontrolované testom. PDF má šesť strán formátu A3. SVG šablóny uvádzajú fyzické mm a kontrolnú mierku; pôdorys je 1 : 2.
-- Samostatný lokálny tester mimo repozitára úspešne odoslal označenú testovaciu telemetriu oddelenému serveru. BenchTwin ani Wokwi neboli overené ako úplná fyzikálna simulácia všetkých konkrétnych súčiastok.
+## Skúšky pred fyzickým zapojením
 
-## Čo zostáva overiť na zostave
+Over dovolený nabíjací prúd článku a skutočné nastavenie CN3791. Predajný údaj 4 A MAX nie je odporúčanie pre tento článok. CN3791 nemá oddelený systémový power-path; úplné prednabitie sa robí s odpojenou záťažou podľa ZAPOJENIE.md.
 
-Pred zapojením LiPo zisti jej dovolený nabíjací prúd a nastav/over skutočný prúd konkrétnej dosky CN3791; údaj „max. 4 A“ na predajnej stránke nie je odporúčaný prúd tejto batérie. Pre úplné prednabitie odpoj systémovú záťaž podľa ZAPOJENIE.md. Modul nemá samostatný systémový power-path výstup.
+Zmeraj MT3608 na 5 V a jeho stabilitu pri Wi-Fi špičkách, adresy INA219, polaritu batérie a správne znamienko prúdu. Odpoj hlavný zdroj a over prepnutie relé pri skutočne zapnutých LED. Percentá z napätia nie sú meranie skutočnej kapacity.
 
-Na stole over nastavenie MT3608 na 5 V, rozbeh ESP32 cez batériovú vetvu, prepnutie relé pri výpadku LAB a odber všetkých svetiel. Odhad percent z napätia nie je meranie skutočnej kapacity 2500 mAh. INA219 meria napätie a čistý prúd; nabíjanie i odber musia prechádzať batériovým bočníkom.
+Panel má približne 533 g. Skontroluj tuhosť strechy a výstuh L03, uchytenie za rám, dĺžku skrutiek a odľahčenie kábla. Pred úplným odložením rozpoj označený konektor. Detailové obálky elektroniky nie sú garantované vrtné šablóny.
 
-Filter a jeho tlaková strata, hadicové koncovky, závity plavákov a montážne otvory sa dokončia podľa skutočne zakúpených dielov. Skontroluj orientáciu všetkých štyroch plavákov, tesnosť a zastavenie pri každej poruche. Plavák vo vaničke zachytí nahromadenú vodu, nie prvú kvapku. AI cez Ollamu nebola v tomto prostredí hodnotená so stiahnutým jazykovým modelom; aplikácia má aj lokálne odpovede a kontrolu dostupnosti servera.
-
-Elektronické obálky a hadičky v 3D slúžia na rozmiestnenie. Nevŕtaj modulové otvory ani nevyrábaj nádrže len podľa týchto obálok. Hmotnosť 4–6 kg je výpočet/odhad, nie výsledok váženia.
+Simulácia je samostatne mimo projektu. Náhradné analógové snímače neoverujú nabíjanie ani prúdy fyzickej LiPo. Úplná elektrická podpora všetkých konkrétnych modulov v BenchTwin nebola potvrdená. Kvalitu konkrétneho Ollama modelu treba odskúšať na prezentačnom PC. Hmotnosť 4–5 kg je odhad bez váženia.

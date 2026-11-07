@@ -5,6 +5,5 @@
 6,MT3608 zaloznych 5V,445.0,305.0,18.0,38.0,20.0,8.0,návrhová rozmerová rezerva; fyzicky overiť
 7,INA219 panel,491.0,303.0,18.0,32.0,25.0,8.0,návrhová rozmerová rezerva; fyzicky overiť
 8,INA219 bateria,491.0,335.0,18.0,32.0,25.0,8.0,návrhová rozmerová rezerva; fyzicky overiť
-9,Rele pre svetla,437.0,349.0,18.0,52.0,27.0,8.0,návrhová rozmerová rezerva; fyzicky overiť
-10,DRV8833 cerpadlo,497.0,367.0,18.0,28.0,20.0,8.0,návrhová rozmerová rezerva; fyzicky overiť
+9,Rele pre svetla,437.0,349.0,18.0,52.0,27.0,16.0,návrhová rozmerová rezerva; fyzicky overiť
 16,Univerzalka LED a delic,385.0,351.0,18.0,50.0,30.0,8.0,návrhová rozmerová rezerva; fyzicky overiť

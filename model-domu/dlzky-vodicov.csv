@@ -16,10 +16,6 @@ W14,Prepínač B → GPIO6/GND,2,600,"0,14 mm²",signálový pár
 W15,MT3608 → ESP napájací USB-C kábel,1,200,hotový kábel,iba overených 5 V
 W16,I²C ESP → INA219 0x40,4,180,"0,14 mm²",3V3 GND SDA SCL
 W17,I²C INA219 0x40 → 0x41,4,100,"0,14 mm²",3V3 GND SDA SCL
-W18,Panel → INA219 panel,2,600,"0,25–0,5 mm²",vrátane pôvodného kábla panela
+W18,Panel na streche → INA219,2,650,"0,25–0,5 mm²",vrátane pôvodného kábla; 200 mm servisná slučka a rozpojiteľný konektor
 W19,Panelový INA219 → CN3791 IN,2,150,"0,25–0,5 mm²",vstup nikdy na BAT
-W20,DRV8833 → pumpa,2,450,"0,25–0,5 mm²","motorový pár, viesť mimo I²C"
-W21,Hlavný zdroj → DRV8833,2,200,"0,25–0,5 mm²",+5 V / GND
-W22,Predĺženie štyroch plavákov,8,300,"0,14–0,25 mm²",nadstavuje existujúce káble snímačov
-W23,GPIO12 → DRV8833 AIN1,1,180,"0,14 mm²",AIN2 na GND
 W24,GPIO4 delič a tranzistory LED,8,150,"0,14 mm²",miestne prepojky
