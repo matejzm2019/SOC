@@ -1,155 +1,69 @@
-SIMULÁCIA SOČ SMART DOMU – SAMOSTATNÝ NÁVOD MIMO REPOZITÁRA
-Dátum: 4. 11. 2026
+SOČ SMART DOM – SAMOSTATNÝ SIMULAČNÝ NÁVOD
+Verzia 0.11.0-roof, 7. 11. 2026. Tento priečinok je MIMO projektu SOC.
 
-Tento súbor a celý priečinok SOC-simulacia sú zámerne vedľa projektu SOC,
-nie v ňom. Nemajú byť commitnuté do matejzm2019/SOC. Skutočný projekt má
-vlastné stavebné a prevádzkové návody v docs/ a model-domu/.
+Dom má panel na streche, LED, LiPo, CN3791, MT3608, relé a dva INA219.
+Geometria a samotné meranie sa skúšajú odlišnými nástrojmi. Simulácia
+neoverí skutočný nabíjací prúd, ochranu LiPo ani rozbeh konkrétneho meniča.
 
-ČO SA DÁ A NEDÁ POCTIVO VYSIMULOVAŤ
+A. CELÁ APLIKÁCIA A TESTOVACIE ESP NA PC
 
-BenchTwin oficiálne uvádza ESP32, kód, senzory, motory a 3D diely.
-Je v beta prevádzke. Nepotvrdil som, že má presné funkčné modely všetkých
-týchto modulov súčasne: CN3791, MT3608, INA219, DRV8833, konkrétna LiPo,
-plaváky a vodný filter. Zobrazenie dosky v 3D katalógu samo nepreukazuje,
-že simuluje jej nabíjací algoritmus, ochrany, reálne prúdy a teplotu.
-
-Preto má pripravený balík TRI ÚROVNE:
-A. hotový bezplatný test celej aplikácie a komunikácie na PC;
-B. Wokwi test rovnakého firmvérového guardu na ESP32-S3, s náhradami snímačov;
-C. manuálne zostavenie v BenchTwin, ak požadované modely nájdeš v jeho knižnici.
-Žiadna z týchto skúšok nenahrádza fyzické meranie nabíjania LiPo, spínanie
-relé pod záťažou, rozbeh pumpy, kvapalinovú tesnosť a odhad percent.
-
-A. HOTOVÝ TEST NA TVOJOM PC – CELÁ APPKA, AI A SOFTVÉROVÉ ESP
-
-1. Rozbaľ SOC a SOC-simulacia vedľa seba, napríklad:
-   C:\SOC\
-   C:\SOC-simulacia\
-
-2. Najprv v SOC spusti start.cmd, aby sa vytvorilo Python prostredie .venv.
-   Potom môžeš normálny server zavrieť. Simulačný server beží oddelene
-   na porte 8876 a s inou databázou a kľúčom, aby neovládal fyzický model.
-
-3. V samostatnom termináli na Windows spusti:
+1. Rozbaľ SOC a SOC-simulacia vedľa seba. V SOC najprv spusti start.cmd,
+   aby sa vytvorilo prostredie .venv. Bežný server potom môžeš zavrieť.
+2. Windows, samostatný terminál:
    C:\SOC\.venv\Scripts\python.exe C:\SOC-simulacia\start_test_server.py --project C:\SOC
-
-   Linux/macOS, po inštalácii požiadaviek projektu do jeho .venv:
+   Linux/macOS po inštalácii závislostí:
    SOC/.venv/bin/python SOC-simulacia/start_test_server.py --project SOC
-
-   Otvor http://127.0.0.1:8876 . Server počúva iba na tomto PC.
-   Jeho databáza je v SOC-simulacia/data-simulacia/, nie v skutočnom SOC/data/.
-
-4. V druhom termináli spusti softvérové zariadenie:
+3. Otvor http://127.0.0.1:8876 . Ide o inú databázu a testovací kľúč;
+   bežná aplikácia na porte 8765 a fyzický model sa neovládajú.
+4. V druhom termináli:
    py C:\SOC-simulacia\simulate_device.py --configure-test --scenario normal --seconds 180
-
-   Linux/macOS:
-   python3 SOC-simulacia/simulate_device.py --configure-test --scenario normal --seconds 180
-
-   --configure-test nastaví LEN oddelený testovací server na príjem ESP
-   telemetrie, 2500 mAh a povolí jeho virtuálny vodný okruh. Bežná aplikácia
-   na porte 8765 ani skutočný kľúč hardvéru sa nemenia.
-
-5. Appka musí viditeľne uvádzať TESTOVACIE ÚDAJE/TESTOVACIA TELEMETRIA.
-   Percentá, napätie, výkon a voda sú v tomto teste generované softvérom.
-   Na karte Voda stlač časovaný cyklus/automatiku. Virtuálna hladina stúpne
-   a pumpa sa zastaví na hornej hladine. Všetko sa deje iba v testovacej DB.
-
-6. Ďalšie scenáre spúšťaj po ukončení predchádzajúceho procesu (Ctrl+C):
+   Linux/macOS: python3 SOC-simulacia/simulate_device.py --configure-test --seconds 180
+5. V aplikácii musia byť údaje označené ako TESTOVACIE. Skús ďalšie behy:
    py simulate_device.py --scenario outage --seconds 30
-   py simulate_device.py --scenario source_empty --seconds 30
-   py simulate_device.py --scenario full --seconds 30
-   py simulate_device.py --scenario leak --seconds 30
-   py simulate_device.py --scenario normal --pause-link-at 8 --pause-link-for 5 --seconds 35
+   py simulate_device.py --scenario shade --seconds 30
+   py simulate_device.py --scenario discharged --seconds 30
+   py simulate_device.py --pause-link-at 8 --pause-link-for 8 --seconds 30
+   Výpadok mení hlásenie hlavného zdroja; test nijako fyzicky nespína relé.
+   Pri odmlčaní dlhšom než 5 sekúnd aplikácia označí zariadenie offline.
+6. AI: na tom istom PC nainštaluj Ollamu a spusti ollama pull qwen3:0.6b.
+   V Nastaveniach asistenta over pripojenie. Ide o vysvetľovanie označených
+   testovacích údajov, nie experiment so skutočným panelom či batériou.
 
-   Pri strate spojenia server ukáže offline. Virtuálna platnosť povelu
-   vyprší, opätovné spojenie samo neobnoví bezpečne zablokované čerpanie.
-   Odstráň príčinu a stlač Resetovať poruchu; potom nový povel.
+B. WOKWI – KÓD ESP32-S3, PREPÍNAČE A NÁHRADNÉ SNÍMAČE
 
-7. AI funguje aj nad označenými testovacími údajmi. Na tom istom PC:
-   nainštaluj Ollamu, potom `ollama pull qwen3:0.6b`.
-   V Nastaveniach asistenta over pripojenie. Model má povedať, že vstupy
-   sú testovacie; fyziku nabíjačky týmto testom neoveruješ.
-   Model musí byť najprv stiahnutý; jeho kvalitu slovenčiny treba odskúšať.
+1. Na https://wokwi.com vytvor ESP32-S3 DevKitC-1 projekt a nahraď súbory
+   obsahom priečinka wokwi: sketch.ino, backup_power.h, secrets.h,
+   diagram.json a libraries.txt. Knižnice: Adafruit INA219, ArduinoJson 7.
+2. Sketch má SIMULATED_SENSORS=1 a WIFI_ENABLED=0. Nepoužívaj ho na
+   skutočnom hardvéri ako meranie! Produkčný sketch je v SOC/firmware/.
+3. Run: Serial monitor ukazuje JSON s telemetry_origin=software_test.
+   GPIO4 prepína MAIN (iba v simulátore ide priamo medzi 3V3 a GND;
+   skutočná doska má povinný delič 22 kΩ / 10 kΩ).
+   GPIO5/6 prepínajú LED A/B; GPIO7/10 sú výstupy do testovacích LED.
+   Potenciometre: GPIO1 slnko, GPIO17 napätie článku, GPIO18 čistý prúd.
+   Nie sú to fyzikálne modely INA219, LiPo ani nabíjačky.
+4. Bezplatný verejný Wokwi gateway nemá prístup na tvoj lokálny server.
+   Voliteľné WIFI_ENABLED=1 s host.wokwi.internal:8876 potrebuje Private
+   Wokwi Gateway podľa aktuálnych podmienok služby. Aplikáciu nevystavuj
+   verejne len kvôli simulátoru. Na bezplatný test celej appky použi časť A.
 
-B. WOKWI – ESP32-S3 A ROVNAKÝ KÓD MIESTNYCH OCHRÁN
+C. BENCHTWIN
 
-1. Otvor https://wokwi.com a vytvor projekt ESP32-S3 DevKitC-1.
-2. Nahraď/pridaj súbory z priečinka wokwi:
-   sketch.ino, diagram.json, secrets.h, backup_power.h, water_guard.h,
-   libraries.txt. Knižnice sú Adafruit INA219 a ArduinoJson 7.
-3. Tento sketch má SIMULATED_SENSORS=1, WATER_ENABLED=1, WIFI_ENABLED=0.
-   Nepoužívaj ho na reálnej doske ako produkčné meranie!
-4. Stlač Run. V Serial monitore sú JSON dáta s telemetry_origin=software_test.
-5. Potenciometre:
-   GPIO1 = náhradné osvetlenie/panelový výkon;
-   GPIO17 = náhradné napätie batérie 3,0–4,2 V;
-   GPIO18 = náhradný čistý prúd približne -0,5 až +0,5 A.
-   Ide o riadené testovacie hodnoty. Nie sú to modely INA219 ani článku.
-6. Prepínače:
-   GPIO4 = hlavné napájanie, v simulátore 3V3/GND (na skutočnej doske je delič!);
-   GPIO5 a GPIO6 = svetlá, zopnutím proti GND zapnuté;
-   GPIO13 = sourceOK, GND znamená voda dostupná;
-   GPIO14 = targetLow, rozopnutie znamená pod dolnou hladinou;
-   GPIO15 = targetFull, rozopnutie znamená plná nádrž/stop;
-   GPIO16 = dryOK, rozopnutie znamená uniknutá voda/stop.
-7. Iba v tomto offline variante nahrádza server prepínač GPIO2:
-   zopni ho na GND a sketch obnovuje virtuálny serverový povel.
-   GPIO3 na GND po vypnutí požiadavky GPIO2 požiada o reset poruchy.
-   Červená LED na GPIO12 je IBA indikátor povelu pre pumpu, nie model motora.
-   GPIO7 a GPIO10 sú indikátory svetiel, nie skutočné 5 V tranzistorové vetvy.
-8. Vyskúšaj časový limit 15 s, horný plavák, prázdny zdroj, únik a výpadok.
-   Po poruche vypni požiadavku GPIO2, oprav vstupy, aktivuj GPIO3 reset
-   a potom daj nový povel. Rovnaký water_guard.h je v skutočnom firmvéri.
-9. Prepojenie so serverom nie je potrebné na tento bezplatný test.
-   Ak máš platený Wokwi Private IoT Gateway, môžeš vo sketch.ino nastaviť
-   WIFI_ENABLED=1. Offline GPIO2/GPIO3 sa potom nepoužívajú.
-   Nechaj Wokwi-GUEST s prázdnym heslom, server URL je:
-   http://host.wokwi.internal:8876/api/device/telemetry
-   a testovací kľúč soc-simulation-only, iba pre oddelený testovací server.
-   Testovací server spusti podľa A a povoľ prijímanie telemetrie cez
-   --configure-test, alebo vypni Demo a povoľ vodu ručne.
+Na https://benchtwin.com skús nový ESP32 projekt. V jeho aktuálnej knižnici
+najprv over presnú podporu ESP32-S3, INA219, CN3791 a MT3608. Nepotvrdil
+som funkčné elektrické modely všetkých týchto konkrétnych dosiek naraz.
+Prítomnosť 3D obrázka modulu ešte neznamená simuláciu jeho prúdov a ochrán.
+Ak niektorý model chýba, použi A/B na komunikáciu a logiku; nabíjaciu vetvu
+otestuj fyzicky podľa SOC/docs/ZAPOJENIE.md. Nevytváram neoverený importný
+súbor predstierajúci úplnú simuláciu nabíjania.
 
-   Verejná bezplatná Wokwi brána nedosiahne localhost ani tvoju LAN.
-   Nefunguje z nej priamo http://192.168.x.x:8765 ani host.wokwi.internal.
-   Nesprístupňuj kvôli tomuto školskému testu nechránený server internetu.
+3D DOM
 
-C. BENCHTWIN – POSTUP BEZ VYMÝŠĽANIA NEOVERENÉHO IMPORTU
+V appke je otáčanie, priblíženie, zdvih/odloženie celej strechy vrátane
+panela a výber súčiastok. Panel aj jeho kábel sú súčasťou strechy; pri
+fyzickom modeli treba pred úplným odložením rozpojiť označený konektor.
+Editovateľný model: SOC/model-domu/3d/dom.blend; výmena: dom.glb.
 
-1. Otvor https://benchtwin.com . Start building → elektronický projekt.
-2. V knižnici vyhľadaj ESP32-S3, prípadne podporovaný ESP32 s vedomým
-   premapovaním pinov. N16R8 znamená pamäť reálnej dosky; podpora rodiny
-   ESP32 automaticky nepreukazuje simuláciu konkrétnej 16MB/8MB konfigurácie.
-3. Pridaj breadboard, tri potenciometre, deväť prepínačov, tri LED a ich
-   rezistory. Pre logický test použi rovnaké piny a logiku ako v bode B.
-4. Presné moduly hľadaj osobitne: INA219, CN3791, MT3608, DRV8833,
-   relay 5V/SPDT, lithium/LiPo cell, DC motor a float switch.
-   Ak komponent chýba alebo má len vizuálny model, nahraď ho v LOGICKOM
-   teste potenciometrom, prepínačom alebo indikačnou LED a náhradu označ.
-   Nenazývaj taký test simuláciou skutočného nabíjania či čerpadla.
-5. Skontroluj, či daná verzia BenchTwin akceptuje ArduinoJson/Adafruit
-   knižnice a viaceré hlavičkové súbory. Ak áno, vlož sketch a oba .h z B;
-   sieť nechaj vypnutú. Ak nie, použi pripravený Wokwi test alebo A.
-   Hotový BenchTwin importný súbor neprikladám: jeho formát a plnú
-   kompatibilitu projektu som neoveril, takže by nebolo poctivé ho vymyslieť.
-6. V 3D časti môžeš otvoriť model domu v Blenderi z SOC/model-domu/3d/dom.blend.
-   GLB je pre prehliadače a STL je v mm. Ak aktuálny BenchTwin ponúka import
-   tohto formátu, použi ho ako VIZUÁLNU geometriu. Samotný dom nie je
-   elektrický ani vodný simulačný model. Import v BenchTwin nebol overený.
-
-ČO TREBA NAKONIEC OVERIŤ NA SKUTOČNOM STOLE
-
-- Polaritu a povolený nabíjací prúd konkrétnej LiPo, limit CN3791 a jeho RCS.
-- MT3608 5,00 V pri reálnej záťaži a pri Wi-Fi špičkách ESP32.
-- Prechod relé medzi zdrojmi, možné krátke bliknutie LED a kontinuitu ESP.
-- Skutočný rozbehový prúd pumpy, prietok, výtlak a čas do pretečenia nádrže.
-- Spínacie výšky plavákov, úniky, sifónovanie a záchytnú vaničku.
-- Presnosť odhadu nabitia: potenciometer ani modelovaná hodnota SOC ju neoverujú.
-
-OVERENÉ ZDROJE
-https://benchtwin.com/
-https://benchtwin.com/about/
+Zdroje: https://benchtwin.com/about/
 https://docs.wokwi.com/getting-started/supported-hardware
 https://docs.wokwi.com/guides/esp32-wifi
-
-Návod je oddelený od projektu podľa zadania. Dátové súbory po skúšaní
-zostávajú iba v SOC-simulacia/data-simulacia/ a nemajú sa publikovať.
