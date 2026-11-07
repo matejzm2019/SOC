@@ -1,5 +1,5 @@
 SOČ SMART DOM – SAMOSTATNÝ SIMULAČNÝ NÁVOD
-Verzia 0.11.0-roof, 7. 11. 2026. Tento priečinok je MIMO projektu SOC.
+Verzia 0.12.0-assistant, 8. 11. 2026. Tento priečinok je MIMO projektu SOC.
 
 Dom má panel na streche, LED, LiPo, CN3791, MT3608, relé a dva INA219.
 Geometria a samotné meranie sa skúšajú odlišnými nástrojmi. Simulácia
@@ -32,14 +32,14 @@ A. CELÁ APLIKÁCIA A TESTOVACIE ESP NA PC
 B. WOKWI – KÓD ESP32-S3, PREPÍNAČE A NÁHRADNÉ SNÍMAČE
 
 1. Na https://wokwi.com vytvor ESP32-S3 DevKitC-1 projekt a nahraď súbory
-   obsahom priečinka wokwi: sketch.ino, backup_power.h, secrets.h,
+   obsahom priečinka wokwi: sketch.ino, backup_power.h, switch_input.h, secrets.h,
    diagram.json a libraries.txt. Knižnice: Adafruit INA219, ArduinoJson 7.
 2. Sketch má SIMULATED_SENSORS=1 a WIFI_ENABLED=0. Nepoužívaj ho na
    skutočnom hardvéri ako meranie! Produkčný sketch je v SOC/firmware/.
 3. Run: Serial monitor ukazuje JSON s telemetry_origin=software_test.
    GPIO4 prepína MAIN (iba v simulátore ide priamo medzi 3V3 a GND;
    skutočná doska má povinný delič 22 kΩ / 10 kΩ).
-   GPIO5/6 prepínajú LED A/B; GPIO7/10 sú výstupy do testovacích LED.
+   GPIO5/6 prepínajú LED A/B po 30 ms stabilného kontaktu; GPIO7/10 sú výstupy do testovacích LED.
    Potenciometre: GPIO1 slnko, GPIO17 napätie článku, GPIO18 čistý prúd.
    Nie sú to fyzikálne modely INA219, LiPo ani nabíjačky.
 4. Bezplatný verejný Wokwi gateway nemá prístup na tvoj lokálny server.
@@ -57,11 +57,21 @@ Ak niektorý model chýba, použi A/B na komunikáciu a logiku; nabíjaciu vetvu
 otestuj fyzicky podľa SOC/docs/ZAPOJENIE.md. Nevytváram neoverený importný
 súbor predstierajúci úplnú simuláciu nabíjania.
 
+AI
+
+Všeobecný chat vie zistiť predpoveď cez Open-Meteo, iné mesto aj hodinu.
+Vyber nainštalovaný Qwen3 4B alebo 4B Instruct. Online zdroje majú vlastný
+prepínač; na získanie predpovede treba internet a mesto. Získané odkazy
+sú pod odpoveďou. Encyklopédia je označená náhrada pri nedostupnosti
+verejného vyhľadávača; nie je overenie aktuálnych správ. Viac je v
+SOC/docs/LOKALNY_ASISTENT.md.
+
 3D DOM
 
 V appke je otáčanie, priblíženie, zdvih/odloženie celej strechy vrátane
 panela a výber súčiastok. Panel aj jeho kábel sú súčasťou strechy; pri
 fyzickom modeli treba pred úplným odložením rozpojiť označený konektor.
+Prepínače sú na paneli C01 pri ľavom okraji podstavy, mimo chodníka.
 Editovateľný model: SOC/model-domu/3d/dom.blend; výmena: dom.glb.
 
 Zdroje: https://benchtwin.com/about/
