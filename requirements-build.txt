@@ -1,2 +1,0 @@
-# Len na obnovu PDF cez tools/build_documents.py; runtime aplikácie to nepotrebuje.
-reportlab>=4,<5

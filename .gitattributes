@@ -1,7 +1,0 @@
-*.pdf binary
-*.blend binary
-*.glb binary
-*.stl binary
-*.jpg binary
-# CSV files retain Excel-compatible CRLF and UTF-8 BOM from the generators.
-*.csv -text whitespace=cr-at-eol
