@@ -6,6 +6,7 @@
 #include <Adafruit_INA219.h>
 #include "secrets.h"
 #include "backup_power.h"
+#include "switch_input.h"
 #ifndef SIMULATED_SENSORS
 #define SIMULATED_SENSORS 0
 #endif
@@ -23,15 +24,17 @@ bool mains=false;int loadStage=0;
 
 bool present(uint8_t address){Wire.beginTransmission(address);return Wire.endTransmission()==0;}
 void controlTask(void*) {
- bool currentMain=false;
+ bool currentMain=false;DebouncedSwitch switchA,switchB;
+ TickType_t wake=xTaskGetTickCount();
  for(;;){
   currentMain=mainSupplyPresent(analogReadMilliVolts(MAIN_PIN),currentMain);
-  bool a=digitalRead(SW_A)==LOW,b=digitalRead(SW_B)==LOW;
+  const uint32_t now=millis();
+  bool a=switchA.update(digitalRead(SW_A)==LOW,now),b=switchB.update(digitalRead(SW_B)==LOW,now);
   digitalWrite(LED_A,a);digitalWrite(LED_B,b);digitalWrite(GRID_LED,currentMain);
   portENTER_CRITICAL(&controlMux);
   mains=currentMain;loadStage=(a?1:0)+(b?2:0);
   portEXIT_CRITICAL(&controlMux);
-  vTaskDelay(pdMS_TO_TICKS(20));
+  vTaskDelayUntil(&wake,pdMS_TO_TICKS(10));
  }
 }
 void setup(){
@@ -75,7 +78,7 @@ void loop(){
  grid=mains;loads=loadStage;
  portEXIT_CRITICAL(&controlMux);
  JsonDocument doc;
- doc["device_id"]="energia-esp32";doc["firmware_version"]="0.6.0-roof";
+ doc["device_id"]="energia-esp32";doc["firmware_version"]="0.7.0-controls";
  doc["telemetry_origin"]=SIMULATED_SENSORS?"software_test":"hardware";
  doc["panel_voltage_v"]=max(0.0f,panelV);doc["panel_current_a"]=max(0.0f,panelA);doc["panel_power_w"]=max(0.0f,panelW);
  doc["load_stage"]=loads;doc["grid_available"]=grid;

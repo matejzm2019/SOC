@@ -12,5 +12,6 @@ P10,Rovina strechy,2,504,230,4,preglejka,sklon 35°; obe roviny tvoria odnímate
 P11,Štít strechy,2,330,115.53,4,preglejka,"trojuholník; pri výrobe výška 115,5 mm"
 L01,Nosník strechy,2,316,10,10,lišta,spája štíty a tvorí jeden kus strechy
 L02,Vodiaci doraz strechy,4,30,10,6,lišta,"vôľa aspoň 0,5–1 mm"
-L03,Výstuha pod panelom,2,460,10,10,lišta,"pozdĺž strechy, pod prednou rovinou"
+L03,Výstuha pod panelom,2,440,10,10,lišta,"pozdĺž strechy, pod prednou rovinou"
 L04,Montážna lišta panela,2,250,8,6,lišta,na prednej rovine; klipy držia rám panela
+C01,Ovládací panel,1,100,40,4,preglejka,X30 Y18 na 15 mm stĺpikoch; A/B Ø6; LED Ø3; závit over na skutočnom prepínači

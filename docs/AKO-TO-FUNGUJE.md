@@ -1,6 +1,6 @@
 # Čo je tento projekt a ako funguje
 
-Verzia 0.11.0-roof, 7. 11. 2026. SOČ je funkčný nízkonapäťový model inteligentného domu s lokálnym serverom, solárnou batériou a zálohou svetiel. Dom má celé steny, strechu položenú a odnímateľnú v jednom kuse. Bez nábytku. Toto je aktuálny návrh; staršie obrázky v deliverables/ zachytávajú pôvodnú verziu.
+Verzia 0.12.0-assistant, 8. 11. 2026. SOČ je funkčný nízkonapäťový model inteligentného domu s lokálnym serverom, solárnou batériou a zálohou svetiel. Dom má celé steny, strechu položenú a odnímateľnú v jednom kuse. Bez nábytku. Toto je aktuálny návrh; staršie obrázky v deliverables/ zachytávajú pôvodnú verziu.
 
 ## Rozdelenie práce
 
@@ -21,14 +21,14 @@ flowchart LR
 
 - **ESP32:** číta snímače a ovláda LED. Fyzické prepínače sa obsluhujú nezávisle od Wi-Fi/HTTP prenosu.
 - **Server:** notebook, stolný PC alebo vhodný mini PC. Spúšťa FastAPI, ukladá merania do SQLite, počíta model a poskytuje webovú aplikáciu. Nemusíš kupovať cloudový server.
-- **AI:** Ollama beží na tom istom PC ako backend. ESP32 nemá spúšťať jazykový model. Mobil je iba klient cez prehliadač.
+- **AI:** Ollama beží na tom istom PC ako backend. ESP32 nemá spúšťať jazykový model. Mobil je iba klient cez prehliadač. Asistent vie aj všeobecné otázky a môže čítacími nástrojmi zistiť konkrétnu predpoveď alebo verejné zdroje. Online zisťovanie sa vypína samostatne; podrobnosti sú v LOKALNY_ASISTENT.md.
 - **Wi-Fi/router:** spája ESP, PC a mobil. Po stiahnutí závislostí a modelu samotná LAN komunikácia nepotrebuje internet. Internetové počasie a spotové ceny ho potrebujú samostatne.
 
 ## Meranie a model sú rozlíšené
 
 Dva INA219 merajú malý panel a čistý prúd/napätie článku. Kladný batériový prúd znamená nabíjanie, záporný vybíjanie. Percentá sú hrubý odhad zo všeobecnej napäťovej krivky LiPo; nie je to fuel gauge ani test skutočnej kapacity. Pri nabíjaní môže odhad nadhodnocovať a pri záťaži podhodnocovať. Hodnota 2 500 mAh je údaj zo štítku. Skutočná využiteľná kapacita vyžaduje kontrolované vybíjanie s integráciou prúdu a odpojením na stanovenej hranici.
 
-Veľké výkony domu v kW, import/export a virtuálna domáca batéria sú výpočtový model. Malý článok fyzicky napája LED a ESP, nie kilowattový dom. Fyzické svetlá sa ovládajú dvoma prepínačmi; 3D model ukazuje ich hlásený stav. Spotreba jednotlivých miestností sa nemerajú.
+Veľké výkony domu v kW, import/export a virtuálna domáca batéria sú výpočtový model. Malý článok fyzicky napája LED a ESP, nie kilowattový dom. Fyzické svetlá sa ovládajú dvoma prepínačmi A/B na vyvýšenom paneli vľavo vpredu; 3D model ukazuje ich hlásený stav. Spotreba jednotlivých miestností sa nemerajú.
 
 ## Záloha svetiel
 

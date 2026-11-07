@@ -52,6 +52,14 @@ def test_manufacturing_geometry_matches_cutting_list():
  roof=[m for m in asset['meshes'] if m['g']==1]
  assert len(roof)>30 and all(m['name'].startswith('ROOF') for m in roof)
  assert not any('furniture' in m['name'].lower() for m in asset['meshes'])
+ controls=[m for m in asset['meshes'] if m['g'] in (14,17)]
+ assert all(25<=v<=132 for m in controls for v in m['p'][0::3])
+ assert all(15<=v<=60 for m in controls for v in m['p'][1::3])
+ # Neither the switches nor their service panel intersect the entrance path X323–385.
+ assert max(v for m in controls for v in m['p'][0::3])<323
+ guides=[m for m in asset['meshes'] if m['name'].startswith('ROOF L02')]
+ assert all(max(m['p'][2::3])<=118 for m in guides)
+ assert not any('460x10x10' in m['name'] for m in asset['meshes'])
  assert asset['roof_groups']==[1,2] and asset['roof_angle_deg']==35
  assert not any(m['g'] in {10,11} for m in asset['meshes'])
  panel=next(m for m in asset['meshes'] if m['name']=='SOLAR Panel 230x195x17')

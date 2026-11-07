@@ -25,6 +25,7 @@ export function createHouseView(root) {
    let color=m.c;
    const t=lastState&&!lastState.demo.enabled&&lastState.device.online?lastState.device.telemetry:null;
    if(m.g===12||m.g===13){const on=t?Boolean(t.load_stage&(m.g===12?1:2)):false;color=on?[1,.8,.25]:[.35,.3,.22];}
+   if(m.g===17){const on=t&&t.grid_available;color=on?[.25,.6,1]:[.12,.2,.25];}
    if(m.g===selected)color=color.map((v,i)=>Math.min(1,v*.65+[.2,.3,.35][i]));
    gl.uniform3fv(loc.uColor,color);gl.uniform1f(loc.uLift,(m.g===1||m.g===2)?roof:0);gl.drawArrays(gl.TRIANGLES,0,m.count);
   }
@@ -34,7 +35,7 @@ export function createHouseView(root) {
  root.querySelector('[data-roof-hide]').addEventListener('change',e=>{hideRoof=e.target.checked;draw();});
  root.querySelector('[data-house-reset]').addEventListener('click',reset);
  root.querySelector('[data-house-top]').addEventListener('click',()=>{pitch=Math.PI/2;yaw=0;hideRoof=true;root.querySelector('[data-roof-hide]').checked=true;draw();});
- root.querySelector('select').addEventListener('change',e=>{selected=Number(e.target.value);if(selected<0){reset();return;}hideRoof=selected>=3;root.querySelector('[data-roof-hide]').checked=hideRoof;if(!hideRoof){roof=0;root.querySelector('[data-roof]').value='0';set('[data-roof-value]','0 mm');}const points=meshes.filter(m=>m.g===selected).flatMap(m=>m.positions);const xs=[],ys=[],zs=[];for(let i=0;i<points.length;i+=3){xs.push(points[i]);ys.push(points[i+1]);zs.push(points[i+2]);}focus=[(Math.min(...xs)+Math.max(...xs))/2,(Math.min(...ys)+Math.max(...ys))/2,(Math.min(...zs)+Math.max(...zs))/2];zoom=(selected>=3&&selected<=10)||selected===16?5:2;draw();});
+ root.querySelector('select').addEventListener('change',e=>{selected=Number(e.target.value);if(selected<0){reset();return;}hideRoof=[3,4,5,6,7,8,9,12,13,15,16].includes(selected);root.querySelector('[data-roof-hide]').checked=hideRoof;if(!hideRoof){roof=0;root.querySelector('[data-roof]').value='0';set('[data-roof-value]','0 mm');}const points=meshes.filter(m=>m.g===selected).flatMap(m=>m.positions);const xs=[],ys=[],zs=[];for(let i=0;i<points.length;i+=3){xs.push(points[i]);ys.push(points[i+1]);zs.push(points[i+2]);}focus=[(Math.min(...xs)+Math.max(...xs))/2,(Math.min(...ys)+Math.max(...ys))/2,(Math.min(...zs)+Math.max(...zs))/2];zoom=(selected>=3&&selected<=10)||selected===16||selected===17?5:selected===14?4:2;draw();});
  canvas.addEventListener('pointerdown',e=>{drag=[e.clientX,e.clientY];canvas.setPointerCapture(e.pointerId);});
  canvas.addEventListener('pointermove',e=>{if(!drag)return;yaw+=(e.clientX-drag[0])*.007;pitch=Math.max(.1,Math.min(1.57,pitch+(e.clientY-drag[1])*.006));drag=[e.clientX,e.clientY];draw();});
  canvas.addEventListener('pointerup',()=>{drag=null;});canvas.addEventListener('pointercancel',()=>{drag=null;});

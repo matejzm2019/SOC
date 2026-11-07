@@ -365,7 +365,7 @@ function updateSettings() {
   const values = formSettings();
   const changed = Object.keys(state.settings).filter(key => values[key] !== state.settings[key]);
   const count = changed.length;
-  const reset = changed.some(key => !['ai_enabled','ai_model','weather_enabled','location_name','location_set','weather_source'].includes(key));
+  const reset = changed.some(key => !['ai_enabled','ai_model','ai_online_enabled','weather_enabled','location_name','location_set','weather_source'].includes(key));
   setText('settings-change-title', count ? `${count} ${count === 1 ? 'zmena' : count < 5 ? 'zmeny' : 'zmien'} na uloženie` : 'Žiadne neuložené zmeny');
   setText('settings-change-detail', count ? reset ? imported ? 'Uloženie vytvorí novú analýzu importovaných údajov s touto tarifou. Pôvodná história zostane uložená.' : 'Zmena modelu vytvorí nový súbor údajov. Normálny režim čaká na ESP32; demo začína pozastavené.' : 'Nastavenia sa uložia bez resetovania energetickej histórie.' : 'Upravte hodnotu alebo modul. Vzhľad stránky sa prepína okamžite mimo nastavení.');
   $('#settings-save').disabled = !count || busy;
@@ -447,7 +447,7 @@ async function loadRuns() {
 
 function applyAssistantStatus(result) {
   assistantStatus = result;
-  setText('assistant-status', result.available ? result.model.startsWith('qwen3:4b-') ? 'QWEN3 4B' : result.model.toUpperCase() : 'NEPRIPOJENÝ');
+  setText('assistant-status', result.available ? result.model.startsWith('qwen3:4b') ? 'QWEN3 4B' : result.model.toUpperCase() : 'NEPRIPOJENÝ');
   setText('assistant-connection', result.message);
   $$('.assistant-prompts button, #chat-send').forEach(el => el.disabled = chatBusy || !result.available);
   setText('chat-send', chatBusy ? 'Spracúva…' : 'Odoslať ↑');
@@ -586,13 +586,24 @@ async function askAssistant(question) {
   if (chatBusy || !question.trim()) return;
   chatBusy = true; setText('chat-error',''); applyAssistantStatus(assistantStatus || {available:false,message:'Pripájam model…'});
   chatBubble('user',question);
-  const pending = chatBubble('assistant','Lokálny model spracúva otázku. Na staršom počítači to môže chvíľu trvať.');
+  const pending = chatBubble('assistant',state.settings.ai_online_enabled?'Pripravujem odpoveď; podľa otázky overím aj online podklady.':'Lokálny model pripravuje odpoveď.');
   pending.classList.add('pending');
-  const controller = new AbortController(), timeout = setTimeout(() => controller.abort(),125000);
+  const controller = new AbortController(), timeout = setTimeout(() => controller.abort(),195000);
   try {
     const result = await api('assistant/chat',{method:'POST',body:JSON.stringify({question,history:chatHistory.slice(-4)}),signal:controller.signal});
     pending.remove();
     const article = chatBubble('assistant',result.answer);
+    if (result.sources?.length) {
+      const links=document.createElement('div');links.className='assistant-sources';links.setAttribute('aria-label','Získané zdroje');
+      for(const source of result.sources){
+        try {const url=new URL(source.url);if(url.protocol!=='https:')continue;
+          const link=document.createElement('a');link.href=url.href;link.target='_blank';link.rel='noopener noreferrer';link.textContent=source.title+(source.scope==='encyclopedia'?' · encyklopédia':'');link.title=url.hostname;links.append(link);
+        } catch {}
+      }
+      article.append(links);
+    } else if(result.basis==='general_knowledge') {
+      const note=document.createElement('p');note.className='footnote';note.textContent='Všeobecné vysvetlenie z lokálneho modelu · bez online overenia.';article.append(note);
+    }
     applyAssistantStatus({available:true,model:result.model,message:'Pripravený na tomto počítači.'});
     article.querySelector('small').textContent = `Lokálny asistent · údaje #${result.run_id}`;
     if (result.facts.length) {

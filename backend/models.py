@@ -39,8 +39,9 @@ class Settings(StrictModel):
     price_source: Literal["manual", "internet"] = "manual"
     supplier_markup: float = Field(0, ge=0, le=10)
     energy_vat_pct: float = Field(0, ge=0, le=100)
+    ai_online_enabled: bool = True
     ai_enabled: bool = True
-    ai_model: Literal["qwen3:0.6b", "qwen3:1.7b", "qwen3:4b-instruct-2507-q4_K_M"] = "qwen3:0.6b"
+    ai_model: Literal["qwen3:0.6b", "qwen3:1.7b", "qwen3:4b", "qwen3:4b-instruct-2507-q4_K_M"] = "qwen3:0.6b"
 
     @model_validator(mode="after")
     def mode_source(self):
@@ -173,7 +174,7 @@ class AssistantRequest(StrictModel):
 
 # Only application configuration is editable; telemetry and device credentials are never tools.
 CHAT_SETTINGS = {
-    "demo_mode": "Demo režim", "prices_enabled": "Modul cien",
+    "demo_mode": "Demo režim", "ai_online_enabled": "Online zdroje asistenta", "prices_enabled": "Modul cien",
     "price_source": "Zdroj ceny", "price_mode": "Tarifný režim",
     "buy_price": "Nákup (€/kWh)", "sell_price": "Výkup (€/kWh)",
     "offpeak_price": "Nízka tarifa (€/kWh)", "distribution_price": "Distribúcia (€/kWh)",

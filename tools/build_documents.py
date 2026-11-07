@@ -21,8 +21,9 @@ parts=[
 ('P11','Štít strechy',2,330,115.53,4,'preglejka','trojuholník; pri výrobe výška 115,5 mm'),
 ('L01','Nosník strechy',2,316,10,10,'lišta','spája štíty a tvorí jeden kus strechy'),
 ('L02','Vodiaci doraz strechy',4,30,10,6,'lišta','vôľa aspoň 0,5–1 mm'),
-('L03','Výstuha pod panelom',2,460,10,10,'lišta','pozdĺž strechy, pod prednou rovinou'),
+('L03','Výstuha pod panelom',2,440,10,10,'lišta','pozdĺž strechy, pod prednou rovinou'),
 ('L04','Montážna lišta panela',2,250,8,6,'lišta','na prednej rovine; klipy držia rám panela'),
+('C01','Ovládací panel',1,100,40,4,'preglejka','X30 Y18 na 15 mm stĺpikoch; A/B Ø6; LED Ø3; závit over na skutočnom prepínači'),
 ]
 with (OUT/'rezaci-plan.csv').open('w',newline='',encoding='utf-8-sig') as f:
  w=csv.writer(f);w.writerow(['ID','diel','kusy','dlzka_mm','sirka_mm','hrubka_mm','material','poznamka']);w.writerows(parts)
@@ -34,11 +35,18 @@ for id,name,count,w,h,t,mat,note in parts:
  if id=='P11':shape='<polygon points="0,115.53 330,115.53 165,0"/>'
  holes=''.join(f'<rect x="{x}" y="{h-y-hh}" width="{ww}" height="{hh}"/>' for x,y,ww,hh in windows.get(id,[]))
  if id=='P03':holes+='<circle cx="440" cy="95" r="4"/>'
+ if id=='C01':holes+='<circle cx="26" cy="22" r="3"/><circle cx="66" cy="22" r="3"/><circle cx="89" cy="22" r="1.5"/>'
+ if id=='C01':
+  for x,y in ((5,5),(95,5),(5,35),(95,35)):holes+=f'<circle cx="{x}" cy="{h-y}" r="1.6"/>'
  if id=='P01':
-  for x,y in [(360,85),(360,385),(285,35),(320,35),(500,370)]:holes+=f'<circle cx="{x}" cy="{h-y}" r="3"/>'
- svg=f'''<svg xmlns="http://www.w3.org/2000/svg" width="{w}mm" height="{h}mm" viewBox="0 0 {w} {h}"><title>{id} {html.escape(name)} – 1:1 mm</title><g fill="none" stroke="black" stroke-width="0.15">{shape}{holes}</g><text x="10" y="15" font-size="5" font-family="sans-serif">{id} · {w} x {h} x {t} mm · {count} ks · 1:1</text><path d="M10 {h-8} h100" stroke="blue" stroke-width="0.3"/><text x="10" y="{h-10}" font-size="4">Kontrolná mierka 100 mm</text></svg>'''
+  for x,y in [(360,85),(360,385),(56,36),(96,36),(500,370)]:holes+=f'<circle cx="{x}" cy="{h-y}" r="3"/>'
+  holes+='<circle cx="119" cy="414" r="1.5"/>'
+  for x,y in ((35,23),(125,23),(35,53),(125,53)):holes+=f'<circle cx="{x}" cy="{h-y}" r="1.6"/>'
+ check=100 if w>=120 else 50
+ svg=f'''<svg xmlns="http://www.w3.org/2000/svg" width="{w}mm" height="{h}mm" viewBox="0 0 {w} {h}"><title>{id} {html.escape(name)} – 1:1 mm</title><g fill="none" stroke="black" stroke-width="0.15">{shape}{holes}</g><text x="10" y="15" font-size="5" font-family="sans-serif">{id} · {w} x {h} x {t} mm · {count} ks · 1:1</text><path d="M10 {h-8} h{check}" stroke="blue" stroke-width="0.3"/><text x="10" y="{h-10}" font-size="4">Kontrolná mierka {check} mm</text></svg>'''
  (V/f'{id}-1ku1.svg').write_text(svg)
-wire=[('W01','LAB +5 V → hlavný rozvod',1,600,'0,5 mm²','červený'),('W02','LAB GND → spoločná zem',1,600,'0,5 mm²','čierny'),('W03','Batéria → INA219 0x41',2,150,'0,25–0,5 mm²','PH2.0 adaptér, polaritu zmerať'),('W04','INA219 → batériový uzol',1,120,'0,25–0,5 mm²','červený'),('W05','CN3791 BAT → batériový uzol',2,150,'0,25–0,5 mm²','pár + / GND'),('W06','Batériový uzol → MT3608 cez servisnú prepojku',2,150,'0,25–0,5 mm²','odpoj na úplné prednabitie'),('W07','MT3608 5 V → relé NC',1,150,'0,25–0,5 mm²','červený'),('W08','Hlavný +5 V → relé NO a VCC',2,150,'0,25–0,5 mm²','červený'),('W09','Relé COM → LED vetva A',2,750,'0,14–0,25 mm²','napájanie a spínaný návrat'),('W10','Relé COM → LED vetva B',2,500,'0,14–0,25 mm²','napájanie a spínaný návrat'),('W11','Rozvod 3 LED A na stene',2,300,'0,14 mm²','každá LED vlastný 330 Ω'),('W12','Rozvod 3 LED B na stene',2,300,'0,14 mm²','každá LED vlastný 330 Ω'),('W13','Prepínač A → GPIO5/GND',2,600,'0,14 mm²','signálový pár'),('W14','Prepínač B → GPIO6/GND',2,600,'0,14 mm²','signálový pár'),('W15','MT3608 → ESP napájací USB-C kábel',1,200,'hotový kábel','iba overených 5 V'),('W16','I²C ESP → INA219 0x40',4,180,'0,14 mm²','3V3 GND SDA SCL'),('W17','I²C INA219 0x40 → 0x41',4,100,'0,14 mm²','3V3 GND SDA SCL'),('W18','Panel na streche → INA219',2,650,'0,25–0,5 mm²','vrátane pôvodného kábla; 200 mm servisná slučka a rozpojiteľný konektor'),('W19','Panelový INA219 → CN3791 IN',2,150,'0,25–0,5 mm²','vstup nikdy na BAT'),('W24','GPIO4 delič a tranzistory LED',8,150,'0,14 mm²','miestne prepojky')]
+wire=[('W01','LAB +5 V → hlavný rozvod',1,600,'0,5 mm²','červený'),('W02','LAB GND → spoločná zem',1,600,'0,5 mm²','čierny'),('W03','Batéria → INA219 0x41',2,150,'0,25–0,5 mm²','PH2.0 adaptér, polaritu zmerať'),('W04','INA219 → batériový uzol',1,120,'0,25–0,5 mm²','červený'),('W05','CN3791 BAT → batériový uzol',2,150,'0,25–0,5 mm²','pár + / GND'),('W06','Batériový uzol → MT3608 cez servisnú prepojku',2,150,'0,25–0,5 mm²','odpoj na úplné prednabitie'),('W07','MT3608 5 V → relé NC',1,150,'0,25–0,5 mm²','červený'),('W08','Hlavný +5 V → relé NO a VCC',2,150,'0,25–0,5 mm²','červený'),('W09','Relé COM → LED vetva A',2,750,'0,14–0,25 mm²','napájanie a spínaný návrat'),('W10','Relé COM → LED vetva B',2,500,'0,14–0,25 mm²','napájanie a spínaný návrat'),('W11','Rozvod 3 LED A na stene',2,300,'0,14 mm²','každá LED vlastný 330 Ω'),('W12','Rozvod 3 LED B na stene',2,300,'0,14 mm²','každá LED vlastný 330 Ω'),('W13','Prepínač A → GPIO5/GND',2,900,'0,14 mm²','signálový pár'),('W14','Prepínač B → GPIO6/GND',2,900,'0,14 mm²','signálový pár'),('W15','MT3608 → ESP napájací USB-C kábel',1,200,'hotový kábel','iba overených 5 V'),('W16','I²C ESP → INA219 0x40',4,180,'0,14 mm²','3V3 GND SDA SCL'),('W17','I²C INA219 0x40 → 0x41',4,100,'0,14 mm²','3V3 GND SDA SCL'),('W18','Panel na streche → INA219',2,650,'0,25–0,5 mm²','vrátane pôvodného kábla; 200 mm servisná slučka a rozpojiteľný konektor'),('W19','Panelový INA219 → CN3791 IN',2,150,'0,25–0,5 mm²','vstup nikdy na BAT'),('W24','GPIO4 delič a tranzistory LED',8,150,'0,14 mm²','miestne prepojky')]
+wire.append(('W25','LED hlavného zdroja → GPIO11/GND',2,900,'0,14 mm²','rezistor 330 Ω pri ovládacom paneli'))
 with (OUT/'dlzky-vodicov.csv').open('w',newline='',encoding='utf-8-sig') as f:
  w=csv.writer(f);w.writerow(['ID','spoj','pocet_vodicov','dlzka_jedneho_mm','prierez','poznamka']);w.writerows(wire)
 details=[('A01a', 'Cédrový obklad čelný', 10, 480, 6, 1.5), ('A01b', 'Cédrový obklad bočný', 10, 318, 6, 1.5), ('A02', 'Rohové lišty', 4, 120, 6, 7), ('A03v', 'Zvislé rámy okien', 16, 54, 3, 2), ('A03h64', 'Vodorovné rámy predné', 6, 70, 3, 2), ('A03h56', 'Vodorovné rámy ostatné', 10, 62, 3, 2), ('A03m', 'Stredové priečniky okien', 8, 48, 2, 2), ('A04a', 'Parapety predné', 3, 74, 7, 2), ('A04b', 'Parapety ostatné', 5, 66, 7, 2), ('A05a', 'Pevná doska dverí', 1, 82, 40, 2), ('A05b', 'Zárubne dverí', 2, 86, 4, 3), ('A05c', 'Nadpražie dverí', 1, 48, 4, 3), ('A05d', 'Prah dverí', 1, 48, 10, 2), ('A06', 'Naznačené strešné falce', 24, 230, 1, 1), ('A07', 'Dvojdielny hrebenáč', 2, 504, 12, 1), ('A08', 'Odkvapové lišty', 2, 504, 6, 4), ('A09', 'Štítové lišty', 4, 230, 6, 4), ('A10', 'Vstupné nášľapy', 3, 62, 18, 2)]
@@ -52,7 +60,8 @@ for x,y,w,h,col in rects:svg.append(f'<rect x="{x}" y="{450-y-h}" width="{w}" he
 for name,x,y,w,h in labels:svg.append(f'<rect x="{x}" y="{450-y-h}" width="{w}" height="{h}" fill="#b3cdd9" stroke="#243647" stroke-width="0.7"/><text x="{x+2}" y="{450-y-h+9}" font-size="7" font-family="sans-serif">{name}</text>')
 for x in (130,235,330):
  for y in (77,390):svg.append(f'<circle cx="{x}" cy="{450-y}" r="4" fill="#e7a928"/>')
-for x in (280,315):svg.append(f'<circle cx="{x}" cy="420" r="5" fill="#475364"/>')
+svg.append('<rect x="30" y="392" width="100" height="40" fill="#475364"/>')
+for x in (56,96):svg.append(f'<circle cx="{x}" cy="414" r="5" fill="#475364"/>')
 svg+=['<text x="65" y="12" font-size="11" font-family="sans-serif">ZADNÁ STRANA</text>','<text x="65" y="480" font-size="11" font-family="sans-serif">PREDNÁ STRANA · 600 × 450 mm · súradnice od ľavého predného rohu</text>','<text x="85" y="120" font-size="13" font-family="sans-serif">Svetelný okruh B</text>','<text x="85" y="300" font-size="13" font-family="sans-serif">Svetelný okruh A</text>','<text x="380" y="215" font-size="9" font-family="sans-serif">Voľný priestor, bez nábytku</text>','</svg>']
 (V/'podorys.svg').write_text(''.join(svg))
 # Vector PDF with embedded Unicode font and manufacturing data, A3 landscape.
@@ -67,7 +76,7 @@ c=canvas.Canvas(str(OUT/'STAVEBNY-NAVOD.pdf'),pagesize=landscape(A3));c.setTitle
 def heading(title,sub=''):
  c.setFont('DejaVu',20);c.drawString(18*mm,PH-20*mm,title);c.setFont('DejaVu',10);c.drawString(18*mm,PH-28*mm,sub)
 def pageend(n):
- c.setFont('DejaVu',8);c.drawString(18*mm,12*mm,f'SOČ · verzia 2026-11-07 · všetky rozmery v mm · strana {n}');c.showPage()
+ c.setFont('DejaVu',8);c.drawString(18*mm,12*mm,f'SOČ · verzia 2026-11-08 · všetky rozmery v mm · strana {n}');c.showPage()
 def line(y,text,size=10):c.setFont('DejaVu',size);c.drawString(18*mm,y*mm,text)
 heading('Drevený smart dom – stavebný návod','Celé steny · celá strecha sa zdvihne · bez nábytku · panel priamo na streche')
 for image,x in [('dom-zatvoreny.jpg',16),('dom-strecha-odlozena.jpg',210)]:
@@ -79,7 +88,7 @@ line(55,'Panel 230 × 195 × 17 je na streche. Celá zostava zostáva na podstav
 line(45,'Panel upevni za kovový rám na lišty L04. Elektronické otvory prenes zo skutočných dosiek.')
 line(35,'SVG v priečinku vykresy sú 1:1; tento PDF prehľad nie je šablóna 1:1. Pred rezaním zmeraj hrúbku dosiek.')
 pageend(1)
-heading('Pôdorys a osadenie','Súradnice X/Y od ľavého predného rohu podstavy. Predná strana má dva prepínače.')
+heading('Pôdorys a osadenie','Súradnice X/Y od ľavého predného rohu podstavy. Prepínače A/B sú na ľavom okraji podstavy, mimo chodníka.')
 scale=.43;ox=20;oy=45
 for x,y,w,h,col in rects:
  c.setFillColor(col);c.rect((ox+x*scale)*mm,(oy+y*scale)*mm,w*scale*mm,h*scale*mm,stroke=1,fill=1)
@@ -89,7 +98,7 @@ for name,x,y,w,h in labels:
 for n,(name,x,y,w,h) in enumerate(labels):
  name=labels[n][0];c.setFont('DejaVu',10);c.drawString(290*mm,(220-n*14)*mm,f'{name}: X={x}, Y={y}; rezerva {w} × {h}')
 c.setFont('DejaVu',10)
-for k,t in enumerate(['Dom: X60–540, Y70–400.','Pozdĺžna priečka: X370–376.','Ľavá priečka: Y235–241.','Pravá priečka: Y250–256.','Doska elektroniky: X380 Y257.','Pod PCB 4 mm izolačné stĺpiky.']):c.drawString(290*mm,(90-k*10)*mm,t)
+for k,t in enumerate(['Dom: X60–540, Y70–400.','Pozdĺžna priečka: X370–376.','Ľavá priečka: Y235–241.','Pravá priečka: Y250–256.','Doska elektroniky: X380 Y257.','Pod PCB 4 mm izolačné stĺpiky. Ovládanie: X30 Y18.']):c.drawString(290*mm,(90-k*10)*mm,t)
 pageend(2)
 heading('Rezací plán','Čisté rozmery hotových dielov. Pripočítaj šírku rezu píly pri rozložení na materiál, nie k hotovému dielu.')
 y=250
@@ -97,6 +106,7 @@ for row in [('ID','diel','ks','dĺžka','šírka','hrúbka')]+[r[:6] for r in pa
  for x,txt in zip([18,40,210,240,280,320],row):c.setFont('DejaVu',10);c.drawString(x*mm,y*mm,str(txt))
  y-=10
 line(60,'P11: základňa 330, výška 115,53 (výroba 115,5), vrchol X165. L03 podopiera prednú strešnú rovinu.')
+line(70,'L02 prilep na spodnú stranu L01 (Z112–118). L03 dĺžky 440 nechaj medzi bočnými nosníkmi.')
 line(50,'Strechu zlep do jedného rámu. Spoj rovín hore prekry páskou/tenkou lištou; pred lepením nasucho odskúšaj.')
 line(40,'Odnímateľná doska elektroniky 150 × 132: nelep priamo batériu ani spodné kontakty PCB na drevo.')
 pageend(3)
@@ -151,5 +161,5 @@ for row in details:
 line(36,'Tieto detaily sú v detaily-fasady.csv. Falcovanie môžeš nahradiť nakreslenými čiarami na streche.')
 pageend(7);c.save()
 # A local index served by FastAPI /stavba/. No cloud or CDN resources.
-(OUT/'index.html').write_text('''<!doctype html><html lang="sk"><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Stavba smart domu</title><style>body{font:17px system-ui;max-width:1050px;margin:35px auto;padding:20px;background:#eef2f7;color:#182839}a{color:#174c92}img{width:100%;border-radius:12px}li{margin:12px 0}code{background:#dce5ef;padding:4px}</style><h1>Stavebné podklady smart domu</h1><p>Celé steny, odnímateľná strecha v jednom kuse, bez nábytku. Rozmery v milimetroch.</p><ul><li><a href="STAVEBNY-NAVOD.pdf">Stavebný návod PDF · A3</a></li><li><a href="3d/dom.blend">Editovateľný Blender model</a> · <a href="3d/dom.glb">3D GLB model</a></li><li><a href="vykresy/podorys.svg">Pôdorys s osadením</a> · <a href="rezaci-plan.csv">Rezací plán CSV</a></li><li><a href="dlzky-vodicov.csv">Dĺžky vodičov CSV</a> · <a href="detaily-fasady.csv">Detaily fasády CSV</a></li></ul><p>SVG šablóny sú v priečinku <code>vykresy/</code>, každý diel má vlastný súbor Pxx-1ku1.svg. Tlač na 100 %, over kontrolnú mierku 100 mm. PDF je prehľad, nie šablóna 1:1.</p><img src="nahlady/dom-zatvoreny.jpg" alt="Zatvorený drevený dom"><img src="nahlady/dom-strecha-odlozena.jpg" alt="Dom so strechou odloženou, bez nábytku"><p>Aktívny 3D prehliadač je v aplikácii na karte 3D model a stavba.</p></html>''')
+(OUT/'index.html').write_text('''<!doctype html><html lang="sk"><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Stavba smart domu</title><style>body{font:17px system-ui;max-width:1050px;margin:35px auto;padding:20px;background:#eef2f7;color:#182839}a{color:#174c92}img{width:100%;border-radius:12px}li{margin:12px 0}code{background:#dce5ef;padding:4px}</style><h1>Stavebné podklady smart domu</h1><p>Celé steny, odnímateľná strecha v jednom kuse, bez nábytku. Rozmery v milimetroch.</p><ul><li><a href="STAVEBNY-NAVOD.pdf">Stavebný návod PDF · A3</a></li><li><a href="3d/dom.blend">Editovateľný Blender model</a> · <a href="3d/dom.glb">3D GLB model</a></li><li><a href="vykresy/podorys.svg">Pôdorys s osadením</a> · <a href="rezaci-plan.csv">Rezací plán CSV</a></li><li><a href="vykresy/C01-1ku1.svg">Ovládací panel C01 · šablóna 1:1</a></li><li><a href="dlzky-vodicov.csv">Dĺžky vodičov CSV</a> · <a href="detaily-fasady.csv">Detaily fasády CSV</a></li></ul><p>SVG šablóny sú v priečinku <code>vykresy/</code>, každý diel má vlastný súbor Pxx-1ku1.svg alebo C01-1ku1.svg. Tlač na 100 %, over kontrolnú mierku 100 mm (C01: 50 mm). PDF je prehľad, nie šablóna 1:1.</p><img src="nahlady/dom-zatvoreny.jpg" alt="Zatvorený drevený dom"><img src="nahlady/dom-strecha-odlozena.jpg" alt="Dom so strechou odloženou, bez nábytku"><p>Aktívny 3D prehliadač je v aplikácii na karte 3D model a stavba.</p></html>''')
 print('Generated cutting list, wire list, SVGs and A3 PDF.')

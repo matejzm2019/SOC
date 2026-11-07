@@ -1,50 +1,25 @@
-# Lokálny asistent cez Ollamu
+# Všeobecný lokálny asistent – 0.12.0
 
-Predvolený model je **Qwen3 0.6B**, tag `qwen3:0.6b`. Jeho Q4_K_M balík má približne 523 MB. Veľkosť súboru nie je celková spotreba RAM; runtime a kontext potrebujú ďalšiu pamäť. Rýchlosť treba overiť na konkrétnom notebooku. Pri dostupnej pamäti môžete vybrať `qwen3:1.7b` (balík približne 1,4 GB). Zdroj: [katalóg Ollama 0.6B](https://ollama.com/library/qwen3:0.6b), [1.7B](https://ollama.com/library/qwen3:1.7b).
+Jazykový model beží cez Ollamu na tom istom PC ako aplikácia. Podporované sú Qwen3 4B Instruct (qwen3:4b-instruct-2507-q4_K_M), qwen3:4b a menšie 1.7B/0.6B. V Nastavenia → Asistent vyber nainštalovaný názov a over pripojenie. Ak pôvodný 0.6B nie je nainštalovaný, aplikácia rozpozná dostupný 4B; uložený výber nemení potichu. Pri existujúcom uloženom menšom modeli sa zachová jeho výber.
 
-1. Nainštalujte [Ollamu pre Windows](https://ollama.com/download/windows) na počítač, kde beží backend Energie.
-2. V novom PowerShelli spustite:
+## Čo dokáže
 
-   ```powershell
-   ollama pull qwen3:0.6b
-   ```
+- Bežné otázky a vysvetlenia aj mimo energetiky. Všeobecné čísla (napr. bod varu) sa nevymazávajú len preto, že nie sú v meraniach domu. Pod odpoveďou je uvedené, ak nebola overená online.
+- Predpoveď počasia, teploty ráno/na obed/večer, iné mestá a konkrétna miestna hodina. Zajtrajšok znamená nasledujúci kalendárny deň v časovej zóne danej lokality. Zdrojom je Open-Meteo, nie odhad jazykového modelu ani súhrn nasledujúcich 24 hodín.
+- Dohľadanie verejných zdrojov cez čítacie nástroje a odkazy pod odpoveďou. Bežné vyhľadávanie skúša DuckDuckGo; pri nedostupnosti je označená náhrada Wikipédiou. Encyklopédia nie je overenie dnešných správ alebo aktuálnych cien. Dostupnosť verejného vyhľadávača sa nedá garantovať.
+- Domáce merania a modelové výpočty majú svoj pôvod a jednotky. Kontrola čísel sa používa pri odpovediach z meraní/predpovedí/zdrojov, nie ako zákaz všeobecných vedomostí.
+- Pri výslovnej žiadosti pripraví povolenú zmenu nastavenia na potvrdenie. Obyčajná otázka nepotrebuje druhý klasifikačný beh modelu a sama nič nemení. Asistent nespína fyzické zariadenia.
 
-3. Ponechajte Ollamu spustenú. Inštalátor Windows ju spravidla spustí na pozadí. Pri samostatnej CLI inštalácii použite `ollama serve`.
-4. Spustite `start.cmd`. V aplikácii otvorte **Nastavenia → Lokálny asistent → Overiť pripojenie**. Predvolený model je už vybraný.
-5. Na domovskej stránke použite pripravené otázky alebo napíšte vlastnú otázku. Telefón posiela otázku backendu na PC; na telefóne Ollama nemusí bežať.
+Príklady: „Aká bude zajtra teplota?“, „A v Prahe o 14:00?“, „Bude cez víkend pršať?“, „Nájdi dokumentáciu k FreeRTOS“, „Pri akej teplote vrie voda?“, „Vysvetli rozdiel medzi výkonom a energiou.“ Bez vybratej lokality sa opýta na mesto. Lokalita zistená v chate neprepíše polohu ani históriu domu.
 
-Model aplikácia automaticky nesťahuje. Na stiahnutie modelu potrebujete internet; jeho následné spúšťanie je lokálne. Vybrané modely majú licenciu Apache 2.0. Aktuálne podmienky runtime sú v [dokumentácii Ollama Windows](https://docs.ollama.com/windows).
+## Online zdroje a súkromie
 
-## Úsporné nastavenie
+Prepínač Online zdroje asistenta ich vie zakázať nezávisle od panelu Počasie. Zmena tejto voľby nezakladá novú energetickú históriu. Model a konverzácia zostávajú v lokálnej Ollame; vyhľadávací výraz alebo poloha sa posiela príslušnému online poskytovateľovi. Bez internetu ostávajú všeobecné znalosti a dostupné domáce údaje; model nesmie predstierať úspešné overenie.
 
-Backend volá `http://127.0.0.1:11434/api/chat`, nastavuje `think=false`, kontext 2048 tokenov a `keep_alive=60s`. Krátky prvý dotaz rozpoznáva požiadavku na nastavenia cez JSON schému (najviac 180 tokenov, limit 35 sekúnd). Pri bežnej otázke nasleduje odpoveď s relevantnými faktmi (najviac 512 tokenov, s obmedzením opakovania). Celé spracovanie má limit približne 120 sekúnd. Spracúva jednu otázku naraz, potom nechá Ollamu model uvoľniť. Na slabšom CPU môže prvá odpoveď trvať dlhšie. Podporované sú iba lokálne modely. Dokumentácia: [Ollama Chat API](https://docs.ollama.com/api/chat), [štruktúrované odpovede](https://docs.ollama.com/capabilities/structured-outputs).
+Voliteľne možno nastaviť OLLAMA_API_KEY v prostredí servera. Potom sa na všeobecné vyhľadávanie prednostne použije oficiálne https://ollama.com/api/web_search. Kľúč nie je potrebný na lokálny model ani Open-Meteo a nepatrí do repozitára ani do chatu. Bez neho zostáva verejné vyhľadávanie s označenou encyklopedickou náhradou. Oficiálny cloudový vyhľadávač sa riadi aktuálnymi podmienkami účtu Ollama; nemožno sľúbiť neobmedzenú dostupnosť.
 
-Voliteľná serverová premenná `SOC_OLLAMA_URL` môže zmeniť lokálny port; hostiteľ musí zostať localhost, 127.0.0.1 alebo ::1. Je to nastavenie správcu servera, nie URL zadávaná návštevníkom.
+Lokálne volania Ollamy nepoužívajú proxy. Vonkajšie HTTP volania rešpektujú proxy a certifikáty nastavené na PC. Výsledky webu sú podklady, nikdy pokyny na zápis. Model má len povolené nástroje weather_forecast a search_web, limit počtu kôl/volaní a časový limit; nemá shell ani voľné načítanie interných URL.
 
-## Čo asistent smie robiť
+Pri 4B je kontext 8192 tokenov a čas na dokončenie do troch minút; v bežnej krátkej otázke je rýchlejší. Obmedzená RAM alebo starší procesor môžu byť pomalé. Skutočnú kvalitu slovenčiny a ochotu používať nástroje treba overiť s nainštalovaným modelom na prezentačnom PC. HTTP a používateľské testy s testovacou odpoveďou modelu nie sú meranie kvality reálneho LLM.
 
-Asistent dostáva aktuálne fakty o energii, počasí, cenách a modeli. Podľa témy vyberá podklady, aby sa napríklad cena za kWh nezamieňala s dennými nákladmi. Otázky môžu prirodzene nadväzovať na predošlé správy. Matematické predikcie počíta Python; LLM ich vysvetľuje.
-
-Pozdravy, poďakovania a jednoduché otázky na asistenta dostanú priamo konverzačnú odpoveď modelu bez energetických podkladov, starých hodnôt z histórie a druhého dotazu na nastavenia. Na „ahoj“ teda nemá vzniknúť výpis výkonov. Pre chat odporúčame `ollama pull qwen3:4b-instruct-2507-q4_K_M` a výber 4B v nastaveniach; 1.7B a 0.6B zostávajú úspornými možnosťami. [4B balík](https://ollama.com/library/qwen3:4b-instruct-2507-q4_K_M) má približne 2,5 GB, spotreba RAM je vyššia. Pri staršom notebooku treba overiť rýchlosť a voľnú pamäť; menší model možno vybrať bez zmeny energetických dát. Väčší model stále nezaručuje bezchybnú slovenčinu. Ak dlhá odpoveď vyčerpá tokeny, jej text zostane viditeľný s možnosťou napísať „pokračuj“.
-
-## Nastavenia cez chat
-
-Na karte **AI chat** napíšte napríklad:
-
-- „Zapni internetové ceny.“
-- „Nastav nákupnú cenu na 0,20 €/kWh.“
-- „Nastav kapacitu malej batérie na 2000 mAh.“
-- „Vypni demo režim.“
-- „Vypni fotovoltaiku.“
-
-Asistent zobrazí konkrétne hodnoty pred zmenou a po nej. **Použiť zmenu** ich uloží; **Zrušiť návrh** nič neuloží. Chat môže meniť vybrané tarify, režim, moduly, výkon FV, základnú modelovanú spotrebu a kapacity s uvedenou jednotkou. Neprepája zdroje elektriny, neovláda nabíjačku ani ESP a nemá prístup ku kľúčom alebo ľubovoľnému API. Lokalitu nastavte cez existujúci výber mesta/GPS.
-
-Backend validuje hodnoty rovnakým modelom ako formulár nastavení. Ukladá iba potvrdený serverový návrh, nie ľubovoľné hodnoty odoslané klientom. Návrh platí desať minút, je jednorazový a pri zmene konfigurácie alebo datasetu sa odmietne ako neaktuálny. Zmena modelových parametrov vytvorí nový dataset; pôvodná história zostane uložená. Pri potvrdení cez chat zostáva konverzácia viditeľná, hodnoty starých správ však majú svoj pôvodný dataset.
-
-Asistent odpovedá prirodzene. Číslované zoznamy, názvy ako ESP32 a overené hodnoty s jednotkami odpoveď neblokujú. Podporované ID faktov sa doplnia z podkladov. Ak číselná veličina nezodpovedá faktom ani ich zaokrúhleniu či podporovanej zmene jednotiek, označí sa iba tento úsek; zvyšok odpovede zostane viditeľný. Podklady možno rozbaliť pod správou.
-
-Kontrola nie je úplným overením významu: model môže správne číslo priradiť nesprávnej veličine alebo slovne zle vysvetliť situáciu. Qwen3 0.6B je úsporný, ale slovenčina a interpretácia môžu byť slabé. Pre kvalitnejšie odpovede skúste ponúkaný 1.7B model podľa pamäte notebooku. Energetické výpočty a predikcie robí Python; model nemá ovládanie zariadení.
-
-Konverzácia sa drží len v pamäti otvorenej stránky; po obnovení sa vymaže. Backend otázky neukladá. Do Ollamy sa posiela krátka história a aktuálne fakty; aplikácia ich neodosiela cloudovému LLM.
-
-Ak model chýba alebo Ollama nebeží, energetika a počasie fungujú ďalej. Karta asistenta zobrazí konkrétny postup pripojenia.
+Oficiálne podklady: https://docs.ollama.com/capabilities/tool-calling a https://docs.ollama.com/capabilities/web-search ; predpoveď https://open-meteo.com/en/docs .

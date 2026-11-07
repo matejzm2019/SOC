@@ -21,3 +21,5 @@ dialog{position:fixed;inset:0;margin:auto;width:min(980px,calc(100vw - 32px));ma
 .chat-proposal{margin-top:15px;padding:15px;border:1px solid var(--accent);border-radius:10px;background:var(--accent-soft)}.chat-proposal h3{font-size:13px}.chat-proposal-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:15px}.chat-proposal .footnote{margin-top:12px}
 
 .house-toolbar{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:18px 0}.house-toolbar label{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.house-toolbar select{max-width:100%;padding:8px;border-radius:7px;border:1px solid var(--line);background:var(--surface);color:var(--text)}.house-canvas{display:block;width:100%;height:clamp(340px,60vh,680px);border-radius:12px;touch-action:none}.house-canvas:focus-visible{outline:3px solid var(--accent)}@media(max-width:650px){.house-toolbar label{width:100%}.house-toolbar select{max-width:100%}}
+
+.assistant-sources{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}.assistant-sources a{font-size:12px;padding:6px 9px;border:1px solid var(--line);border-radius:7px;color:var(--accent);overflow-wrap:anywhere}

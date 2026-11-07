@@ -1,6 +1,6 @@
 # Jednotný kusovník – menšia zostava
 
-Platný návrh 7. 11. 2026. Ceny orientačne podľa overenia 2. 11. 2026, bez dopravy; nie potvrdenie dnešnej skladovej dostupnosti. Vybraný je CN3791 + MT3608. Nekombinovať náhodne so starším návrhom BQ24074/MAX17048 alebo Waveshare Power Manager.
+Platný návrh 8. 11. 2026. Ceny orientačne podľa overenia 2. 11. 2026, bez dopravy; nie potvrdenie dnešnej skladovej dostupnosti. Vybraný je CN3791 + MT3608. Nekombinovať náhodne so starším návrhom BQ24074/MAX17048 alebo Waveshare Power Manager.
 
 | ID | Ks | Diel | Cena spolu | Umiestnenie / poznámka |
 |---|---:|---|---:|---|
@@ -25,9 +25,10 @@ Platný návrh 7. 11. 2026. Ceny orientačne podľa overenia 2. 11. 2026, bez do
 - Jedna univerzálna spájkovacia doska približne 50×30 mm (vyrezať z väčšej univerzálky), pinové lišty 2,54 mm a malé skrutkové svorky. ESP má podľa predajcu lišty pribalené, treba ich prispájkovať.
 - Dátový USB-C kábel na programovanie ESP; samostatný napájací USB-C kábel/prepojka od overených 5 V meniča. Neprepájať dve USB napájania bez overenia dosky.
 - DC zásuvka/adaptér 3,5×1,35 mm k panelu na skrutkové svorky; presný konektor CN3791 nepredpokladať bez porovnania dielov.
-- Izolované vodiče približne 5 m červených a 5 m čiernych 0,25–0,5 mm², približne 10 m farebných 0,14–0,25 mm². Predstrihy sú v `model-domu/dlzky-vodicov.csv`; používaj z existujúcich zásob, netreba kupovať každú farbu zvlášť.
+- Izolované vodiče približne 5 m červených a 5 m čiernych 0,25–0,5 mm², približne 15 m farebných 0,14–0,25 mm². Predstrihy sú v `model-domu/dlzky-vodicov.csv`; používaj z existujúcich zásob, netreba kupovať každú farbu zvlášť.
 - Servisná rozpojiteľná dvojpinová prepojka medzi batériovým uzlom a MT3608, aby bolo možné pri úplnom prednabití odpojiť všetky záťaže.
 - Izolačné stĺpiky pod PCB 4 mm, skrutky, sťahovacie pásky, príchytky vodičov, zmršťovacia bužírka. Batériu upevni mäkkým pásikom; nezovri ani neprepichni obal.
+- Štyri 15 mm M3 stĺpiky pre panel C01, skrutky a matice; zápustné hlavy zospodu podstavy. Doska C01 100 × 40 × 4 mm; šablóna otvorov a popisy A/B/5V sú v modeli. Over závity reálnych prepínačov.
 - Štyri nožičky pod dom, výška 10 mm, aby sa nestrihali vodiče pod podstavou.
 - Štyri príchytky kovového rámu panela, dve montážne lišty L04 a dve výstuhy L03. Pôvodný rozpojiteľný konektor panela a odľahčenie ťahu; vodiče W18 po 650 mm vrátane pôvodného kábla. Konkrétny úchyt vyber podľa skutočného rámu, články nevŕtaj.
 - Na fasádu balsa/cédrové lišty, rámy, parapety a voliteľný difúzny akrylát/papier. Kusy a dĺžky sú v model-domu/detaily-fasady.csv.
