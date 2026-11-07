@@ -75,14 +75,11 @@ def facts_for(state, history, forecast):
             best = max(points, key=lambda p: p["pv_w"])
             add("Koniec najlepšieho hodinového intervalu FV", best["timestamp"], forecast["model"])
         add("Odhad spotreby počas výhľadu", f'{sum(p["load_w"] for p in points) / 1000:.2f} kWh', forecast["model"])
-    add("Úloha ESP32", "Meria panel a batériu dvoma INA219 cez I²C, sleduje hlavný zdroj a plaváky, spína LED a čerpadlo cez výkonové prvky. Cez Wi-Fi komunikuje s FastAPI na PC; AI Ollama beží na PC, nie na ESP32.", "návrh systému")
-    add("Napájanie fyzického modelu", "Hlavný zdroj napája LED a čerpadlo. Pri výpadku relé prepne LED na 5 V menič MT3608 z chránenej LiPo. ESP32 zostáva na meničovom výstupe. CN3791 nabíja batériu zo soláru. Percentá sú orientačný odhad z napätia, nie meranie skutočnej kapacity.", "návrh systému")
+    add("Úloha ESP32", "Meria panel a batériu dvoma INA219 cez I²C, sleduje hlavný zdroj, spína LED cez výkonové prvky. Cez Wi-Fi komunikuje s FastAPI na PC; AI Ollama beží na PC, nie na ESP32.", "návrh systému")
+    add("Napájanie fyzického modelu", "Hlavný zdroj napája LED. Pri výpadku relé prepne LED na 5 V menič MT3608 z chránenej LiPo. ESP32 zostáva na meničovom výstupe. CN3791 nabíja batériu zo soláru. Percentá sú orientačný odhad z napätia, nie meranie skutočnej kapacity.", "návrh systému")
     if sample.get("telemetry_origin") == "software_test":
         add("Zdroj telemetrie", "TESTOVACIE SOFTVÉROVÉ ÚDAJE, nie meranie fyzického hardvéru.", "systém")
-    if state.get("water"):
-        w = state["water"]
-        add("Vodný okruh", f'Zdroj {w["origin"]}; čerpadlo {"beží" if w["pump_running"] else "stojí"}; porucha {w["fault"] or "žiadna hlásená"}. Prietok a kvalita vody sa nemerajú.', "systém")
-    add("Konštrukcia domu", "Podstava 600 × 450 mm, dom 480 × 330 mm, celé steny a strecha odnímateľná v jednom kuse. Bez nábytku. Solár a vodný okruh sú vedľa domu.", "výrobný návrh")
+    add("Konštrukcia domu", "Podstava 600 × 450 mm, dom 480 × 330 mm, celé steny a strecha odnímateľná v jednom kuse. Bez nábytku. Panel 230 × 195 mm je na prednej strešnej rovine so sklonom 35°. Strecha sa odníma spolu s panelom; pred úplným odložením sa rozpojí jeho dvojpinový konektor.", "výrobný návrh")
     add("Softvérové demo", "Simulácia spracovaná na notebooku, ktorá nepotrebuje fyzický hardvér.", "návrh systému")
     if settings["battery_enabled"] and not settings["demo_mode"]:
         add("Nastavená kapacita malej batérie", f'{settings["battery_capacity_mah"]} mAh', "používateľské nastavenie; nie meranie kapacity")
@@ -100,7 +97,7 @@ def relevant_facts(question, history, facts):
     def plain(text):
         return ''.join(c for c in unicodedata.normalize('NFKD',text.lower()) if not unicodedata.combining(c))
     # ponytail: keyword retrieval suits this small fixed dataset; add semantic search only for a larger knowledge base.
-    topics = [(r'vod|cerpad|filtr|nadrz|plavak',r'vodny|napajanie'),(r'dom|strech|rozmer|konstruk',r'konstrukcia|napajanie|esp32'),(r'\bcen|stoji|tarif|nakup|vykup|eur|poplat',r'cen|tarif|poplat'),
+    topics = [(r'dom|strech|rozmer|konstruk',r'konstrukcia|napajanie|esp32'),(r'\bcen|stoji|tarif|nakup|vykup|eur|poplat',r'cen|tarif|poplat'),
               (r'naklad|ekonom|uspor',r'naklad|cen|spotreb'),
               (r'bateri|nabit|\bsoc\b|clan[ok]',r'bateri|napatie|napajanie'),
               (r'pocas|teplot|oblac|zraz|vietor',r'pocas|lokalit|obloh|teplot|vietor|oblac|ziaren|zraz'),

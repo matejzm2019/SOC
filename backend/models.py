@@ -71,15 +71,6 @@ class DemoCommand(StrictModel):
     step: bool = False
 
 
-class WaterTelemetry(StrictModel):
-    source_ok: bool
-    target_low: bool
-    target_full: bool
-    leak_detected: bool
-    pump_running: bool
-    fault: Literal["none", "source_empty", "leak", "sensor_conflict", "timeout", "link_lost", "main_lost"] = "none"
-
-
 class Esp32Telemetry(StrictModel):
     device_id: str = Field("energia-esp32", min_length=1, max_length=48, pattern=r"^[a-zA-Z0-9_-]+$")
     firmware_version: str = Field("dev", min_length=1, max_length=24)
@@ -96,7 +87,6 @@ class Esp32Telemetry(StrictModel):
     battery_charge_rate_pct_h: float | None = Field(default=None, ge=-1000, le=1000)
     battery_current_a: float | None = Field(default=None, ge=-5, le=5)
     battery_soc_method: Literal["max17048", "voltage_estimate"] | None = None
-    water: WaterTelemetry | None = None
 
     @model_validator(mode="after")
     def battery_pair(self):

@@ -1,6 +1,6 @@
 # Čo je tento projekt a ako funguje
 
-Verzia 0.10.0-house, 4. 11. 2026. SOČ je funkčný nízkonapäťový model inteligentného domu s lokálnym serverom, solárnou batériou, zálohou svetiel a vodným okruhom. Dom má celé steny, strechu položenú a odnímateľnú v jednom kuse. Bez nábytku. Toto je aktuálny návrh; staršie obrázky v deliverables/ zachytávajú pôvodnú verziu.
+Verzia 0.11.0-roof, 7. 11. 2026. SOČ je funkčný nízkonapäťový model inteligentného domu s lokálnym serverom, solárnou batériou a zálohou svetiel. Dom má celé steny, strechu položenú a odnímateľnú v jednom kuse. Bez nábytku. Toto je aktuálny návrh; staršie obrázky v deliverables/ zachytávajú pôvodnú verziu.
 
 ## Rozdelenie práce
 
@@ -13,14 +13,13 @@ flowchart LR
  M --> R
  R --> LED[Svetlá domu]
  M --> E[ESP32-S3 N16R8]
- L --> D[DRV8833 a čerpadlo]
- I[Dva INA219, prepínače a plaváky] --> E
+ I[Dva INA219, prepínače] --> E
  E <-->|Wi-Fi / HTTP JSON| S[PC: FastAPI + SQLite]
  S <-->|iba lokálne na PC| AI[Ollama + Qwen]
  WEB[Webová aplikácia: PC / mobil] <-->|LAN| S
 ```
 
-- **ESP32:** číta snímače, ovláda LED a driver motora. Miestne ochrany čerpadla bežia nezávisle od blokujúceho Wi-Fi/HTTP prenosu.
+- **ESP32:** číta snímače a ovláda LED. Fyzické prepínače sa obsluhujú nezávisle od Wi-Fi/HTTP prenosu.
 - **Server:** notebook, stolný PC alebo vhodný mini PC. Spúšťa FastAPI, ukladá merania do SQLite, počíta model a poskytuje webovú aplikáciu. Nemusíš kupovať cloudový server.
 - **AI:** Ollama beží na tom istom PC ako backend. ESP32 nemá spúšťať jazykový model. Mobil je iba klient cez prehliadač.
 - **Wi-Fi/router:** spája ESP, PC a mobil. Po stiahnutí závislostí a modelu samotná LAN komunikácia nepotrebuje internet. Internetové počasie a spotové ceny ho potrebujú samostatne.
@@ -29,7 +28,7 @@ flowchart LR
 
 Dva INA219 merajú malý panel a čistý prúd/napätie článku. Kladný batériový prúd znamená nabíjanie, záporný vybíjanie. Percentá sú hrubý odhad zo všeobecnej napäťovej krivky LiPo; nie je to fuel gauge ani test skutočnej kapacity. Pri nabíjaní môže odhad nadhodnocovať a pri záťaži podhodnocovať. Hodnota 2 500 mAh je údaj zo štítku. Skutočná využiteľná kapacita vyžaduje kontrolované vybíjanie s integráciou prúdu a odpojením na stanovenej hranici.
 
-Veľké výkony domu v kW, import/export a virtuálna domáca batéria sú výpočtový model. Malý článok fyzicky napája LED a ESP, nie kilowattový dom. Fyzické svetlá sa ovládajú dvoma prepínačmi; 3D model ukazuje ich hlásený stav. Spotreba jednotlivých miestností, prietok ani kvalita vody sa nemerajú.
+Veľké výkony domu v kW, import/export a virtuálna domáca batéria sú výpočtový model. Malý článok fyzicky napája LED a ESP, nie kilowattový dom. Fyzické svetlá sa ovládajú dvoma prepínačmi; 3D model ukazuje ich hlásený stav. Spotreba jednotlivých miestností sa nemerajú.
 
 ## Záloha svetiel
 
@@ -39,15 +38,9 @@ ESP je stále na MT3608, aby zostalo dostupné pri výpadku. Preto odoberá z ba
 
 Notebook a router neodpájaj pri ukážke vypnutia laboratórnej vetvy. Keď sa článok vybije až po ochranné odpojenie, vypnú sa ESP aj LED a aplikácia správne ukáže offline stav.
 
-## Vodný okruh
+## Strecha s panelom
 
-Zdrojová nádrž → malá pumpa → pasívny mechanický filter → cieľová nádrž. Voda zostáva vedľa domu v záchytnej vaničke. Čerpadlo napája iba hlavný zdroj cez DRV8833; batéria ho nezálohuje.
-
-Štyri plaváky: zdrojové minimum, dolná a horná cieľová hladina a nahromadená uniknutá voda vo vaničke. Posledný snímač nie je detektor prvej kvapky. Automatika dopĺňa od dolnej po hornú hladinu. Každý chod má najviac nastavených 2–60 sekúnd, predvolene 15. ESP potrebuje obnovovaný povel s platnosťou 1,5 s. Pri strate servera, Wi-Fi alebo neplatnej odpovedi povel vyprší a miestny guard zastaví motor. Opakované povely nepredlžujú pôvodný maximálny súvislý chod.
-
-Porucha sa resetuje až po odstránení príčiny. Reštart servera ani obnovenie spojenia samo neobnoví ručné čerpanie. Fyzický núdzový STOP je odpojenie napájacej vetvy motora. AI nemá nástroj na spustenie čerpadla.
-
-Čas od kontroly filtra je odhadovaný prevádzkový čas podľa hlásenia motora, nie meranie zanesenia či pitnosti. Demo a skutočný prevádzkový čas sa nemiešajú.
+Panel je priamo na prednej strešnej rovine so sklonom 35°. Celá strecha vrátane panela a líšt sa zdvihne ako jeden kus. Pred úplným odložením sa rozpojí označený konektor. Všetky LED, ESP a batéria ostávajú v pevnej časti domu. Rozmer podstavy zostáva 600 × 450 mm.
 
 ## AI a server – konkrétne spustenie
 
@@ -59,16 +52,16 @@ Porucha sa resetuje až po odstránení príčiny. Reštart servera ani obnoveni
 6. Kľúč z `data/device_key.txt` skopíruj do `DEVICE_KEY`. Nezverejňuj ho v GitHube. Nový `secrets.h` zostáva ignorovaný Gitom.
 7. Na mobile otvor LAN adresu PC s portom 8765. PC musí bežať, ESP vyžaduje 2,4 GHz Wi-Fi bez izolácie klientov.
 
-AI dostáva vybrané systémové fakty, dostupné merania a pôvod údajov. Vysvetľuje stav a môže navrhnúť povolené nastavenia, ktoré používateľ potvrdí. Nie je to autonómna elektroinštalácia ani bezpečnostný regulátor. Číselné predikcie počíta Python, nie LLM. Pri nedostupnej Ollame meranie, 3D model a miestne ochrany fungujú ďalej.
+AI dostáva vybrané systémové fakty, dostupné merania a pôvod údajov. Vysvetľuje stav a môže navrhnúť povolené nastavenia, ktoré používateľ potvrdí. Nie je to autonómna elektroinštalácia ani bezpečnostný regulátor. Číselné predikcie počíta Python, nie LLM. Pri nedostupnej Ollame meranie, 3D model a fyzické prepínače fungujú ďalej.
 
 ## Súbory na stavbu
 
 - `model-domu/3d/dom.blend`, `dom.glb`: skutočný rozmerový 3D model.
 - `model-domu/STAVEBNY-NAVOD.pdf`: A3 prehľad na montáž.
-- `model-domu/rezaci-plan.csv`, `dlzky-vodicov.csv`, `hadicky.csv`: rozmery a predstrihy.
+- `model-domu/rezaci-plan.csv`, `dlzky-vodicov.csv`: rozmery a predstrihy.
 - `model-domu/vykresy/`: SVG šablóny 1:1 a pôdorys.
 - `docs/KOMPONENTY.md`: jednotný kusovník a známe otvorené položky.
 - `docs/ZAPOJENIE.md`: pinová tabuľka, vodiče, kontrolné merania a skúšky.
-- `firmware/esp32-s3/`: aktuálny firmvér s guardom vody a dvoma INA219.
+- `firmware/esp32-s3/`: aktuálny firmvér s lokálnou obsluhou LED a dvoma INA219.
 
 Návod na BenchTwin/Wokwi a softvérové skúšanie je zámerne v samostatnom balíku mimo repozitára, podľa zadania.

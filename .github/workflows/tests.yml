@@ -20,4 +20,3 @@ jobs:
       - run: python -m pytest -q
       - run: node --check frontend/app.js
       - run: node --check frontend/house-view.js
-      - run: node --check frontend/water-view.js

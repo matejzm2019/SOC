@@ -1,6 +1,6 @@
 > Aktuálne režimy: Demo = výhradne softvérový simulátor na notebooku. Normálny režim = model domu s ESP32 cez Wi-Fi; bez merania čaká. Skoršia voľba plánovania bez hardvéru bola nahradená normálnym režimom. Počasie a výhľad zostávajú internetové, CSV je samostatná analýza histórie.
 
-> Aktualizácia 0.10.0-house: fyzická stavba a pinová tabuľka sú v [ZAPOJENIE.md](ZAPOJENIE.md), opis AI/servera v [AKO-TO-FUNGUJE.md](AKO-TO-FUNGUJE.md). Staršie hardvérové poznámky nižšie sú historické; výsledky aktuálnych kontrol sú v OVERENIE-STAVBY.md.
+> Aktualizácia 0.11.0-roof: fyzická stavba a pinová tabuľka sú v [ZAPOJENIE.md](ZAPOJENIE.md), opis AI/servera v [AKO-TO-FUNGUJE.md](AKO-TO-FUNGUJE.md). Staršie hardvérové poznámky nižšie sú historické; výsledky aktuálnych kontrol sú v OVERENIE-STAVBY.md.
 
 # Inteligentný lokálny energetický systém domácnosti
 
