@@ -1,0 +1,289 @@
+SOČ SMART DOM – NÁVOD PRE BENCHTWIN
+8. 11. 2026; zodpovedá domu a zapojeniu verzie 0.12.0.
+
+Tento návod a súbor benchtwin/sketch.ino sú vedľa projektu SOC.
+Cieľ: postaviť v BenchTwin skutočné elektrické zapojenie svetiel,
+solárneho nabíjania a zálohy. Bez vodného okruhu. Panel patrí na strechu;
+ovládanie A/B na ľavý okraj podstavy, mimo vstupného chodníka.
+
+1. OTVORENIE A ULOŽENIE PROJEKTU
+
+Otvor https://benchtwin.com/ a použi Start building. Ak sa zobrazia
+podmienky, prečítaj ich a až potom sám zvoľ Agree and start.
+Pracovný postup v rozhraní je Build → Wire → Code → Simulate.
+Súčiastky sú vľavo, 3D pracovná plocha uprostred, Properties a kontroly
+vpravo. Miesto si môžeš rozdeliť na Top/Front/Right a Wiring diagram.
+
+Začni prázdnym projektom a nazvi ho SOC – solar house.
+Pre celý dom nastav Bench na Custom 600 × 450 mm; pri prvom zapájaní
+môžeš vybrať väčšiu pracovnú plochu, aby sa komponenty lepšie čítali.
+Zapni Safety mode v nastaveniach. Na meranie používaj Multimeter;
+pri nezrovnalosti zastav simuláciu a najprv oprav hlásenia kontroly.
+Priebežne ulož/exportuj svoj BenchTwin projekt. Export Code → Project
+→ Export as .zip ukladá kód, nie automaticky kompletnú 3D scénu;
+na celú scénu používaj projektové uloženie/export dostupný v aplikácii.
+S účtom si môžeš projekt uložiť aj do cloudu.
+
+2. KOMPONENTY – ČO VLOŽIŤ CEZ BUILD / INSERT PART
+
+Hľadaj tieto názvy v katalógu; mená variantov sa môžu mierne líšiť:
+
+1× ESP32-S3 DevKit / ESP32-S3-DevKitC-1. Ak máš variant N16R8,
+   vyber ho; pre tento elektrický test nerozhoduje veľkosť PSRAM.
+1× Solar panel 6 V / 5 W.
+1× CN3791 MPPT solar Li-ion charger; nastav variant/MPPT pre 6 V panel,
+   ak model ponúka túto voľbu. Nepouži viacčlánkový CN3722.
+1× LiPo battery 1S, 3.7 V, 2500 mAh. Začni napr. na 3.8 V, nie na 0 V.
+1× MT3608 boost converter, výstup nastav na 5.00 V.
+2× INA219 current and power monitor, označ ich INA_PANEL a INA_BAT.
+1× 5 V jednokanálový prepínací relay module s COM/NO/NC a LOW trigger.
+2× NPN 2N2222A.
+6× biela LED, 1× modrá LED.
+7× rezistor 330 Ω, 2× 1 kΩ, 3× 10 kΩ, 1× 22 kΩ.
+   Voliteľne ďalšie 2× 10 kΩ ako pull-up prepínačov na 3.3 V.
+2× trvalý dvojpolohový prepínač (SPST/SPDT toggle/slide switch).
+1× nastaviteľný DC zdroj označený LAB_5V, nastavený na 5.00 V.
+1× 470 µF kondenzátor na 5 V vetve pri ESP, s vhodnou polaritou.
+Rozpojiteľná servisná prepojka, vodiče, prípadne breadboard/rozvodné body.
+
+CN3791 a MT3608 aj INA219 sú priamo v aktuálnom verejnom katalógu.
+Katalóg obsahuje aj 1S LiPo varianty. Nezamieňaj LiPo s AA článkom.
+Samotný BMS/ochranný obvod nie je nabíjačka. Reálna vybraná LiPo už
+má ochranu; nevyrábaj z toho v skutočnosti dva články v sérii.
+
+3. ROZLOŽENIE NA PLOCHE
+
+Najprv zapoj obvod mimo obalu domu. Nabíjanie daj vľavo, riadenie
+uprostred a LED/relé vpravo, aby si videl všetky názvy pinov.
+Rozvody pomenuj GND, MAIN_5V, BACKUP_5V, BAT_NODE a LIGHTS_5V.
+Ak rozhranie umožňuje farby: GND čierna, hlavný +5 V červená,
+záložný +5 V oranžová, signály modrá/zelená. Farba nenahrádza spojenie.
+
+Wire: klikni na konkrétny pin, potom na druhý pin. Nevytváraj iba
+vizuálne sa križujúce čiary; spoj musí mať pripojené oba koncové piny.
+V breadboarde kontroluj prepojenie radov aj rozdelené napájacie lišty.
+
+4. SPOLOČNÁ ZEM A NABÍJACIA VETVA
+
+Založ spoločnú GND: LAB mínus, mínus chránenej LiPo, CN3791 IN−/BAT−,
+MT3608 IN−/OUT−, GND ESP, GND oboch INA219, relé a emitorov tranzistorov.
+
+Solárny panel + → INA_PANEL VIN+
+INA_PANEL VIN− → CN3791 IN+
+Solárny panel − → GND / CN3791 IN−
+
+POZOR na označenie INA219: VIN− je druhý koniec bočníka, nie GND!
+Ak ho dáš na zem, môžeš panel skratovať.
+
+Batériové meranie zapoj takto:
+
+CN3791 BAT+ ───┬── BAT_NODE ── INA_BAT VIN+ → VIN− → LiPo +
+MT3608 IN+ ────┘
+LiPo −, CN3791 BAT− a MT3608 IN− → GND
+
+Všetok prúd do/z LiPo musí prechádzať INA_BAT. Menič ani nabíjačku
+nepripájaj priamo na plus LiPo mimo tohto bočníka. Medzi BAT_NODE
+a MT3608 nechaj servisnú prepojku, aby sa dala odpojiť systémová záťaž.
+Panel sa nikdy nepripája priamo na LiPo.
+
+Vlastnosti batérie: 1S/3.7 V, 2500 mAh. Na krátky test použi stredné
+nabitie. Pri CN3791 over, že ide o nabíjanie jedného článku na 4.2 V.
+Menovitý údaj „4 A max“ NIE JE pokyn nastaviť reálnu batériu na 4 A.
+Ak v modeli nastavuješ napr. 0.5 A ako skúšobný limit, ide iba o
+simulačnú hodnotu. Reálny dovolený prúd treba overiť podľa článku.
+
+5. MENIČ, ESP A AUTOMATICKÁ ZÁLOHA LED
+
+MT3608 OUT+ → BACKUP_5V, nastav presne 5.00 V a skontroluj multimetrom.
+MT3608 OUT− → GND.
+BACKUP_5V → 5V/VIN napájací vstup konkrétnej dosky ESP32-S3.
+NIE na pin 3V3. Ak má model dosky automatické USB napájanie,
+nesmie ním maskovať test batériovej vetvy; používaj zapojené napájanie.
+
+LAB_5V + → MAIN_5V
+MAIN_5V → relé VCC a prípadne JD-VCC cez ponechanú prepojku
+Relé GND → GND
+Relé IN → pevne GND
+Relé musí byť typu LOW-trigger: pri napájanom module a LOW je pritiahnuté.
+
+Relé NO → MAIN_5V
+Relé NC → BACKUP_5V
+Relé COM → LIGHTS_5V
+
+Pri prítomnom LAB je COM–NO, pri vypnutí LAB je COM–NC.
+Obe kladné napájacie vetvy nikdy jednoducho nespoj dokopy vodičom.
+Toto prepnutie je hardvérové; program mu neposiela povel.
+
+470 µF: plus na BACKUP_5V, mínus na GND pri napájaní ESP.
+
+6. SVETLÁ A FYZICKÉ PREPÍNAČE A/B
+
+Každá biela LED má vlastný 330 Ω rezistor. Pre vetvu A:
+
+LIGHTS_5V → 330 Ω → anóda LED1 → katóda → kolektor tranzistora A
+LIGHTS_5V → 330 Ω → anóda LED2 → katóda → kolektor tranzistora A
+LIGHTS_5V → 330 Ω → anóda LED3 → katóda → kolektor tranzistora A
+Emitor tranzistora A → GND
+GPIO7 → 1 kΩ → báza A; báza A → 10 kΩ → GND
+
+Vetva B je rovnaká s ďalšími tromi LED, tranzistorom B a GPIO10.
+Na tranzistore sa riaď názvami C/B/E; nepredpokladaj poradie nôh podľa
+obrázka iného puzdra. Tri LED nie sú zapojené do série na 5 V.
+
+Prepínač A: stredný/spoločný kontakt → GPIO5, jeden krajný → GND.
+Druhý krajný nechaj voľný. Pri SPST jednoducho spoj GPIO5 proti GND.
+Prepínač B rovnako na GPIO6. Neprepínaj GPIO medzi 5 V a zemou!
+Softvér používa INPUT_PULLUP; kontakt spojený na GND znamená zapnuté.
+Voliteľné 10 kΩ pull-up sú z GPIO5/6 na ESP 3V3, nikdy na 5 V.
+
+Modrá indikácia: GPIO11 → 330 Ω → anóda modrej LED; katóda → GND.
+
+7. DETEKCIA HLAVNÉHO ZDROJA A I2C
+
+MAIN_5V → 22 kΩ → merací uzol → 10 kΩ → GND
+Merací uzol → GPIO4.
+Pri hlavnom zdroji 5 V je na GPIO4 približne 1.56 V / 1560 mV.
+Priame pripojenie 5 V na GPIO je nesprávne, aj keď ho simulátor toleruje.
+
+Oba INA219: VCC → ESP 3V3, GND → GND.
+ESP GPIO8 → SDA; GPIO9 → SCL.
+INA_PANEL má adresu 0x40; INA_BAT musí mať odlišnú adresu 0x41.
+Ak konkrétny model ponúka adresu/jumper A0, nastav ju na druhom kuse.
+Na reálnom breakoute sa to robí mostíkom A0 podľa jeho zapojenia.
+
+DÔLEŽITÉ PRE BETA VERZIU: dostupný 3D diel ešte nezaručuje všetky
+funkcie knižnice. Ak sa v konkrétnej verzii nedá zmeniť adresa druhého
+INA alebo knižnica ohlási, že podporuje iba 0x40, nedávaj dva prístroje
+s rovnakou adresou na tú istú zbernicu. Pre základný elektrický test
+nechaj SDA/SCL INA_BAT nepripojené a jeho napätie/prúd sleduj
+Multimeter/Scope cez správne zapojený bočník. Nabíjanie ani svetlá sa
+týmto neodpoja. Nie je to úplný test batériovej I2C telemetrie.
+Do fyzického modelu patrí správna 0x41 aj obidva I2C vodiče.
+
+8. KÓD PRE BENCHTWIN – BEZ FREERTOS A BEZ FALOŠNÝCH MERANÍ
+
+Otvor Code. Do sketch.ino vlož obsah SOC-simulacia/benchtwin/sketch.ino.
+Prípadne Code → Project → Import a .zip… a vyber BENCHTWIN-KOD.zip.
+Je to ZIP so sketch.ino, NIE hotový import celého 3D obvodu.
+
+Klikni Check, potom Upload & simulate; skratka je Ctrl+Enter.
+V Simulate sleduj Pins a Serial monitor. Baud rate pre Serial je 115200.
+Raz za sekundu sa vypisuje:
+  MAIN=1 A=1 B=0 main_ADC_mV=približne 1560
+
+MAIN je stav LAB vetvy, A/B sú odrušené kontakty. Program generuje len
+riadenie a diagnostiku, nie vymyslené percentá, solárny výkon alebo HTTP
+telemetriu aplikácie. Prúdy a napätia overuj laboratórnymi meradlami.
+Pošli do Serial znak i; skener preverí ACK na adresách 64 a 65
+(teda 0x40 a 0x41). Výsledok 0 znamená odpoveď na danej adrese;
+samotný ACK ešte neoveruje správne registre a meraný prúd.
+
+Skúšobný sketch nepoužíva FreeRTOS, používateľské C++ triedy,
+Adafruit INA219, ArduinoJson ani sieť. Používa zdokumentované
+setup()/loop(), millis(), GPIO, ADC, Wire a Serial.
+Produkčný sketch SOC/firmware/esp32-s3 má samostatnú FreeRTOS úlohu;
+BenchTwin ju podľa aktuálnej nápovedy nepodporuje. Na fyzický ESP
+patrí produkčný firmvér 0.7.0-controls, nie tento obmedzený bench test.
+
+9. SKÚŠKY V TOMTO PORADÍ
+
+A. LAB zapnutý, batéria pripojená, oba prepínače rozpojené:
+   hlavný ADC približne 1560 mV, MAIN=1, modrá LED svieti,
+   biele LED zhasnuté. Ak nesedí, najprv oprav delič a GND.
+B. Zapni A: svietia len prvé 3 LED; B zapína druhé 3. Pri zmene
+   kontaktu sa stav ustáli po približne 30 ms. Pri každej bielej LED
+   meraj rádovo jednotky mA, nie stovky mA.
+C. Obe svetlá zapnuté, odpoj/vypni LAB. Relé musí prejsť na NC,
+   svetlá pokračujú z batérie, MAIN=0 a modrá LED zhasne.
+   Over, že BACKUP_5V zostalo okolo 5 V a MCU je napájané.
+D. Obnov LAB: COM prejde na NO. Dve kladné vetvy sa nesmú prepájať.
+E. Zvýš osvetlenie panela v jeho simulačných vlastnostiach/nástrojom
+   pre svetlo dostupným v tvojej verzii. Sleduj napätie a prúd panela.
+   V dostatočnom osvetlení a pri nízkej záťaži môže prúd do batérie
+   prejsť do nabíjania; slabé svetlo nemusí pokryť ani odber ESP.
+F. Na čistý test nabíjania odpoj servisnú prepojku k MT3608. ESP a
+   svetlá sa vypnú. CN3791 zostáva spojený s batériou cez INA_BAT.
+   Sleduj prúd. Po skúške obnov prepojku. Nabíjačka nemá samostatný
+   systémový power-path, preto trvalá záťaž môže ovplyvniť ukončenie.
+G. Vytvor tieň/nízky výkon panela. Nabíjací prúd sa zníži; netvrď,
+   že batéria je nabíjaná len preto, že je pripojený panel.
+
+Veľká kapacita sa za pár sekúnd zmení len málo. Overuj prúd a dlhší
+priebeh, prípadne dostupnú zmenu rýchlosti simulácie. Nie je to test
+skutočnej kapacity, teploty a bezpečnosti fyzickej LiPo.
+
+10. DOM A ROZLOŽENIE AKO V 3D MODELI
+
+Až po funkčných skúškach pridaj dom. V Build je Import; ak tvoja
+verzia prijíma STL, použi SOC/model-domu/3d/dom-mm.stl v mm.
+Je to VIZUÁLNA viacdielna zostava vrátane zjednodušených modulov,
+nie aktívny elektrický obvod. Import sám nepripojí GPIO ani batériu.
+Ak sa obaly elektroniky zdvojujú s funkčnými dielmi, používaj import
+ako referenciu vedľa obvodu alebo vytvor vlastný obal nástrojmi Build.
+
+Rozmery: podstava 600 × 450 × 8, dom 480 × 330, steny 120 vysoké,
+strecha 35°, panel 230 × 195 × 17 mm. Ovládací panel C01 je vpredu
+vľavo X30/Y18, 100 × 40 mm; A má os X56/Y36, B X96/Y36.
+Vstupný chodník má X približne 323–385, takže ovládanie doň nezasahuje.
+Elektronika je v zadnej pravej miestnosti na doske X380/Y257,
+150 × 132 mm. Strecha a panel sú odnímateľné spolu, kábel je rozpojiteľný.
+Presné drevené diely, vodiče a SVG sú v model-domu/.
+
+11. APLIKÁCIA A AI – ČO JE A ČO NIE JE V BENCHTWIN
+
+Lokálna AI 4B a FastAPI bežia na tvojom PC. BenchTwin ich automaticky
+nespúšťa a náš skúšobný sketch do appky neposiela merania.
+Aplikáciu spustíš cez SOC/start.cmd; AI potrebuje spustenú Ollamu.
+Môžeš pozerať 3D dom a používať chat/počasie nezávisle od bench testu.
+
+Aktuálne poznámky BenchTwin k vydaniu 3.32 uvádzajú reálne HTTP
+požiadavky ESP32 a panel Network ako funkcie Pro. V tvojej verzii
+skontroluj ich sprístupnenie; staršia stránka What works? zároveň
+obsahuje staršie obmedzenia HTTP. Nepredpokladaj automatické spojenie.
+Ak máš Network panel sprístupnený, môžeš v ňom vytvoriť SIMULOVANÉ
+odpovede pre endpoint a sledovať kódy/časy požiadaviek. To nie je
+komunikácia so skutočným FastAPI ani dôkaz, že AI dostala merania.
+
+Adresa 127.0.0.1 v cloudovom simulátore neznamená automaticky tvoje PC.
+HTTPS stránka môže blokovať HTTP/LAN požiadavky. Používaj len spôsob
+lokálneho spojenia, ktorý tvoja verzia BenchTwin výslovne podporuje.
+Tento návod nepoužíva inú simulačnú platformu ani cudzí gateway.
+
+Ak chceš prepojiť reálne ESP s appkou, použi produkčný firmvér,
+skutočnú 2.4 GHz Wi-Fi, LAN adresu PC a DEVICE_KEY podľa
+SOC/docs/AKO-TO-FUNGUJE.md. Kľúč a Wi-Fi heslo neukladaj do verejného
+BenchTwin zdieľaného projektu.
+
+12. KEĎ NIEČO NEFUNGUJE
+
+„xTaskCreate… not supported“: v editore je produkčný firmvér;
+  nahraď ho naším benchtwin/sketch.ino.
+„LED bez rezistora“: každá LED musí mať svoj 330 Ω v sérii.
+„5 V na GPIO“: oprav delič alebo prepínač; správna logika je 3.3 V.
+Svetlá sú stále z batérie: skontroluj LOW-trigger, VCC relé a NO/NC.
+ESP sa pri výpadku vypne: skontroluj MT3608, jeho 5 V výstup,
+  batériu a napájací pin dosky. Nevyrieš to pridaním skrytého USB zdroja.
+Záporný prúd v nabíjaní: over smer sondy/bočníka; batériový senzor
+  má VIN+ na BAT_NODE a VIN− pri plus batérie.
+INA nie je nájdený: VCC 3.3 V, spoločná zem, SDA=8/SCL=9,
+  správne adresy a podpora konkrétneho modelu/knižnice v tvojej verzii.
+Na 0x41 nič neodpovedá: pozri krok 7; dva defaultné 0x40 nie sú riešenie.
+HTTP nefunguje: najprv over, či je táto funkcia sprístupnená;
+  potom sieťové obmedzenia, nie „náhodné“ zadávanie iných gateway adries.
+
+13. ČO BOLO OVERENÉ A ODKIAĽ SÚ POKYNY
+
+Overené na verejnom rozhraní/dokumentácii BenchTwin: Build/Wire/Code/
+Simulate, Code → Libraries/What works?, Check, Upload & simulate,
+Project import/export kódu, laboratórne nástroje, ESP32-S3 a katalógové
+CN3791/MT3608/INA219/LiPo. Verejná nápoveda výslovne uvádza obmedzenie
+FreeRTOS a poznámky vydania uvádzajú Pro sieťové funkcie.
+Nebolo tu vykonané kompletné interaktívne zostavenie a odbehnutie
+celého domu v tvojom BenchTwin projekte. Tento návod nie je tvrdenie,
+že všetky fyzikálne modely sú totožné s konkrétnymi kúpenými modulmi.
+
+Zdroje, skontrolované 8. 11. 2026:
+https://benchtwin.com/
+https://benchtwin.com/microcontroller-simulator
+V aplikácii: What’s new, Code → What works? a Code → Libraries.
+Reálne zapojenie nášho domu: SOC/docs/ZAPOJENIE.md.
