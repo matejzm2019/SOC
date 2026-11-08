@@ -46,7 +46,9 @@ def roofbox(name,x,t,z,w,d,h,mat=roofmat,g=1,side=-1):
  o=box(name,-w/2,-d/2,-h/2,w,d,h,mat,g)
  o.rotation_euler.x=-side*ANGLE;o.location=(x/1000,(235+side*t*math.cos(ANGLE)+side*z*math.sin(ANGLE))/1000,(RIDGE-t*math.sin(ANGLE)+z*math.cos(ANGLE))/1000);return o
 base=box('P01 Podstava 600x450x8',0,0,0,600,450,8,stone,bevel=0)
-for x,y in [(360,85),(360,385),(285,35),(320,35),(500,370)]:hole(base,x,y,4,3,12)
+for x,y in [(360,85),(360,385),(56,36),(96,36),(500,370)]:hole(base,x,y,4,3,12)
+hole(base,119,36,4,1.5,12)
+for x,y in ((35,23),(125,23),(35,53),(125,53)):hole(base,x,y,4,1.6,12)
 for x in (15,565):
  for y in (15,415):box('Nozicka 10 mm',x,y,-10,20,20,10,black)
 # Narrow edge banding and a clean entrance path are optional surface finishes.
@@ -111,9 +113,9 @@ for x in (60,536):
  v=[(x,70,128),(x,400,128),(x,235,RIDGE),(x+4,70,128),(x+4,400,128),(x+4,235,RIDGE)]
  prism('ROOF P11 stit 330x116x4',v,[(0,2,1),(3,4,5),(0,1,4,3),(1,2,5,4),(2,0,3,5)],ivory,1)
 for x in (68,522):box('ROOF L01 nosnik 316x10x10',x,77,118,10,316,10,wood,1)
-for x in (69,515):
- for y in (85,350):box('ROOF L02 doraz 30x10x6',x,y,122,10,30,6,wood,1)
-for t in (30,195):roofbox('ROOF L03 vystuha 460x10x10',300,t,-5,460,10,10,wood)
+for x in (68,522):
+ for y in (85,350):box('ROOF L02 doraz 30x10x6',x,y,112,10,30,6,wood,1)
+for t in (30,195):roofbox('ROOF L03 vystuha 440x10x10',300,t,-5,440,10,10,wood)
 # Surface mount rails carry the panel; clips grip its metal frame, not the cells.
 for t in (35,191):roofbox('SOLAR L04 montazna lista 250x8x6',300,t,7,250,8,6,dark,2)
 roofbox('SOLAR Panel 230x195x17',300,113,18.5,230,195,17,silver,2)
@@ -152,10 +154,25 @@ for x in (130,235,330):
   box('LED nastenne svietidlo',x-6,y,106,12,3,8,dark,g)
   box('LED difuzor',x-4,y-.3,108,8,3.6,3,light,g)
 for y in (78,389):tube('Vedenie LED po stene',[(80,y,110),(360,y,110),(360,365,16)],black,15,.6)
-for x in (280,315):
- box('Prepinac svetiel kryt',x,30,8,12,10,8,dark,14)
- box('Prepinac svetiel packa',x+4,33,16,4,3,6,silver,14)
-GROUPS={0:'Dom, fasada a priecky',1:'Cela odnimatelna strecha',2:'Panel na streche a jeho uchytenie',3:'ESP32-S3',4:'Chranena LiPo 2500mAh',5:'CN3791',6:'MT3608',7:'INA219 panel',8:'INA219 bateria',9:'Prepinacie rele LED',12:'Svetelny okruh A',13:'Svetelny okruh B',14:'Prepinace svetiel',15:'Vedenie LED',16:'LED a meraci delic'}
+control=box('C01 Ovladaci panel 100x40x4',30,18,23,100,40,4,dark,14)
+for x in (56,96):hole(control,x,36,25,3,10)
+hole(control,119,36,25,1.5,10)
+for x,y in ((35,23),(125,23),(35,53),(125,53)):
+ hole(control,x,y,25,1.6,10)
+ box('C01 Distancny stlpik 15mm',x-2,y-2,8,4,4,15,silver,14)
+# Shaft passes through the base; its two switch bodies stay outside the entrance path.
+for x in (50,90):
+ box('Prepinac svetiel kryt',x,31,14,12,10,8,dark,14)
+ box('Prepinac montazny krk',x+3,33,22,6,6,7,silver,14)
+ box('Prepinac matica',x+2,32,27,8,8,2,silver,14)
+ box('Prepinac svetiel packa',x+4,34,29,4,3,6,silver,14)
+box('LED hlavneho zdroja',117.5,34.5,27,3,3,2,blue,17)
+def label(text,x,y,size):
+ bpy.ops.object.text_add(location=(x/1000,y/1000,.0273));o=bpy.context.object;o.data.body=text;o.data.size=size/1000;o.data.extrude=.00005
+ bpy.ops.object.convert(target='MESH');finish(bpy.context.object,'C01 Popis '+text,ivory,14)
+label('SVETLA',36,49,5)
+label('A',54,22,5);label('B',94,22,5);label('5V',115,25,3.5)
+GROUPS={0:'Dom, fasada a priecky',1:'Cela odnimatelna strecha',2:'Panel na streche a jeho uchytenie',3:'ESP32-S3',4:'Chranena LiPo 2500mAh',5:'CN3791',6:'MT3608',7:'INA219 panel',8:'INA219 bateria',9:'Prepinacie rele LED',12:'Svetelny okruh A',13:'Svetelny okruh B',14:'Ovladaci panel svetiel A/B',15:'Vedenie LED',16:'LED a meraci delic',17:'Indikator hlavneho zdroja'}
 bpy.context.view_layer.update();meshes=[]
 for o in objects:
  o.data.calc_loop_triangles();p=[];n=[]

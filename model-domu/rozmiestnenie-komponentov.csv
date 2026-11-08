@@ -1,9 +1,9 @@
 ﻿skupina,nazov,X_mm,Y_mm,Z_mm,sirka_X_mm,hlbka_Y_mm,vyska_Z_mm,presnost
-3,ESP32-S3,385.0,265.0,18.0,64.0,28.0,8.0,menovitý rozmer výrobku
-4,Chranena LiPo 2500mAh,385.0,305.0,18.0,50.0,40.0,10.0,menovitý rozmer výrobku
-5,CN3791 solarna nabijacka,460.0,265.0,18.0,46.0,24.0,8.0,návrhová rozmerová rezerva; fyzicky overiť
-6,MT3608 zaloznych 5V,445.0,305.0,18.0,38.0,20.0,8.0,návrhová rozmerová rezerva; fyzicky overiť
-7,INA219 panel,491.0,303.0,18.0,32.0,25.0,8.0,návrhová rozmerová rezerva; fyzicky overiť
-8,INA219 bateria,491.0,335.0,18.0,32.0,25.0,8.0,návrhová rozmerová rezerva; fyzicky overiť
-9,Rele pre svetla,437.0,349.0,18.0,52.0,27.0,16.0,návrhová rozmerová rezerva; fyzicky overiť
-16,Univerzalka LED a delic,385.0,351.0,18.0,50.0,30.0,8.0,návrhová rozmerová rezerva; fyzicky overiť
+3,ESP32-S3 N16R8,385,265,18,64,28,8,menovitý rozmer výrobku
+5,CN3791 6V,460,265,18,46,24,8,návrhová rezerva; fyzicky overiť
+4,LiPo 104050 2500mAh,385,305,18,50,40,10,menovitý rozmer výrobku
+6,MT3608,445,305,18,38,20,8,návrhová rezerva; fyzicky overiť
+7,INA219 panel 0x40,491,303,18,32,25,8,návrhová rezerva; fyzicky overiť
+8,INA219 bateria 0x41,491,335,18,32,25,8,návrhová rezerva; fyzicky overiť
+9,Rele REL300,437,349,18,52,27,16,návrhová rezerva; fyzicky overiť
+16,LED a meraci delic,385,351,18,50,30,8,návrhová rezerva; fyzicky overiť

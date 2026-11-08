@@ -211,7 +211,7 @@ def test_assistant_local_grounded_prompt_and_settings_keep_history(tmp_path):
         import json
         request = next(r for r in calls if r.url.path == "/api/chat")
         body = json.loads(request.content)
-        assert body["think"] is False and body["options"]["num_ctx"] == 2048
+        assert body["think"] is False and body["options"]["num_ctx"] == 4096
         assert request.url.host == "127.0.0.1"
         saved = client.put("/api/settings", json=state["settings"] | {"ai_enabled": False}).json()
         # configured=True creates the initial run; subsequent assistant changes preserve it.

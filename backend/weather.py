@@ -48,7 +48,7 @@ class WeatherService:
         self.client, self.storage = client, storage
         self.snapshot = None
         try:
-            cached = storage.cache_get("weather")
+            cached = storage.cache_get("weather") if storage else None
             if cached:
                 fetched = datetime.fromisoformat(cached["fetched_at"])
                 if fetched.tzinfo is None or fetched > datetime.now(UTC):
@@ -88,8 +88,8 @@ class WeatherService:
         if current["available"] and not current["stale"] and current["age_seconds"] < 600:
             return
         params = {"latitude": round(settings.latitude, 3), "longitude": round(settings.longitude, 3),
-                  "current": VARIABLES, "hourly": VARIABLES, "forecast_days": 3,
-                  "timezone": "UTC", "timeformat": "unixtime", "wind_speed_unit": "ms",
+                  "current": VARIABLES, "hourly": VARIABLES, "forecast_days": 7,
+                  "timezone": "auto", "timeformat": "unixtime", "wind_speed_unit": "ms",
                   "tilt": settings.tilt_deg, "azimuth": settings.azimuth_deg - 180}
         try:
             response = await self.client.get("https://api.open-meteo.com/v1/forecast", params=params, timeout=15)
@@ -98,14 +98,15 @@ class WeatherService:
             current_point = normalize_point(data["current"], data["current"]["time"])
             hourly = data["hourly"]
             points = [normalize_point({name: hourly[name][i] for name in VARIABLES.split(",")}, stamp)
-                      for i, stamp in enumerate(hourly["time"])][:72]
+                      for i, stamp in enumerate(hourly["time"])][:168]
             if len(points) < 24:
                 raise ValueError("Missing forecast")
             if any(datetime.fromisoformat(b["timestamp"]) - datetime.fromisoformat(a["timestamp"]) != timedelta(hours=1) for a, b in zip(points, points[1:])):
                 raise ValueError("Invalid forecast intervals")
             snapshot = {"key": weather_key(settings), "fetched_at": datetime.now(UTC).isoformat(),
-                        "current": current_point, "hourly": points}
-            self.storage.cache_put("weather", snapshot)
+                        "current": current_point, "hourly": points, "timezone": data.get("timezone", "UTC")}
+            if self.storage:
+                self.storage.cache_put("weather", snapshot)
             self.snapshot, self.error = snapshot, None
         except (httpx.HTTPError, ValueError, KeyError, TypeError, IndexError, OverflowError, sqlite3.Error):
             self.error = "Počasie sa nepodarilo aktualizovať. Posledné dostupné údaje zostávajú označené časom aktualizácie."

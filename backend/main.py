@@ -76,7 +76,7 @@ class Engine:
             raise HTTPException(422, "Pre importovanú históriu najprv nahrajte CSV v časti Zdroj dát.")
         if settings.measurement_source == "csv" and (settings.demo_mode or settings.battery_enabled or settings.wind_enabled):
             raise HTTPException(422, "Importovaná história nepodporuje demo režim ani modelovanie batérie a vetra. Pre plánovanie zmeňte zdroj údajov.")
-        independent = {"ai_enabled", "ai_model", "weather_enabled", "location_name", "location_set", "weather_source"}
+        independent = {"ai_enabled", "ai_model", "ai_online_enabled", "weather_enabled", "location_name", "location_set", "weather_source"}
         physics_changed = any(getattr(settings, key) != getattr(self.settings, key) for key in Settings.model_fields if key not in independent)
         if physics_changed and settings.measurement_source != "csv":
             self.reset(settings)
@@ -186,11 +186,12 @@ def create_app(database=None, esp32_key=None, http_transport=None):
     async def lifespan(app):
         engine = Engine(Path(database or os.environ.get("SOC_DATABASE", ROOT / "data" / "energy.sqlite3")),
                         esp32_key or device_key(ROOT / "data" / "device_key.txt"))
-        async with httpx.AsyncClient(transport=http_transport, trust_env=False, limits=httpx.Limits(max_connections=8)) as client:
-            engine.weather = WeatherService(client, engine.storage)
-            engine.prices = PriceService(client, engine.storage)
+        async with (httpx.AsyncClient(transport=http_transport, trust_env=False, limits=httpx.Limits(max_connections=8)) as client,
+                    httpx.AsyncClient(transport=http_transport, trust_env=True, limits=httpx.Limits(max_connections=8)) as network_client):
+            engine.weather = WeatherService(network_client, engine.storage)
+            engine.prices = PriceService(network_client, engine.storage)
             app.state.engine = engine
-            app.state.assistant = AssistantService(client)
+            app.state.assistant = AssistantService(client, network_client)
             tasks = [asyncio.create_task(engine.run())]
             if os.environ.get("SOC_OFFLINE") != "1":
                 tasks.append(asyncio.create_task(engine.weather.run(engine)))
@@ -205,7 +206,7 @@ def create_app(database=None, esp32_key=None, http_transport=None):
                         await task
                 engine.storage.connection.close()
 
-    app = FastAPI(title="Energia", version="0.11.0-roof", lifespan=lifespan)
+    app = FastAPI(title="Energia", version="0.12.0-assistant", lifespan=lifespan)
     app.add_middleware(TrustedHostMiddleware, allowed_hosts=["*"])
 
     @app.middleware("http")
@@ -276,7 +277,7 @@ def create_app(database=None, esp32_key=None, http_transport=None):
         return engine.weather_state()
 
     @app.get("/api/assistant/status")
-    async def assistant_status(request: Request, model: Literal["qwen3:0.6b", "qwen3:1.7b", "qwen3:4b-instruct-2507-q4_K_M"] | None = None):
+    async def assistant_status(request: Request, model: Literal["qwen3:0.6b", "qwen3:1.7b", "qwen3:4b", "qwen3:4b-instruct-2507-q4_K_M"] | None = None):
         settings = request.app.state.engine.settings
         if model:
             settings = settings.model_copy(update={"ai_model": model, "ai_enabled": True})

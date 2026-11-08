@@ -12,11 +12,13 @@ Na model sa privádza iba nízke DC napätie. Laboratórny zdroj môže mať sie
 
 ## Aktuálna stavba: smart dom s odnímateľnou strechou
 
-Verzia **0.11.0-roof**: celé steny, bez nábytku, podstava 600 × 450 mm, dom 480 × 330 mm. Malé moduly CN3791 a MT3608, LiPo 2500 mAh, dva INA219, automatické prepnutie LED pri výpadku; panel 230 × 195 mm priamo na streche so sklonom 35°. AI zostáva na PC/serveri cez Ollamu, ESP komunikuje cez Wi-Fi.
+Verzia **0.12.0-assistant**: celé steny, bez nábytku, podstava 600 × 450 mm, dom 480 × 330 mm. Malé moduly CN3791 a MT3608, LiPo 2500 mAh, dva INA219, automatické prepnutie LED pri výpadku; panel 230 × 195 mm priamo na streche so sklonom 35°. AI zostáva na PC/serveri cez Ollamu, ESP komunikuje cez Wi-Fi.
 
 - **[Stavebný návod PDF](model-domu/STAVEBNY-NAVOD.pdf)**, [rezací plán](model-domu/rezaci-plan.csv), [vodiče](model-domu/dlzky-vodicov.csv) a [detaily fasády](model-domu/detaily-fasady.csv).
 - **[3D Blender](model-domu/3d/dom.blend)**, [GLB](model-domu/3d/dom.glb), [pôdorys](model-domu/vykresy/podorys.svg), šablóny dielov 1:1 v model-domu/vykresy/.
 - **[Kusovník](docs/KOMPONENTY.md)**, **[zapojenie](docs/ZAPOJENIE.md)** a **[čo celý systém robí](docs/AKO-TO-FUNGUJE.md)**.
+- Ovládanie A/B je na paneli C01 pri ľavom okraji podstavy, mimo chodníka. Montážne otvory a vedenie sú aktualizované.
+- AI je všeobecný chat s predpoveďou konkrétnych dní/miest a čítacími online nástrojmi pre Qwen3 4B. [Podrobný návod](docs/LOKALNY_ASISTENT.md).
 - V aplikácii karta **3D model a stavba**. Výrobné súbory otvoríš aj na `/stavba/`.
 
 Elektronické moduly sú v 3D modeli rozmerové rezervy; presné montážne otvory treba preniesť zo zakúpených dielov. Úprava nabíjacieho prúdu CN3791 zostáva kontrolou pred fyzickou montážou, nie garantovanými parametrami z obrázka. Návod a pripravené súbory simulácie sú na želanie používateľa v samostatnom balíku mimo projektu.

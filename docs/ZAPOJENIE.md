@@ -1,6 +1,6 @@
 # Zapojenie a skúšky pred montážou
 
-Platí pre verziu 0.11.0-roof: CN3791 + MT3608, chránená LiPo 104050 2 500 mAh, ESP32-S3 N16R8. Nepoužívaj starú schému s BQ24074/MAX17048.
+Platí pre verziu 0.12.0-assistant: CN3791 + MT3608, chránená LiPo 104050 2 500 mAh, ESP32-S3 N16R8. Nepoužívaj starú schému s BQ24074/MAX17048.
 
 ## Napájacie uzly
 
@@ -29,7 +29,7 @@ Menič MT3608 sám nie je ochrana LiPo pred hlbokým vybitím. Článok musí ma
 | GPIO ESP32-S3 | Pripojenie | Stav |
 |---:|---|---|
 | 4 | hlavné +5 V cez 22 kΩ na GPIO; 10 kΩ z GPIO na GND | pri 5 V je cca 1,56 V; priamych 5 V je neprípustných |
-| 5 | prepínač A medzi GPIO a GND | LOW = svetlá A zapnuté |
+| 5 | prepínač A medzi GPIO a GND | LOW = svetlá A zapnuté po odrušení kontaktu |
 | 6 | prepínač B medzi GPIO a GND | LOW = svetlá B zapnuté |
 | 7 | 1 kΩ do bázy 2N2222A vetvy A | každá báza aj 10 kΩ na GND |
 | 10 | 1 kΩ do bázy 2N2222A vetvy B | rovnaké zapojenie |
@@ -37,13 +37,17 @@ Menič MT3608 sám nie je ochrana LiPo pred hlbokým vybitím. Článok musí ma
 | 9 | SCL oboch INA219 | adresy 0x40 a 0x41 |
 | 11 | rezistor 330 Ω, modrá LED na GND | indikácia prítomnosti hlavného zdroja |
 
-Prepínače sú kontakty do GND s interným INPUT_PULLUP na 3,3 V. Na GPIO neprivádzaj 5 V. GPIO12–16 nemajú v tomto projekte pripojené zariadenie.
+Prepínače sú na paneli C01 vľavo vpredu (X30/Y18), kontakty do GND s interným INPUT_PULLUP na 3,3 V. Pri 900 mm vedení možno doplniť 10 kΩ pull-up na 3,3 V pri ESP. Samostatná úloha vzorkuje každých 10 ms a prijme zmenu až po 30 ms stabilného kontaktu; funguje bez servera. Modrá LED GPIO11 je na tom istom paneli cez 330 Ω. Na GPIO neprivádzaj 5 V. GPIO12–16 nemajú v tomto projekte pripojené zariadenie.
 
 Oba INA219 napájaj 3,3 V, nikdy cez 5 V pull-up na SDA/SCL. Druhý nastav adresovacou prepojkou A0 podľa konkrétnej dosky na 0x41. Over I²C skenerom; nespoliehaj sa na nepresnú tabuľku adries e-shopu. Voliteľný BH1750 z pôvodného návrhu nový firmvér nevyžaduje a nemeria ho.
 
 ## LED vetvy
 
 COM relé → pre každú LED jej vlastný rezistor 330 Ω → anóda LED → katóda → kolektor 2N2222A. Emitor na GND. Tri LED v každom okruhu sú paralelné vetvy, každá s vlastným rezistorom. Ide o malé LED, nie o 12 V LED pásik. Pri bielej LED s úbytkom približne 3,1 V vychádza prúd na 5 V rádovo 5 mA. GPIO nenapája samotné svetlá.
+
+## Ovládací panel C01
+
+Doska 100 × 40 × 4 mm je na štyroch 15 mm stĺpikoch, spodok Z23 a vrch Z27. Telá prepínačov sú pod ňou, páčky nad ňou. A/B majú osi X56/X96, Y36; modrá LED X119/Y36. Použi C01-1ku1.svg a P01-1ku1.svg. M3 skrutky zospodu zapusti do podstavy, aby nezasahovali do nožičiek. Závit skutočného prepínača a hrúbku pod maticou over pred vŕtaním; podľa potreby lokálne zapusti spodok C01. W13/W14 sú páry po 900 mm, W25 dva vodiče po 900 mm.
 
 ## Panel na odnímateľnej streche
 
