@@ -23,3 +23,7 @@ Lokálne volania Ollamy nepoužívajú proxy. Vonkajšie HTTP volania rešpektuj
 Pri 4B je kontext 8192 tokenov a čas na dokončenie do troch minút; v bežnej krátkej otázke je rýchlejší. Obmedzená RAM alebo starší procesor môžu byť pomalé. Skutočnú kvalitu slovenčiny a ochotu používať nástroje treba overiť s nainštalovaným modelom na prezentačnom PC. HTTP a používateľské testy s testovacou odpoveďou modelu nie sú meranie kvality reálneho LLM.
 
 Oficiálne podklady: https://docs.ollama.com/capabilities/tool-calling a https://docs.ollama.com/capabilities/web-search ; predpoveď https://open-meteo.com/en/docs .
+
+## Formát odpovedí v chate
+
+Markdown sa zobrazuje ako nadpisy, odseky, zvýraznenie, vnorené zoznamy, odkazy, tabuľky a bloky kódu. Dlhý kód a široké tabuľky majú vlastné posúvanie aj na mobile. Pôvodný text odpovede zostáva v histórii pre ďalšiu otázku; používateľove správy sa zobrazujú ako obyčajný text. Formátovanie funguje lokálne bez CDN. HTML z modelu je zobrazené ako text a výsledok Markdownu prechádza čistením DOMPurify; obrázky sa automaticky nenačítavajú.

@@ -64,4 +64,4 @@ AI dostáva vybrané systémové fakty, dostupné merania a pôvod údajov. Vysv
 - `docs/ZAPOJENIE.md`: pinová tabuľka, vodiče, kontrolné merania a skúšky.
 - `firmware/esp32-s3/`: aktuálny firmvér s lokálnou obsluhou LED a dvoma INA219.
 
-Návod na BenchTwin/Wokwi a softvérové skúšanie je zámerne v samostatnom balíku mimo repozitára, podľa zadania.
+Návod BENCHTWIN-NAVOD.txt a kompatibilný skúšobný sketch sú v samostatnom priečinku SOC-simulacia vedľa projektu. BenchTwin nepodporuje FreeRTOS úlohy produkčného firmvéru; samostatný sketch overuje ovládanie a elektrické zapojenie podľa návodu.

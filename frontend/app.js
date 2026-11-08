@@ -1,4 +1,5 @@
 import {createHouseView} from './house-view.js';
+import {renderChatMarkdown} from './chat-markdown.js';
 const $ = selector => document.querySelector(selector);
 const $$ = selector => [...document.querySelectorAll(selector)];
 const number = (value, digits = 2) => value == null ? '—' : new Intl.NumberFormat('sk-SK', {minimumFractionDigits: digits, maximumFractionDigits: digits}).format(value);
@@ -542,8 +543,10 @@ function chatBubble(role, text) {
   $('.chat-empty')?.remove();
   const article = document.createElement('article'); article.className = `chat-bubble ${role}`;
   const caption = document.createElement('small'); caption.textContent = role === 'user' ? 'Vy' : 'Lokálny asistent';
-  const paragraph = document.createElement('p'); paragraph.textContent = text;
-  article.append(caption,paragraph); $('#chat-messages').append(article);
+  let content;
+  if (role === 'assistant') content = renderChatMarkdown(text);
+  else { content = document.createElement('p'); content.textContent = text; }
+  article.append(caption,content); $('#chat-messages').append(article);
   $('#chat-messages').scrollTop = $('#chat-messages').scrollHeight;
   return article;
 }

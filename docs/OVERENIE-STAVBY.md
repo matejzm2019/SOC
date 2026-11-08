@@ -21,3 +21,7 @@ Zmeraj MT3608 na 5 V, stabilitu pri Wi-Fi špičkách, adresy INA219, polaritu a
 Over úchyty skutočného rámu panela, dĺžky skrutiek, tuhosť strechy a odľahčenie kábla. Pred úplným odložením strechy rozpoj konektor panela. Na C01 over závity konkrétnych prepínačov a podľa potreby zapusti ich montážnu hrúbku; telá sú pod panelom na 15 mm stĺpikoch. Pri spodných skrutkách použi zápustné hlavy, aby nekolidovali s nožičkami.
 
 Elektroobálky a spojky nie sú garantované vrtné šablóny. Samostatná simulácia neoverí skutočné nabíjacie prúdy ani ochrany LiPo. Úplná podpora konkrétnych modulov v BenchTwin nebola potvrdená.
+
+## Doplnená kontrola formátovania chatu
+
+Chromium overil nadpisy vrátane `###`, zvýraznenie, vnorené zoznamy, tabuľky, odkazy a kód. Skúška potvrdila, že HTML/script z odpovede sa nespustí, nebezpečné odkazy nie sú klikateľné a obrázky nespustia externú požiadavku. Pri šírke 390 px dlhý kód a tabuľka posúvajú svoj obsah bez roztiahnutia stránky; pri kontrolovaných krokoch neboli JavaScriptové chyby.
