@@ -88,7 +88,7 @@ function renderState() {
   metricValue('grid-value', Math.abs(s.grid_w) / 1000, 'kW');
   setText('load-detail', imported ? 'Priemer intervalu z CSV' : hybrid ? 'Model spotreby podľa záťaží ESP32' : `${number(s.voltage_v, 0)} V · ${number(s.current_a, 1)} A · virtuálne`);
   setText('pv-detail', `${number(settings.pv_kwp, 1)} kWp inštalovaný výkon`);
-  if (s.source === 'hybrid') setText('pv-detail', `${number(s.panel_power_w, 3)} W panel · ${number(s.illuminance_lux, 0)} lx · ESP32`);
+  if (s.source === 'hybrid') setText('pv-detail', `${number(s.panel_power_w, 3)} W panel · ESP32 · INA3221`);
   if (imported) setText('pv-detail', 'Výroba z importovaného intervalu');
   if (waiting) ['load-value','pv-value','soc-value','grid-value'].forEach(id => setText(id, '—'));
   const batteryAction = s.battery_w > 1 ? 'Vybíjanie' : s.battery_w < -1 ? 'Nabíjanie' : 'Pohotovosť';
@@ -103,10 +103,10 @@ function renderState() {
   setText('cell-voltage', cellAvailable ? `${number(s.battery_voltage_v,2)} V` : '—');
   setText('cell-capacity', `${number(settings.battery_capacity_mah,0)} mAh`);
   setText('cell-energy', cellAvailable ? `${number(s.battery_energy_kwh * 1000,2)} Wh` : '—');
-  setText('cell-status', !state.device.online ? 'ESP32 OFFLINE' : cellAvailable ? voltageEstimate ? 'INA219 · ODHAD %' : 'MAX17048 · ODHAD %' : 'ČAKÁM NA BATÉRIU');
+  setText('cell-status', !state.device.online ? 'ESP32 OFFLINE' : cellAvailable ? voltageEstimate ? 'INA3221 · ODHAD %' : 'MAX17048 · ODHAD %' : 'ČAKÁM NA BATÉRIU');
   setText('cell-current', cellAvailable && s.battery_current_a != null ? `${number(s.battery_current_a*1000,0)} mA` : '—');
   setText('backup-status', !hybrid || waiting || !state.device.online ? 'Živý stav napájania nie je dostupný' : `${s.telemetry_origin === 'software_test' ? 'TEST · ' : ''}${s.grid_available ? 'Hlavný 5 V zdroj dostupný · LED na hlavnej vetve' : 'Výpadok hlavného zdroja · zvolená batériová vetva LED'}`);
-  setText('cell-trend', !cellAvailable ? 'Čakám na batériový INA219 na adrese 0x41.' : `${s.battery_current_a == null ? 'Trend prúdu nedostupný' : s.battery_current_a>.01 ? 'Batéria sa nabíja' : s.battery_current_a<-.01 ? 'Batéria sa vybíja' : 'Prúd je blízko nuly'} · ${method}${voltageEstimate ? ' · počas nabíjania a pod záťažou môže byť odhad nepresný' : ''}${s.soc_pct<20 ? ' · nízke nabitie' : ''} · ${time(s.timestamp)}${state.device.online ? '' : ' · posledné meranie'}`);
+  setText('cell-trend', !cellAvailable ? 'Čakám na batériový INA3221 na adrese 0x41.' : `${s.battery_current_a == null ? 'Trend prúdu nedostupný' : s.battery_current_a>.01 ? 'Batéria sa nabíja' : s.battery_current_a<-.01 ? 'Batéria sa vybíja' : 'Prúd je blízko nuly'} · ${method}${voltageEstimate ? ' · počas nabíjania a pod záťažou môže byť odhad nepresný' : ''}${s.soc_pct<20 ? ' · nízke nabitie' : ''} · ${time(s.timestamp)}${state.device.online ? '' : ' · posledné meranie'}`);
   $('#soc-bar').style.width = `${hybrid && !cellAvailable ? 0 : s.soc_pct || 0}%`;
   const gridAction = !s.grid_available ? 'Výpadok siete' : s.grid_w > 1 ? '↓ Odber zo siete' : s.grid_w < -1 ? '↑ Dodávka do siete' : 'Bez toku energie';
   setText('grid-detail', gridAction);

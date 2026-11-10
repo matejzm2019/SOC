@@ -45,7 +45,7 @@ for id,name,count,w,h,t,mat,note in parts:
  check=100 if w>=120 else 50
  svg=f'''<svg xmlns="http://www.w3.org/2000/svg" width="{w}mm" height="{h}mm" viewBox="0 0 {w} {h}"><title>{id} {html.escape(name)} – 1:1 mm</title><g fill="none" stroke="black" stroke-width="0.15">{shape}{holes}</g><text x="10" y="15" font-size="5" font-family="sans-serif">{id} · {w} x {h} x {t} mm · {count} ks · 1:1</text><path d="M10 {h-8} h{check}" stroke="blue" stroke-width="0.3"/><text x="10" y="{h-10}" font-size="4">Kontrolná mierka {check} mm</text></svg>'''
  (V/f'{id}-1ku1.svg').write_text(svg)
-wire=[('W01','LAB +5 V → hlavný rozvod',1,600,'0,5 mm²','červený'),('W02','LAB GND → spoločná zem',1,600,'0,5 mm²','čierny'),('W03','Batéria → INA219 0x41',2,150,'0,25–0,5 mm²','PH2.0 adaptér, polaritu zmerať'),('W04','INA219 → batériový uzol',1,120,'0,25–0,5 mm²','červený'),('W05','CN3791 BAT → batériový uzol',2,150,'0,25–0,5 mm²','pár + / GND'),('W06','Batériový uzol → MT3608 cez servisnú prepojku',2,150,'0,25–0,5 mm²','odpoj na úplné prednabitie'),('W07','MT3608 5 V → relé NC',1,150,'0,25–0,5 mm²','červený'),('W08','Hlavný +5 V → relé NO a VCC',2,150,'0,25–0,5 mm²','červený'),('W09','Relé COM → LED vetva A',2,750,'0,14–0,25 mm²','napájanie a spínaný návrat'),('W10','Relé COM → LED vetva B',2,500,'0,14–0,25 mm²','napájanie a spínaný návrat'),('W11','Rozvod 3 LED A na stene',2,300,'0,14 mm²','každá LED vlastný 330 Ω'),('W12','Rozvod 3 LED B na stene',2,300,'0,14 mm²','každá LED vlastný 330 Ω'),('W13','Prepínač A → GPIO32/GND',2,900,'0,14 mm²','signálový pár'),('W14','Prepínač B → GPIO33/GND',2,900,'0,14 mm²','signálový pár'),('W15','MT3608 → ESP napájací USB-C kábel',1,200,'hotový kábel','iba overených 5 V'),('W16','I²C ESP → INA219 0x40',4,180,'0,14 mm²','3V3 GND SDA SCL'),('W17','I²C INA219 0x40 → 0x41',4,100,'0,14 mm²','3V3 GND SDA SCL'),('W18','Panel na streche → INA219',2,650,'0,25–0,5 mm²','vrátane pôvodného kábla; 200 mm servisná slučka a rozpojiteľný konektor'),('W19','Panelový INA219 → CN3791 IN',2,150,'0,25–0,5 mm²','vstup nikdy na BAT'),('W24','GPIO34 delič a tranzistory LED',8,150,'0,14 mm²','miestne prepojky')]
+wire=[('W01','LAB +5 V → hlavný rozvod',1,600,'0,5 mm²','červený'),('W02','LAB GND → spoločná zem',1,600,'0,5 mm²','čierny'),('W03','Batéria → INA3221 0x41',2,150,'0,25–0,5 mm²','PH2.0 adaptér, polaritu zmerať'),('W04','INA3221 → batériový uzol',1,120,'0,25–0,5 mm²','červený'),('W05','CN3791 BAT → batériový uzol',2,150,'0,25–0,5 mm²','pár + / GND'),('W06','Batériový uzol → MT3608 cez servisnú prepojku',2,150,'0,25–0,5 mm²','odpoj na úplné prednabitie'),('W07','MT3608 5 V → relé NC',1,150,'0,25–0,5 mm²','červený'),('W08','Hlavný +5 V → relé NO a VCC',2,150,'0,25–0,5 mm²','červený'),('W09','Relé COM → LED vetva A',2,750,'0,14–0,25 mm²','napájanie a spínaný návrat'),('W10','Relé COM → LED vetva B',2,500,'0,14–0,25 mm²','napájanie a spínaný návrat'),('W11','Rozvod 3 LED A na stene',2,300,'0,14 mm²','každá LED vlastný 330 Ω'),('W12','Rozvod 3 LED B na stene',2,300,'0,14 mm²','každá LED vlastný 330 Ω'),('W13','Prepínač A → GPIO32/GND',2,900,'0,14 mm²','signálový pár'),('W14','Prepínač B → GPIO33/GND',2,900,'0,14 mm²','signálový pár'),('W15','MT3608 → ESP napájací USB-C kábel',1,200,'hotový kábel','iba overených 5 V'),('W16','I²C ESP → INA3221 0x40',4,180,'0,14 mm²','3V3 GND SDA SCL'),('W17','I²C INA3221 0x40 → 0x41',4,100,'0,14 mm²','3V3 GND SDA SCL'),('W18','Panel na streche → INA3221',2,650,'0,25–0,5 mm²','vrátane pôvodného kábla; 200 mm servisná slučka a rozpojiteľný konektor'),('W19','Panelový INA3221 → CN3791 IN',2,150,'0,25–0,5 mm²','vstup nikdy na BAT'),('W24','GPIO34 delič a tranzistory LED',8,150,'0,14 mm²','miestne prepojky')]
 wire.append(('W25','LED hlavného zdroja → GPIO27/GND',2,900,'0,14 mm²','rezistor 330 Ω pri ovládacom paneli'))
 with (OUT/'dlzky-vodicov.csv').open('w',newline='',encoding='utf-8-sig') as f:
  w=csv.writer(f);w.writerow(['ID','spoj','pocet_vodicov','dlzka_jedneho_mm','prierez','poznamka']);w.writerows(wire)
@@ -120,23 +120,24 @@ line(43,'Napájanie neveď cez tenké Dupont kontakty. Tie používaj na signál
 pageend(4)
 heading('Zapojenie – rozhodujúce uzly','Úplná pinová tabuľka a poradie montáže sú v docs/ZAPOJENIE.md. Batéria sa nepripája priamo na panel ani LAB.')
 rows=[
-'12 V panel → INA219 0x40 → CN3791 IN (12 V variant). Nabíja jediný chránený 1S článok na 4,2 V.',
-'Pred zapojením zmeraj Voc: INA219 max. 26 V, CN3791 max. 28 V; zachovať rezervu a overiť modul.',
-'CN3791 BAT+ a MT3608 IN+ tvoria batériový uzol → INA219 0x41 VIN+ → VIN− → plus batérie.',
-'INA219 meria čistý prúd celého článku. Všetky odbery/nabíjanie musia byť na strane uzla, nie mimo bočníka.',
+'12 V panel → INA3221 0x40 → CN3791 IN (12 V variant). Nabíja jediný chránený 1S článok na 4,2 V.',
+'Pred zapojením zmeraj Voc: INA3221 max. 26 V, CN3791 max. 28 V; zachovať rezervu a overiť modul.',
+'CN3791 BAT+ a MT3608 IN+ tvoria batériový uzol → INA3221 0x41 IN1+ → IN1− → plus batérie.',
+'Použiť 2 moduly INA3221, na každom CH1. IN1+ môže byť spoločný POW; CH1/GND nie sú oba konce R100.',
+'IN1− je výstup bočníka; na staršej doske kladný CH1. Čipové VS=3V3. Limit dosky 1,1 A v oboch smeroch.',
 'MT3608 nastav na 5,00 V pred pripojením ESP32. Menovitý 2 A údaj nie je zaručený výstup pri 3,7 → 5 V.',
 'Relé REL300: NO = hlavné +5 V; NC = MT3608 +5 V; COM = LED napájanie. VCC/JD-VCC = hlavné 5 V.',
 'Relé IN je pevne na GND. Zapnutý hlavný zdroj pritiahne NO; po vypnutí kontakt prejde na NC.',
 'LED A/B: každá LED cez svoj 330 Ω; kolektory BC547B, emitory GND; GPIO25/26 cez 1 kΩ na bázy.',
 'Každá báza má 10 kΩ na GND. Prepínače svetiel: GPIO32/33 proti GND, druhý kontakt na prepínači voľný.',
 'Detekcia hlavného zdroja: LAB +5 V → 22 kΩ → GPIO34 → 10 kΩ → GND. Pri 5 V je ADC asi 1,56 V.',
-'I²C: GPIO21 SDA, GPIO22 SCL; oba INA219 napájané 3,3 V. Druhému nastav adresu 0x41.',
+'I²C: GPIO21 SDA, GPIO22 SCL; oba INA3221 napájané 3,3 V. Druhému nastav adresu 0x41.',
 '470 µF / 16 V pri ESP: plus na BACKUP 5 V, mínus na GND. ESP32 je stále na MT3608. Pri slabom solári môže batéria klesať aj vtedy, keď hlavný zdroj napája LED.',
 'CN3791 nemá hotový oddelený LOAD výstup. Na úplné prednabitie odpoj MT3608, svetlá aj ESP od článku.',
 'Pri úplnom prednabití odpoj panel, napájaj iba CN3791 zo správne nastaveného LAB; potom obnov solár.',
 'Nastavenie prúdu CN3791 over podľa článku. Hodnota 4 A MAX na e-shope nie je povolený prúd tejto batérie.',
 ]
-for i,t in enumerate(rows):line(245-i*11,t,9)
+for i,t in enumerate(rows):line(245-i*10,t,9)
 pageend(5)
 heading('Montáž a prvé spustenie','Postupuj po častiach; elektroniku najprv odskúšaj mimo dreveného domu.')
 steps=[
@@ -146,7 +147,7 @@ steps=[
 '4. Zostav rám strechy a dve roviny do jedného kusu. Dorazy nechaj s vôľou; nepouži pánty; panel má vlastný rozpojiteľný kábel.',
 '5. LED upevni na pevné steny. Každá má vlastný rezistor; horné káble prichyť, aby ich strecha nezachytila.',
 '6. Pod podstavu nalep 10 mm nožičky. Signalizačné a napájacie trasy prichyť na spodnú stranu a označ Wxx.',
-'7. Menič otestuj s malou skúšobnou záťažou; nastav a zmeraj 5 V. Over polaritu batérie a adresy INA219.',
+'7. Menič otestuj s malou skúšobnou záťažou; nastav a zmeraj 5 V. Over polaritu batérie a adresy INA3221.',
 '8. Zapoj relé a LED, potom ESP. Vyskúšaj výpadok aj pri odpojenej Wi-Fi; prepnutie nesmie vyžadovať server.',
 '9. Upevni panel za rám; potom na PC spusti aplikáciu a Ollamu. ESP a PC pripoj do rovnakej Wi-Fi/LAN, nastav URL a kľúč zariadenia.',
 ]

@@ -3,7 +3,7 @@
 5,CN3791 12V,460,265,18,46,24,8,návrhová rezerva; fyzicky overiť
 4,LiPo 104050 2500mAh,385,305,18,50,40,10,menovitý rozmer výrobku
 6,MT3608,445,305,18,38,20,8,návrhová rezerva; fyzicky overiť
-7,INA219 panel 0x40,491,303,18,32,25,8,návrhová rezerva; fyzicky overiť
-8,INA219 bateria 0x41,491,335,18,32,25,8,návrhová rezerva; fyzicky overiť
-9,Rele REL300,437,349,18,52,27,16,návrhová rezerva; fyzicky overiť
+7,INA3221 panel CH1 0x40,489,302,18,40,40,8,návrhová rezerva; fyzicky overiť
+8,INA3221 bateria CH1 0x41,489,346,18,40,40,8,návrhová rezerva; fyzicky overiť
+9,Rele REL300,435,349,18,52,27,16,návrhová rezerva; fyzicky overiť
 16,LED a meraci delic,385,351,18,50,30,8,návrhová rezerva; fyzicky overiť

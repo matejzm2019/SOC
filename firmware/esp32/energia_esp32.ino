@@ -3,7 +3,8 @@
 #include <WiFi.h>
 #include <HTTPClient.h>
 #include <ArduinoJson.h>
-#include <Adafruit_INA219.h>
+#include <Adafruit_INA3221.h>
+#include "ina3221_reading.h"
 #include "secrets.h"
 #include "backup_power.h"
 #include "switch_input.h"
@@ -19,14 +20,36 @@
 // ADC1 GPIO34 remains available while Wi-Fi is active. Avoid flash and boot strapping pins.
 constexpr int MAIN_PIN=34,SW_A=32,SW_B=33,LED_A=25,LED_B=26,GRID_LED=27;
 constexpr int SIM_SUN=35,SIM_BAT=36,SIM_CURRENT=39;
-Adafruit_INA219 panelSensor(0x40),batterySensor(0x41);
+Adafruit_INA3221 panelSensor,batterySensor;
+constexpr uint8_t PANEL_ADDRESS=0x40,BATTERY_ADDRESS=0x41;
+uint32_t panelStarted=0,batteryStarted=0;
 bool panelReady=false,batteryReady=false;
 float filteredVoltage=NAN;
 uint32_t lastSend=0,lastWifiAttempt=0,lastSensorAttempt=0;
 portMUX_TYPE controlMux=portMUX_INITIALIZER_UNLOCKED;
 bool mains=false;int loadStage=0;
 
-bool present(uint8_t address){Wire.beginTransmission(address);return Wire.endTransmission()==0;}
+bool readRegister16(uint8_t address,uint8_t reg,uint16_t &value){
+ Wire.beginTransmission(address);Wire.write(reg);
+ if(Wire.endTransmission(false)!=0)return false;
+ if(Wire.requestFrom(address,uint8_t(2))!=2){while(Wire.available())Wire.read();return false;}
+ value=(uint16_t(Wire.read())<<8)|uint8_t(Wire.read());return true;
+}
+bool startSensor(Adafruit_INA3221 &sensor,uint8_t address,uint32_t &started){
+ if(!sensor.begin(address,&Wire))return false;
+ sensor.setShuntResistance(0,INA3221_SHUNT_OHMS); // CH1 is channel 0 in the library
+ if(!sensor.setAveragingMode(INA3221_AVG_16_SAMPLES))return false;
+ started=millis();return true;
+}
+bool readSensor(uint8_t address,Ina3221Reading &reading){
+ uint16_t manufacturer,die,bus,shunt;
+ // Checked transport reads: the library's float getters cannot report I2C NACKs.
+ if(!readRegister16(address,INA3221_REG_MANUFACTURER_ID,manufacturer)||manufacturer!=INA3221_MANUFACTURER_ID||
+    !readRegister16(address,INA3221_REG_DIE_ID,die)||die!=INA3221_DIE_ID||
+    !readRegister16(address,INA3221_REG_BUSVOLTAGE_CH1,bus)||
+    !readRegister16(address,INA3221_REG_SHUNTVOLTAGE_CH1,shunt))return false;
+ return decodeIna3221(bus,shunt,reading);
+}
 void controlTask(void*) {
  bool currentMain=false;DebouncedSwitch switchA,switchB;
  TickType_t wake=xTaskGetTickCount();
@@ -50,7 +73,9 @@ void setup(){
   while(true)delay(1000);
  }
 #if !SIMULATED_SENSORS
- Wire.begin(21,22);panelReady=panelSensor.begin();batteryReady=batterySensor.begin();
+ Wire.begin(21,22);Wire.setClock(100000);Wire.setTimeOut(50);
+ panelReady=startSensor(panelSensor,PANEL_ADDRESS,panelStarted);
+ batteryReady=startSensor(batterySensor,BATTERY_ADDRESS,batteryStarted);
 #endif
 #if WIFI_ENABLED
  WiFi.mode(WIFI_STA);WiFi.begin(WIFI_SSID,WIFI_PASSWORD);lastWifiAttempt=millis();
@@ -70,12 +95,23 @@ void loop(){
  batV=3.0f+1.2f*analogRead(SIM_BAT)/4095.0f;
  batA=(analogRead(SIM_CURRENT)/4095.0f-.5f)*1.0f;
 #else
- if(panelReady&&!present(0x40))panelReady=false;
- if(batteryReady&&!present(0x41))batteryReady=false;
- if(uint32_t(millis()-lastSensorAttempt)>=5000){lastSensorAttempt=millis();if(!panelReady)panelReady=panelSensor.begin();if(!batteryReady)batteryReady=batterySensor.begin();}
- if(!panelReady){Serial.println("Chyba INA219 panel 0x40; telemetria neposlana.");return;}
- panelV=panelSensor.getBusVoltage_V();panelA=panelSensor.getCurrent_mA()/1000.0f;panelW=panelSensor.getPower_mW()/1000.0f;
- if(batteryReady){batV=batterySensor.getBusVoltage_V();batA=batterySensor.getCurrent_mA()/1000.0f;}
+ if(uint32_t(millis()-lastSensorAttempt)>=5000){
+  lastSensorAttempt=millis();
+  if(!panelReady)panelReady=startSensor(panelSensor,PANEL_ADDRESS,panelStarted);
+  if(!batteryReady)batteryReady=startSensor(batterySensor,BATTERY_ADDRESS,batteryStarted);
+ }
+ // Three enabled channels, 1.1ms bus + shunt, 16 samples: allow first conversion.
+ if(!panelReady||uint32_t(millis()-panelStarted)<150)return;
+ Ina3221Reading panel;
+ if(!readSensor(PANEL_ADDRESS,panel)){
+  panelReady=false;Serial.println("Chyba INA3221 PANEL CH1: I2C, identita alebo rozsah; telemetria neposlana.");return;
+ }
+ panelV=max(0.0f,panel.bus_v+panel.shunt_v);panelA=panel.current_a;panelW=panelV*max(0.0f,panelA);
+ if(batteryReady&&uint32_t(millis()-batteryStarted)>=150){
+  Ina3221Reading battery;
+  if(readSensor(BATTERY_ADDRESS,battery)){batV=battery.bus_v;batA=battery.current_a;}
+  else{batteryReady=false;Serial.println("Chyba INA3221 BAT CH1; bateria v telemetrii vynechana.");}
+ }
 #endif
  if(!isfinite(panelV)||!isfinite(panelA)||!isfinite(panelW))return;
  bool grid;int loads;
@@ -83,15 +119,15 @@ void loop(){
  grid=mains;loads=loadStage;
  portEXIT_CRITICAL(&controlMux);
  JsonDocument doc;
- doc["device_id"]="energia-esp32";doc["firmware_version"]="0.8.1-panel12";
+ doc["device_id"]="energia-esp32";doc["firmware_version"]="0.9.0-ina3221";
  doc["telemetry_origin"]=SIMULATED_SENSORS?"software_test":"hardware";
  doc["panel_voltage_v"]=max(0.0f,panelV);doc["panel_current_a"]=max(0.0f,panelA);doc["panel_power_w"]=max(0.0f,panelW);
  doc["load_stage"]=loads;doc["grid_available"]=grid;
- if(isfinite(voltageSoc(batV))&&isfinite(batA)&&abs(batA)<=5){
+ if(isfinite(voltageSoc(batV))&&isfinite(batA)&&abs(batA)<=INA3221_MODULE_LIMIT_A + 0.00005f){
   filteredVoltage=isfinite(filteredVoltage)?filteredVoltage+.1f*(batV-filteredVoltage):batV;
   doc["battery_voltage_v"]=batV;doc["battery_current_a"]=batA;
   doc["battery_soc_pct"]=voltageSoc(filteredVoltage);doc["battery_soc_method"]="voltage_estimate";
- }else{filteredVoltage=NAN;batteryReady=false;}
+ }else{filteredVoltage=NAN;}
  String payload;serializeJson(doc,payload);Serial.println(payload);
 #if WIFI_ENABLED
  if(WiFi.status()!=WL_CONNECTED)return;

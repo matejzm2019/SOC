@@ -46,3 +46,17 @@ Používateľ pozná iba údaj 12 V; výkon, Voc, Vmp, hmotnosť, konektor ani r
 - **85 testov prešlo, 1 Windows test preskočený na Linuxe**. Nová skúška prijíma skutočných 12 V aj 22 V, bez nahradenia konštantou, a odmieta 26,1 V podľa API limitu. Dve upozornenia testovacích knižníc zostávajú. API validácia nenahrádza elektrickú ochranu senzora.
 - Produkčný firmvér 0.8.1-panel12 zostavený Arduino CLI 1.5.1 / core 3.3.12 pre esp32:esp32:esp32: **1 063 372 B programu / 50 424 B RAM**. Softvérový test má výslovne syntetický profil 12 V / 1 W, nie vymyslený údaj o reálnom paneli. Skutočný firmvér meria hodnoty INA219.
 - Aktualizovaný nákupný a montážny návod, PDF, pevné 5 V vetvy, význam kondenzátora 16 V, návod BenchTwin, vysvetlenie kalibrácie a faktický kontext AI. Nabíjačka, batéria, fyzické prepnutie ani celý BenchTwin obvod tu neboli vykonané na používateľových dieloch.
+
+## Dva INA3221 a jeden celý zoznam – 10. 11. 2026
+
+Aktuálny produkčný firmvér je **0.9.0-ina3221**. Staršie odseky vyššie zaznamenávajú historické verzie a ich meracie moduly. Jediný platný nákupný zoznam je [KOMPONENTY.md](KOMPONENTY.md): elektronika, presné počty rezistorov/LED, konektory, vodiče, nosné drevené diely, detaily a montážne vybavenie. Dokument k 12 V panelu odkazuje na tento zoznam a neduplikuje nákupnú tabuľku.
+
+- Dva Techfun INA3221, každý CH1, R100 = 0,1 Ω; adresy 0x40 a 0x41. Pri kontrole 4,75 €/ks a 55 ks skladom. Hlavné nákupné položky spolu **16,15–16,25 €** bez dopravy/drobností. Použitý je konzervatívny predajcov limit 1,1 A, nie vyšší číselný rozsah ADC.
+- Oficiálna knižnica Adafruit INA3221 Library 1.0.3 / BusIO 1.17.4, ArduinoJson 7.4.3, Espressif core 3.3.12. Skutočná kompilácia esp32:esp32:esp32: **1 064 296 B programu / 50 424 B RAM**. Skúšobný BenchTwin sketch s kontrolou identity: **303 752 B / 23 612 B RAM**.
+- **85 testov prešlo, 1 Windows test preskočený na Linuxe**, dve upozornenia testovacích knižníc. C++ test používa priamo produkčný dekóder: kladný/záporný prúd, 40 µV/8 mV jednotky, úbytok shuntu, hranica ±1,1 A, neprípustný bus a neplatné registre. Odrušenie, hysterézia a pretečenie millis zostávajú overené.
+- Dodatočná hostiteľská skúška priamo s funkciou readRegister16 z produkčného sketchu overila úspešné čítanie, NACK aj skrátenú/nulovú odpoveď. Surové chyby I2C sa nevydávajú za nulové meranie. Identita sa overuje pred dekódovaním; prvá vzorka čaká na konverziu. Softvérové odmietnutie neodpája elektrické preťaženie.
+- Zhodnosť oboch JSON modelov, rozmery podstavy, strechy a geometrické hranice overujú testy. Rezervy INA3221 40 × 40 mm sú rozložené na X489/Y302 a X489/Y346, relé X435/Y349. Blender/GLB/STL, náhľady, CSV aj A3 PDF sú obnovené. Skutočné rozmery dosiek sú stále na fyzické premeranie.
+- Zapojenie odlišuje staršiu spoločnú POW/VIN+ dosku s CH1/GND od novšej IN1+/IN1− revízie. Vývody treba potvrdiť spojitosťou k R100, čipové VS/VCC je 3V3. Kladné meracie vetvy dvoch modulov sa nespájajú. Návod nepovažuje dvojicu CH1/GND za dva konce shuntu.
+- Základné elektrické skúšky a I2C identita v BenchTwin sú popísané samostatne mimo projektu. Prítomnosť a úplná funkcia INA3221 modelu v konkrétnej verzii BenchTwin tu nebola potvrdená; elektrický test meradlami nie je náhrada skúšky I2C registrov.
+
+Fyzická elektronika ani kompletný BenchTwin obvod tu neboli spustené. Dovolený nabíjací prúd článku, RCS, Voc panela, príkonové špičky, adresovacie mostíky a revízia dodaných dosiek sa overujú pred prevádzkou na hardvéri. Orientačné percentá zostávajú odhadom z napätia, nie meraním kapacity.

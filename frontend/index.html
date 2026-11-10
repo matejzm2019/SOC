@@ -64,9 +64,9 @@
       </section>
       <section class="panel price-panel" data-module="prices"><div class="panel-heading"><h2>Cena energie</h2><span class="subtle-tag" id="tariff-source">VLASTNÁ TARIFA</span></div><div class="price-pair"><div><span>Nákup / kWh</span><strong id="buy-price">—</strong></div><div><span>Výkup / kWh</span><strong id="sell-price">—</strong></div></div><p class="muted" id="tariff-note">Bez distribučných a fixných poplatkov</p></section></div>
       <section class="panel physical-battery-panel" id="physical-battery-panel" data-module="battery" hidden>
-        <div class="panel-heading"><div><h2>Batéria a záloha svetiel</h2><p>Samostatný okruh: panel → nabíjačka → batéria</p></div><span id="cell-status" class="subtle-tag">INA219</span></div>
+        <div class="panel-heading"><div><h2>Batéria a záloha svetiel</h2><p>Samostatný okruh: panel → nabíjačka → batéria</p></div><span id="cell-status" class="subtle-tag">INA3221</span></div>
         <div class="cell-values"><div><span>Nabitie · orientačný odhad</span><strong id="cell-soc">—</strong></div><div><span>Napätie článku</span><strong id="cell-voltage">—</strong></div><div><span>Menovitá kapacita</span><strong id="cell-capacity">—</strong></div><div><span>Zostávajúca energia · odhad</span><strong id="cell-energy">—</strong></div></div>
-        <p id="backup-status" class="data-provenance" role="status"></p><p>Prúd batérie: <strong id="cell-current">—</strong></p><p id="cell-trend" class="muted"></p><p class="footnote">LED prepína relé medzi hlavným zdrojom a batériovým meničom. ESP32 je stále na zálohovaných 5 V. Dva INA219 merajú panel a batériu. Percentá z napätia sú hrubý odhad ovplyvnený nabíjaním a záťažou. Stav kontaktov relé sa samostatne nemeria.</p>
+        <p id="backup-status" class="data-provenance" role="status"></p><p>Prúd batérie: <strong id="cell-current">—</strong></p><p id="cell-trend" class="muted"></p><p class="footnote">LED prepína relé medzi hlavným zdrojom a batériovým meničom. ESP32 je stále na zálohovaných 5 V. Dva INA3221 merajú panel a batériu. Percentá z napätia sú hrubý odhad ovplyvnený nabíjaním a záťažou. Stav kontaktov relé sa samostatne nemeria.</p>
       </section>
       <section class="panel chart-panel"><div class="panel-heading"><div><h2>Energia v čase</h2><p>Priemerný výkon v intervale</p></div><span class="subtle-tag">POSLEDNÝCH 24 H</span></div><div class="legend"><span><i class="legend-dot mint-bg"></i>Spotreba</span><span data-module="pv"><i class="legend-dot yellow-bg"></i>Fotovoltaika</span><span data-module="wind"><i class="legend-dot blue-bg"></i>Vietor</span></div><div id="overview-chart" class="chart"></div><div class="chart-footer"><span id="today-energy">—</span><span id="energy-data-label">Syntetické dáta</span></div></section>
       <section class="panel insight-panel"><div class="panel-heading"><h2>Odporúčania</h2></div><p class="insight-label">PODĽA AKTUÁLNYCH HODNÔT</p><div id="insights"></div><div class="insight-foot">Odporúčania vychádzajú z vypočítaných údajov.</div></section>
@@ -142,7 +142,7 @@
           </div>
         </section>
         <section data-settings-panel="model" hidden aria-labelledby="model-title">
-          <div class="settings-section-heading"><span class="section-number">04 / PARAMETRE</span><h3 id="model-title">Model domácnosti</h3><p>V normálnom režime panel riadi škálovanú FV a dva INA219 merajú panel a malú batériu. Spotreba a bilancia siete sú modelované. V deme sú všetky energetické údaje softvérové; pri importe analyzujeme vlastné intervaly.</p></div>
+          <div class="settings-section-heading"><span class="section-number">04 / PARAMETRE</span><h3 id="model-title">Model domácnosti</h3><p>V normálnom režime panel riadi škálovanú FV a dva INA3221 merajú panel a malú batériu. Spotreba a bilancia siete sú modelované. V deme sú všetky energetické údaje softvérové; pri importe analyzujeme vlastné intervaly.</p></div>
           <div class="form-grid">
             <label class="field">Základná spotreba (W)<input name="base_load_w" type="number" min="50" max="20000" required><small>Spotreba pri bežnej prevádzke.</small></label>
             <label class="field" data-setting-module="pv">Výkon FV (kWp)<input name="pv_kwp" type="number" min="0.1" max="100" step="0.1" required></label>
@@ -153,7 +153,7 @@
 
             <label class="field" data-setting-module="battery" data-battery-model="virtual">Kapacita virtuálnej batérie (kWh)<input name="battery_kwh" type="number" min="0.1" max="200" step="0.1" required></label>
             <label class="field" data-setting-module="battery" data-battery-model="virtual">Limit virtuálnej batérie (kW)<input name="battery_max_kw" type="number" min="0.1" max="100" step="0.1" required></label>
-            <label class="field" data-setting-module="battery" data-battery-model="physical">Kapacita Li-ion článku (mAh)<input name="battery_capacity_mah" type="number" min="100" max="10000" step="1" required><small>Z etikety jednej chránenej batérie 3,7 V / 4,2 V. Napätie a prúd meria INA219; percentá sú orientačný odhad z napätia.</small></label>
+            <label class="field" data-setting-module="battery" data-battery-model="physical">Kapacita Li-ion článku (mAh)<input name="battery_capacity_mah" type="number" min="100" max="10000" step="1" required><small>Z etikety jednej chránenej batérie 3,7 V / 4,2 V. Napätie a prúd meria INA3221; percentá sú orientačný odhad z napätia.</small></label>
             <label class="field" data-setting-module="wind">Výkon turbíny (kW)<input name="wind_kw" type="number" min="0.1" max="50" step="0.1" required></label>
           </div>
         </section>

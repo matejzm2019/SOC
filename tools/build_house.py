@@ -130,7 +130,7 @@ for x in (182,418):
 # Panel lead is attached to the roof. Fixed socket remains on the rear wall.
 tube('SOLAR Kabel k rozpojitelnemu konektoru',[(408,221,202),(450,280,202),(490,382,151),(500,408,90),(500,408,38)],black,2,1)
 box('Rozpojitelny konektor panela',495,400,27,10,8,12,black)
-modules=[('ESP-32D / ESP32',385,265,70,32,3,blue),('CN3791 12V',460,265,46,24,5,green),('LiPo 104050 2500mAh',385,305,50,40,4,silver),('MT3608',445,305,38,20,6,blue),('INA219 panel 0x40',491,303,32,25,7,blue),('INA219 bateria 0x41',491,335,32,25,8,blue),('Rele REL300',437,349,52,27,9,blue),('LED a meraci delic',385,351,50,30,16,green)]
+modules=[('ESP-32D / ESP32',385,265,70,32,3,blue),('CN3791 12V',460,265,46,24,5,green),('LiPo 104050 2500mAh',385,305,50,40,4,silver),('MT3608',445,305,38,20,6,blue),('INA3221 panel CH1 0x40',489,302,40,40,7,blue),('INA3221 bateria CH1 0x41',489,346,40,40,8,blue),('Rele REL300',435,349,52,27,9,blue),('LED a meraci delic',385,351,50,30,16,green)]
 with (OUT/'rozmiestnenie-komponentov.csv').open('w',encoding='utf-8-sig',newline='') as f:
  writer=csv.writer(f);writer.writerow(['skupina','nazov','X_mm','Y_mm','Z_mm','sirka_X_mm','hlbka_Y_mm','vyska_Z_mm','presnost'])
  for name,x,y,w,d,g,mat in modules:writer.writerow([g,name,x,y,18,w,d,10 if g==4 else 16 if g==9 else 8,'menovitý rozmer výrobku' if g == 4 else 'návrhová rezerva; fyzicky overiť'])
@@ -172,7 +172,7 @@ def label(text,x,y,size):
  bpy.ops.object.convert(target='MESH');finish(bpy.context.object,'C01 Popis '+text,ivory,14)
 label('SVETLA',36,49,5)
 label('A',54,22,5);label('B',94,22,5);label('5V',115,25,3.5)
-GROUPS={0:'Dom, fasada a priecky',1:'Cela odnimatelna strecha',2:'Panel na streche a jeho uchytenie',3:'ESP-32D / ESP32',4:'Chranena LiPo 2500mAh',5:'CN3791',6:'MT3608',7:'INA219 panel',8:'INA219 bateria',9:'Prepinacie rele LED',12:'Svetelny okruh A',13:'Svetelny okruh B',14:'Ovladaci panel svetiel A/B',15:'Vedenie LED',16:'LED a meraci delic',17:'Indikator hlavneho zdroja'}
+GROUPS={0:'Dom, fasada a priecky',1:'Cela odnimatelna strecha',2:'Panel na streche a jeho uchytenie',3:'ESP-32D / ESP32',4:'Chranena LiPo 2500mAh',5:'CN3791',6:'MT3608',7:'INA3221 panel',8:'INA3221 bateria',9:'Prepinacie rele LED',12:'Svetelny okruh A',13:'Svetelny okruh B',14:'Ovladaci panel svetiel A/B',15:'Vedenie LED',16:'LED a meraci delic',17:'Indikator hlavneho zdroja'}
 bpy.context.view_layer.update();meshes=[]
 for o in objects:
  o.data.calc_loop_triangles();p=[];n=[]

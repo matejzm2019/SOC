@@ -1,46 +1,116 @@
-# Jednotný kusovník – menšia zostava
+# Kompletný zoznam komponentov a materiálu
 
-Platný návrh 10. 11. 2026. CN3791, MT3608, INA219 a relé boli overené na Techfun 10. 11. 2026; ceny bez dopravy. Ostatné drobnosti majú staršie orientačné ceny. Sklad sa priebežne mení. Vybraný je CN3791 + MT3608. Nekombinovať náhodne so starším návrhom BQ24074/MAX17048 alebo Waveshare Power Manager.
+**Jediný platný nákupný zoznam pre aktuálnu zostavu, 10. 11. 2026.** ESP-32D, existujúci 12 V panel, chránená LiPo 2500 mAh, CN3791 12 V, MT3608 a **dva INA3221**. Staršie zoznamy v histórii commitov neplatia. Objednaj len položky, ktoré ešte nemáš.
 
-| ID | Ks | Diel | Cena spolu | Umiestnenie / poznámka |
-|---|---:|---|---:|---|
-| E01 | 1 | ESP32, 38-pinová USB-C doska označená ESP-32D | už máš | použiť dosku z fotografie; nejde o S3 N16R8 |
-| E02 | 1 | [Chránená LiPo 104050 – 2500 mAh](https://techfun.sk/produkt/li-pol-bateria-kablik-ochranny-obvod/) | 5,80 € podľa fotografie | 3,7 V / 4,2 V, 50×40×10 mm, PH2.0; už vybraná |
-| E03 | 1 | [CN3791, variant 12 V](https://techfun.sk/produkt/solarna-nabijacka-cn3791-pre-litiove-baterie/) | 4,40 € | 1S LiPo 3,7/4,2 V; pri kontrole 12 V variant skladom 2 ks; overiť MPPT bod a nabíjací prúd |
-| E04 | 1 | [MT3608 bez USB](https://techfun.sk/produkt/step-up-menic-mt3608/) | 0,85–0,95 € | nastaviť 5,00 V; údaj 2 A nie je zaručený výstup pri všetkých podmienkach |
-| E05 | 1 | Existujúci solárny panel označený 12 V | už máš / nový neobjednávať | výkon, Voc, rozmery a konektor neznáme; pred zapojením zmerať podľa ZAPOJENIE.md |
-| E06/E07 | 2 | [INA219](https://techfun.sk/produkt/snimac-prudu-ina219-obojsmerny/) | 9,00 € | panel 0x40, batéria 0x41, logika 3,3 V; meraná vetva musí zostať s rezervou pod 26 V |
-| E08 | 1 | [REL300 relé 5 V s optočlenom](https://techfun.sk/produkt/rele-modul-1-kanal-5v-so-zabudovanym-optoclenom/) | 1,40 € | spínanie LOW, NO/NC prepínajú LED |
-| E09/E10 | 2 | BC547BBK, NPN 45 V / 100 mA / 500 mW | zo zásob | dve vetvy po 3 malých LED, cca 15–20 mA/vetva; overiť C/B/E |
-| L01–L06 | 6 + 4 rezerva | [Biele LED 3 mm](https://techfun.sk/produkt/led-ka-1-kus-3mm-rozne-farby/) | 0,30 € za 10 | po tri na každý svetelný okruh |
-| L07 | 1 + 1 rezerva | Modrá LED z rovnakej ponuky | 0,06 € za 2 | stav hlavného zdroja |
-| S01/S02 | 2 | [SMTS-102](https://techfun.sk/produkt/kovovy-dvojpolohovy-prepinac-smts-102/) | 0,80 € | prepínače svetiel, logické kontakty proti GND |
-| R | 4 balenia | [Rezistory ¼ W](https://techfun.sk/produkt/rezistor-rozne-hodnoty-1-4w-10-kusov/): 330 Ω, 1 kΩ, 10 kΩ, 22 kΩ | 1,00 € | 10 ks každej hodnoty; rezerva zostane |
-| C | 1 + voliteľná rezerva | 470 µF / 16 V | zo zásob | pri ESP na 5 V, dodržať polaritu; 25 V netreba kupovať |
-| J | 1 | [PH2.0 2-pin protikus/káblik](https://techfun.sk/produkt/ph2-0-kablik-samecsamica-2p/) | 0,40 € | naposledy vypredaný; XH2.54 ani JST1.25 nesedia |
-| K | 2 balenia | [Dupont 20 cm](https://techfun.sk/produkt/kabliky-40-kusov-20-cm/), M–F a F–F | 4,40 € | na signály, nie motorové/hlavné napájanie |
+## Elektronika
 
-## Ďalšie montážne diely
+| ID | Potrebné množstvo | Komponent / odkaz Techfun | Stav a poznámka |
+|---|---:|---|---|
+| E01 | 1 | ESP32, 38-pinová USB-C doska označená ESP-32D | už máš; Arduino ESP32 Dev Module, PSRAM vypnutá |
+| E02 | 1 | [Chránená LiPo 104050, 2500 mAh](https://techfun.sk/produkt/li-pol-bateria-kablik-ochranny-obvod/) | vybraný článok 1S 3,7 V / plný 4,2 V; kúpiť len ak ho ešte nemáš; cena z fotografie 5,80 € |
+| E03 | 1 | [CN3791 – vybrať **12 V**](https://techfun.sk/produkt/solarna-nabijacka-cn3791-pre-litiove-baterie/) | 4,40 €; pre 1S LiPo, nie 12 V batériu; overiť prúd/RCS a MPPT bod |
+| E04 | 1 | [MT3608, bez micro USB](https://techfun.sk/produkt/step-up-menic-mt3608/) | 0,85–0,95 € podľa variantu; nastaviť výstup 5,00 V pred pripojením ESP |
+| E05 | 1 | Existujúci solárny panel označený 12 V | už máš, nový nekupovať; výkon, Voc, Vmp, rozmery a konektor nepotvrdené |
+| E06/E07 | **2** | [INA3221, trojkanálový modul](https://techfun.sk/produkt/senzor-napatia-a-prudu-ina3221-3-kanalovy/) | **4,75 €/ks, 9,50 € spolu**; pri kontrole 55 ks skladom; každý meria CH1, PANEL 0x40 a BAT 0x41; limit dosky 1,1 A / čipu 26 V |
+| E08 | 1 | [Relé 5 V, 1 kanál, LOW trigger, COM/NO/NC](https://techfun.sk/produkt/rele-modul-1-kanal-5v-so-zabudovanym-optoclenom/) | 1,40 €; hardvérové prepnutie svetiel |
+| Q01/Q02 | **2** | BC547BBK, NPN 45 V / 100 mA / 500 mW | použi svoje; ak máš len jeden, chýba druhý; overiť vývody C/B/E |
+| LED01–06 | 6, odporúčané 10 s rezervou | [Biele LED 3 mm](https://techfun.sk/produkt/led-ka-1-kus-3mm-rozne-farby/) | dve vetvy po 3 LED, nie výkonový LED pás; staršia cena 0,30 € za 10 |
+| LED07 | 1, odporúčané 2 s rezervou | Modrá LED 3 mm z rovnakej ponuky | indikácia hlavného 5 V zdroja; staršia cena 0,06 € za 2 |
+| S01/S02 | 2 | [Dvojpolohový prepínač SMTS-102](https://techfun.sk/produkt/kovovy-dvojpolohovy-prepinac-smts-102/) | kontakty proti GND; staršia cena 0,80 € za dva |
+| R01–07 | **7× 330 Ω** | [Rezistory ¼ W, balenie 10 ks](https://techfun.sk/produkt/rezistor-rozne-hodnoty-1-4w-10-kusov/) | kúpiť 1 balenie; každá zo 7 LED má vlastný rezistor |
+| R08/R09 | **2× 1 kΩ** | rovnaká ponuka rezistorov | 1 balenie; do báz BC547 |
+| R10–12 | **3× 10 kΩ**, voliteľne ďalšie 2 | rovnaká ponuka rezistorov | 1 balenie; 2× báza–GND, 1× ADC delič; voliteľné 2× pull-up prepínačov na 3V3 |
+| R13 | **1× 22 kΩ** | rovnaká ponuka rezistorov | 1 balenie; horná časť deliča hlavného 5 V zdroja; štyri balenia rezistorov staršie spolu cca 1,00 € |
+| CE01 | 1 + voliteľná rezerva | 470 µF / 16 V elektrolyt | už máš; iba na BACKUP_5V pri ESP, dodržať polaritu; nie na solárny vstup |
+| PCB01 | 1 | Univerzálna spájkovacia doska cca 50 × 30 mm | ovládače LED a merací delič; prípadne vyrezať z väčšej dosky |
 
-- Jedna univerzálna spájkovacia doska približne 50×30 mm (vyrezať z väčšej univerzálky), pinové lišty 2,54 mm a malé skrutkové svorky. Na doske z fotografie sú už lišty osadené.
-- Dátový USB-C kábel na programovanie ESP; samostatný napájací USB-C kábel/prepojka od overených 5 V meniča. Neprepájať dve USB napájania bez overenia dosky.
-- Rozpojiteľný dvojpinový konektor panela a skrutkové svorky; konkrétny protikus vybrať podľa skutočného konektora. Rozmer 3,5×1,35 mm už nie je potvrdený.
-- Izolované vodiče približne 5 m červených a 5 m čiernych 0,25–0,5 mm², približne 15 m farebných 0,14–0,25 mm². Predstrihy sú v `model-domu/dlzky-vodicov.csv`; používaj z existujúcich zásob, netreba kupovať každú farbu zvlášť.
-- Servisná rozpojiteľná dvojpinová prepojka medzi batériovým uzlom a MT3608, aby bolo možné pri úplnom prednabití odpojiť všetky záťaže.
-- Izolačné stĺpiky pod PCB 4 mm, skrutky, sťahovacie pásky, príchytky vodičov, zmršťovacia bužírka. Batériu upevni mäkkým pásikom; nezovri ani neprepichni obal.
-- Štyri 15 mm M3 stĺpiky pre panel C01, skrutky a matice; zápustné hlavy zospodu podstavy. Doska C01 100 × 40 × 4 mm; šablóna otvorov a popisy A/B/5V sú v modeli. Over závity reálnych prepínačov.
-- Štyri nožičky pod dom, výška 10 mm, aby sa nestrihali vodiče pod podstavou.
-- Úchyty podľa konštrukcie skutočného 12 V panela; štyri príchytky a lišty L04 v modeli sú predbežné. Dve výstuhy L03 zostávajú súčasťou strechy. Pôvodný rozpojiteľný konektor panela a odľahčenie ťahu; vodiče W18 po 650 mm vrátane pôvodného kábla. Konkrétny úchyt vyber podľa skutočného rámu, články nevŕtaj.
-- Na fasádu balsa/cédrové lišty, rámy, parapety a voliteľný difúzny akrylát/papier. Kusy a dĺžky sú v model-domu/detaily-fasady.csv.
-- Materiál domu: preglejka 8, 6 a 4 mm, lišta 10×10, lepidlo na drevo, brúsny papier, difúzny papier za okná a páska/tenká krycia lišta na spoj strechy. Presné diely Pxx/Lxx sú v rezacom pláne.
-- Existujúci laboratórny zdroj, multimeter, spájkovačka, píla a vrtáky. Notebook a router nemusíš kupovať, ak ich už máš.
+**CN3791 + MT3608 + 2× INA3221 + relé = 16,15–16,25 €** bez dopravy, batérie, drobností a dreva. Ceny hlavných modulov overené 10. 11. 2026; sklad sa mení. Ostatné ceny označené ako staršie sú orientačné. Panel, ESP, BC547 ani kondenzátor nekupovať znova, ak ich už máš.
 
-Štyri hlavné nákupné položky (CN3791 12 V, MT3608, 2× INA219 a 5 V relé) vychádzajú na **15,65–15,75 €** bez dopravy. Panel sa nekupuje znova. Drobnosti a prípadne batériu pripočítaj iba ak ich ešte nemáš; orientačná cena batérie z fotografie je 5,80 €, nie dnešná overená ponuka. Podrobný aktuálny zoznam: [PANEL-12V-A-OBJEDNAVKA.md](PANEL-12V-A-OBJEDNAVKA.md).
+## Konektory, vodiče a elektrická montáž
 
-## Otvorené parametre pred dokončením zapojenia
+| Položka | Množstvo | Poznámka |
+|---|---:|---|
+| [PH2.0 2-pin protikus/káblik](https://techfun.sk/produkt/ph2-0-kablik-samecsamica-2p/) | 1, ak zodpovedá batérii | overiť konektor a polaritu na skutočnom kuse; staršia cena 0,40 €, vtedy vypredaný; XH2.54 nie je PH2.0 |
+| Rozpojiteľný 2-pin k panelu | 1 pár | typ podľa skutočného panela; pôvodný konektor zachovať, nezamieňať ho s batériovým |
+| Servisná 2-pin prepojka batériový uzol → MT3608 | 1 pár | odpojí všetky systémové záťaže pri úplnom dobití |
+| Dátový USB-C kábel ESP | 1 | pri programovaní odpojiť externé napájanie |
+| Samostatný napájací USB-C kábel alebo vodiče na 5V vstup ESP | 1 | iba overených 5 V; nepripájať súčasne dva neoverené 5 V zdroje |
+| [Dupont 20 cm](https://techfun.sk/produkt/kabliky-40-kusov-20-cm/), M–F a F–F | 1 balenie každého | signály a krátke I2C prepoje; staršia cena spolu cca 4,40 €; hlavné napájanie viesť hrubším vodičom |
+| Napájací vodič 0,25–0,5 mm² | cca 5 m červený + 5 m čierny | rezerva na rozvody; nepoužité vodiče nekupovať podľa farby, ak už máš vhodný prierez |
+| Signálový vodič 0,14–0,25 mm² | cca 15 m celkom | rôzne farby; W13/W14 prepínače 2×900 mm každý, W25 indikácia 2×900 mm |
+| Krátke I2C prepojky | prvý modul 4×180 mm, druhý 4×100 mm | môžu byť z uvedenej zásoby vodičov; adresy sú rozdielne |
+| Kábel panela W18 | 2×650 mm celkom vrátane existujúceho | aspoň 200 mm servisná slučka; skrátiť až podľa skutočnej trasy |
+| Malé skrutkové svorky / rozvodné body | podľa zapojenia a dodaných modulov | plusové uzly panel, BAT_NODE, BACKUP_5V a MAIN_5V zostávajú oddelené; GND spoločná |
+| Pinové lišty 2,54 mm | podľa neosadených modulov | na ESP z fotografie sú už osadené; INA3221 môže mať lištu neprispájkovanú |
+| Izolačné PCB stĺpiky cca 4 mm, skrutky a matice | podľa otvorov dosiek | nevŕtať podľa obálok 3D; dosky bez dier upevniť izolovane vhodnou príchytkou |
+| Zmršťovacia bužírka, sťahovacie pásky, príchytky, štítky vodičov | po 1 sade | označiť SOLÁR, BAT, MAIN_5V, BACKUP_5V a moduly PANEL/BAT |
+| Mäkký pásik na LiPo | 1 | neprepichovať ani nestláčať článok |
 
-1. Predajca pri článku nezverejňuje dovolený nabíjací prúd. Potvrď jeho hodnotu a zmeraj/nastav limit konkrétneho CN3791. Čip má maximum 4 A, ale to neurčuje ani skutočné nastavenie dosky, ani povolený prúd batérie.
-2. Ak sa limit CN3791 musí meniť, používa sa merací rezistor: podľa datasheetu I = 0,120 V / RCS. Pre príklad 0,5 A je RCS = 0,24 Ω. Presné puzdro prenes z dosky; vhodný rezistor nebol v ponuke Techfun overený. Bežné rezistory 330 Ω/1 kΩ túto úpravu nenahrádzajú. Toto je reálna chýbajúca položka, ak má dodaná doska nevhodný limit; nedá sa poctivo predpokladať hotové zapojenie bez kontroly.
-3. Potvrď rozmery a konektory fyzických modulov. Na ich montáž sú v 3D modeli rezervované obálky, nie garantované presné vrtné šablóny.
+Úplné predstrihy všetkých Wxx sú v [dlzky-vodicov.csv](../model-domu/dlzky-vodicov.csv); množstvá vyššie sú nákupná zásoba, nie ďalšie vodiče navyše k CSV.
 
-4. Z údaja 12 V nemožno odvodiť Voc ani výkon. INA219 má limit 26 V, CN3791 čip 28 V; platí aj nižší limit konkrétnej dosky/kondenzátorov. Pri meraní panela sa zachová rezerva; 32 V rozsah v registri INA219 nezvyšuje jeho 26 V elektrický limit.
+## Drevo – nosné diely a ovládací panel
+
+Rozmery v mm. Podstava 600 × 450, dom 480 × 330; celá strecha je odnímateľná. Rozmer 12 V panela zatiaľ nie je známy, preto L04 a jeho klipy premerať pred rezaním.
+
+| ID | Diel | Ks | Dĺžka × šírka × hrúbka (mm) |
+|---|---|---:|---|
+| P01 | Podstava domu | 1 | 600 × 450 × 8 |
+| P02 | Predná stena | 1 | 480 × 120 × 6 |
+| P03 | Zadná stena | 1 | 480 × 120 × 6 |
+| P04 | Ľavá stena | 1 | 318 × 120 × 6 |
+| P05 | Pravá stena | 1 | 318 × 120 × 6 |
+| P06 | Pozdĺžna priečka | 1 | 318 × 100 × 6 |
+| P07 | Ľavá priečna priečka | 1 | 304 × 100 × 6 |
+| P08 | Pravá priečna priečka | 1 | 158 × 100 × 6 |
+| P09 | Vyberateľná doska elektroniky | 1 | 150 × 132 × 4 |
+| P10 | Rovina strechy | 2 | 504 × 230 × 4 |
+| P11 | Štít strechy | 2 | 330 × 115.53 × 4 |
+| L01 | Nosník strechy | 2 | 316 × 10 × 10 |
+| L02 | Vodiaci doraz strechy | 4 | 30 × 10 × 6 |
+| L03 | Výstuha pod panelom | 2 | 440 × 10 × 10 |
+| L04 | Montážna lišta panela | 2 | 250 × 8 × 6 |
+| C01 | Ovládací panel | 1 | 100 × 40 × 4 |
+
+P11 je trojuholníkový štít (výška výroby 115,5 mm). Materiál na nákup orientačne: preglejka 600×450×8, 600×900×6 a 600×900×4 mm, plus lišty. Rez rozložiť s rezervou na šírku píly, smer vlákien a skutočnú hrúbku. Súbory SVG majú mierku 1:1; kontrolnú mierku premerať po tlači.
+
+## Detaily fasády a strechy podľa 3D modelu
+
+Tieto jednoduché lepené detaily nie sú nábytok. Falce možno iba nakresliť, ak chceš menej výroby.
+
+| ID | Diel | Ks | Dĺžka × šírka × hrúbka (mm) |
+|---|---|---:|---|
+| A01a | Cédrový obklad čelný | 10 | 480 × 6 × 1.5 |
+| A01b | Cédrový obklad bočný | 10 | 318 × 6 × 1.5 |
+| A02 | Rohové lišty | 4 | 120 × 6 × 7 |
+| A03v | Zvislé rámy okien | 16 | 54 × 3 × 2 |
+| A03h64 | Vodorovné rámy predné | 6 | 70 × 3 × 2 |
+| A03h56 | Vodorovné rámy ostatné | 10 | 62 × 3 × 2 |
+| A03m | Stredové priečniky okien | 8 | 48 × 2 × 2 |
+| A04a | Parapety predné | 3 | 74 × 7 × 2 |
+| A04b | Parapety ostatné | 5 | 66 × 7 × 2 |
+| A05a | Pevná doska dverí | 1 | 82 × 40 × 2 |
+| A05b | Zárubne dverí | 2 | 86 × 4 × 3 |
+| A05c | Nadpražie dverí | 1 | 48 × 4 × 3 |
+| A05d | Prah dverí | 1 | 48 × 10 × 2 |
+| A06 | Naznačené strešné falce | 24 | 230 × 1 × 1 |
+| A07 | Dvojdielny hrebenáč | 2 | 504 × 12 × 1 |
+| A08 | Odkvapové lišty | 2 | 504 × 6 × 4 |
+| A09 | Štítové lišty | 4 | 230 × 6 × 4 |
+| A10 | Vstupné nášľapy | 3 | 62 × 18 × 2 |
+
+## Zostávajúce montážne diely a vybavenie
+
+- 4× nožička pod podstavu, výška 10 mm.
+- 4× stĺpik M3 výšky 15 mm pre C01, príslušné skrutky a matice; hlavy pod podstavou zapustiť. Hrúbku C01 pri závite prepínača prispôsobiť skutočnému kusu.
+- Príchytky panela podľa jeho skutočného rámu; v modeli sú 4 ako priestorová predstava, nie potvrdený úchyt neznámeho panela. Odľahčenie ťahu kábla panela.
+- Lepidlo na drevo, brúsny papier, voliteľná farba, difúzny papier alebo matný akrylát do okien, páska/tenká lišta na spoj strechy.
+- Existujúci laboratórny zdroj, multimeter, spájkovačka, cín/tavidlo, píla, vrtáky a meradlo. PC/notebook, 2,4 GHz Wi-Fi router a prípadne prezentačné svetlo; zariadenia nekupovať znova, ak ich už máš.
+
+## Čo overiť pred dokončením objednávky a prvým zapojením
+
+1. **Nabíjací prúd:** podľa dovoleného prúdu batérie a konzervatívneho limitu použitého INA3221 1,1 A. Aj vybíjací prúd s meničom a Wi-Fi špičkami musí byť v limite. Označenie CN3791 „4 A MAX“ nie je pripravené nastavenie pre túto zostavu. RCS = 0,120 V / I; príklad 0,5 A znamená 0,24 Ω, ale puzdro a prúd treba overiť na dodanej doske a článku. Konkrétny výkonový rezistor sa neobjednáva naslepo namiesto bežného 330 Ω/1 kΩ.
+2. **Solár:** poznať iba 12 V nestačí na potvrdenie Voc a výkonu. Pred pripojením zmerať Voc s rezervou pod 26 V (pri 24 V alebo viac najprv preveriť parametre a zvoliť potrebné diely). Overiť skutočný MPPT bod CN3791. Kalibračný výkon v appke je nameraný vo W, nie číslo 12.
+3. **Revízia INA3221:** staršia doska má spoločné POW/VIN+ a výstupy CH1/GND, novšia priamo IN1+/IN1−. Podľa R100 identifikovať oba konce bočníka, nezameniť GND s IN1−. Čipové VS/VCC je 3V3; nie solárny vstup. Používame dva moduly s oddelenými kladnými meracími vstupmi.
+4. **Mechanika a konektory:** rozmery 12 V panela, jeho úchyty, protikusy a polarita, rozteče dosiek a závity prepínačov. 3D obálky elektroniky/panela nie sú vrtné šablóny.
+
+Zapojenie: [ZAPOJENIE.md](ZAPOJENIE.md). Rozdiely dosiek a adresy: [INA3221.md](INA3221.md). Funkcia soláru a dobíjania: [PANEL-12V-A-OBJEDNAVKA.md](PANEL-12V-A-OBJEDNAVKA.md). Tieto súbory nemajú ďalší konkurenčný nákupný zoznam.

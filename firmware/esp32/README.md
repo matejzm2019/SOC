@@ -1,19 +1,18 @@
-# ESP-32D / klasické ESP32 – firmvér 0.8.1-panel12
+# ESP-32D – firmvér 0.9.0-ina3221
 
-Aktuálna doska je používateľova 38-pinová USB-C doska s modulom označeným ESP-32D. Nie je to ESP32-S3. Dva INA219, hlavný zdroj, dve svetelné vetvy a Wi-Fi telemetria pre FastAPI na PC. Pinová tabuľka: [ZAPOJENIE.md](../../docs/ZAPOJENIE.md).
+Aktuálna zostava: dva samostatné INA3221, na každom kanál CH1; panel 0x40, batéria 0x41. Hlavný zdroj, dve LED vetvy a Wi-Fi telemetria do FastAPI na PC. AI zostáva na PC. Jeden celý zoznam: [KOMPONENTY.md](../../docs/KOMPONENTY.md).
 
-1. Arduino IDE: balík **esp32 by Espressif Systems**, doska **ESP32 Dev Module**, PSRAM **Disabled**. Pre bežný 4 MB variant použi predvolené 4 MB; skutočnú flash over pri nahrávaní/esptool, z fotografie sa jej kapacita nedá určiť. Nevyberaj S3, 16 MB ani OPI PSRAM podľa pôvodného návodu.
-2. Knižnice Adafruit INA219 a ArduinoJson 7 vrátane závislostí.
-3. `energia_esp32.ino`, `backup_power.h`, `switch_input.h` vlož do priečinka `energia_esp32` podľa názvu .ino.
-4. `secrets.example.h` skopíruj na `secrets.h`; doplň Wi-Fi, LAN URL a DEVICE_KEY z `data/device_key.txt`. Súbor s heslami necommituj.
-5. Pri programovaní odpoj externých 5 V. Pri prevádzke je ESP na MT3608 nastavenom na 5 V, pripojenom na označený 5V vstup dosky alebo jej USB napájací konektor. USB a externých 5 V nespájaj bez overenia napájania konkrétnej dosky. Ak nahrávanie stojí na Connecting, podrž BOOT do začiatku zápisu a potom ho pusť.
+1. Arduino IDE: **ESP32 Dev Module**, PSRAM Disabled. Pre bežný 4 MB variant predvolené 4 MB; skutočnú flash over pri nahrávaní/esptool, z fotografie nie je známa. Nevyberať S3/N16R8.
+2. Nainštaluj **Adafruit INA3221 Library 1.0.3**, **Adafruit BusIO** a **ArduinoJson 7**. Knižnica pre starší merač sa už nepoužíva.
+3. Do priečinka `energia_esp32` patria `energia_esp32.ino`, `backup_power.h`, `switch_input.h` a **ina3221_reading.h**. `secrets.example.h` skopíruj na ignorovaný `secrets.h`, doplň Wi-Fi, LAN URL a DEVICE_KEY z `data/device_key.txt`.
+4. Čipové VS/VCC senzorov napájaj 3V3. SDA=21, SCL=22. PANEL A0=GND, BAT A0=VS (3V3), najprv odstrániť pôvodný mostík na GND. R100 je 0,1 Ω. Meria sa hardvérový CH1, v knižnici kanál **0**, nie 1.
+5. Pred zapojením rozlíš meracie piny konkrétnej revízie: spoločný POW/VIN+ a kladný CH1 na starej doske alebo IN1+/IN1− na novej. Druhý pin CH1 môže byť GND. VS/VCC logiky nie je merací výkonový vstup. Návod [INA3221.md](../../docs/INA3221.md).
+6. Pri programovaní odpoj externých 5 V. V prevádzke ESP napája overených 5 V z MT3608, nie panel priamo. USB a externý zdroj nespájať bez overenia napájania dosky. Pri Connecting prípadne podrž BOOT do začiatku zápisu.
 
-Úloha local-control číta každých 10 ms prepínače GPIO32/33, spína BC547 vetiev GPIO25/26 a sleduje hlavný zdroj cez delič 22 kΩ/10 kΩ na GPIO34 (ADC1, použiteľný aj s Wi-Fi). Kontakty sa prijmú až po 30 ms stabilného stavu, nezávisle od servera. GPIO27 indikuje hlavný zdroj. Relé prepína zdroje LED hardvérovo.
+GPIO34 ADC1 cez 22 kΩ/10 kΩ meria hlavné 5 V aj so zapnutou Wi-Fi. Prepínače 32/33, BC547 LED 25/26, modrá indikácia 27; GPIO6–11 patria flash a nepoužívajú sa. Local-control má vzorku 10 ms a vyžaduje 30 ms stabilného kontaktu, nezávisle od HTTP. Relé prepína zdroje hardvérovo.
 
-I²C: GPIO21 SDA / GPIO22 SCL, panel 0x40, batéria 0x41, logické napájanie 3,3 V. GPIO6–11 patria flash pamäti a nesmú sa použiť. Použité riadenie obchádza aj bootovacie strapping piny. GPIO34 je iba vstup, čo je pre delič správne.
+Konfigurácia a kontrola čipu používajú knižnicu Adafruit. Meracie registre sa čítajú s kontrolou výsledku I2C a dĺžky odpovede, vrátane identity 0x5449/0x3220. Priemerovanie 16 vzoriek, prvá konverzia má 150 ms rezervu. Shunt má znamienko a krok 40 µV; bus 8 mV. R100 = 0,1 Ω. Vybraný Techfun modul je limitovaný **1,1 A**, hoci samotný ADC má väčší číselný rozsah.
 
-Chýbajúci panelový merač zabráni odoslaniu vymyslených dát; chýbajúci batériový merač vynechá jeho hodnoty. Telemetria sa posiela každú sekundu. Prúd batérie je kladný pri nabíjaní. Percentá `voltage_estimate` sú orientačné, nemerajú kapacitu článku.
+Pri chýbajúcom/chybnom panelovom meraní sa telemetria neposiela, pri batériovom sa vynechajú iba batériové hodnoty. Každých 5 s sa skúša obnovenie chýbajúceho modulu. Neplatné čítanie sa nevydáva za nulu. Pri batérii sa zachová znamienko (+ nabíjanie, − vybíjanie) a meria sa napätie IN1− na článku. Percentá `voltage_estimate` sú orientačné, nie meranie kapacity. Softvérové odmietnutie merania nie je elektrické odpojenie preťaženia.
 
-`SIMULATED_SENSORS=1` používa náhradné ADC1 vstupy GPIO35/36/39; `WIFI_ENABLED=0` umožní iba Serial. Na skutočnú zostavu patria predvolené `SIMULATED_SENSORS=0` a `WIFI_ENABLED=1`. Firmvér nemá bežať v BenchTwin bez úprav FreeRTOS; na BenchTwin je samostatný sketch mimo projektu.
-
-Panel je označený 12 V; jeho výkon ani Voc nie sú potvrdené. INA219 meria skutočné napätie, vo firmvéri sa nenahrádza konštantou 12 V. API prijíma malé panely do 26 V / 20 W podľa jeho kontraktu, hardvér vyžaduje rezervu pod napäťovým limitom. Softvérová vetva SIMULATED_SENSORS má výslovne syntetický test 12 V / 1 W, nie odhad parametrov zakúpeného panela.
+`SIMULATED_SENSORS=1` používa iba výslovne syntetický test 12 V / 1 W a ADC1 35/36/39; `WIFI_ENABLED=0` vypne HTTP. Fyzická zostava používa predvolené 0/1. Výkon, Voc a rozmery reálneho 12 V panela nie sú potvrdené. Kalibračný výkon sa určuje v aplikácii podľa nameraných W. Samostatný BenchTwin sketch zostáva mimo projektu a nie je produkčný firmvér.
