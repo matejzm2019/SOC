@@ -1,6 +1,6 @@
 # Drevený dom so strešným panelom – výrobný balík
 
-Verzia 0.12.0-assistant, 8. 11. 2026. Celé steny, žiadny nábytok. Teplá biela fasáda, cédrový obklad, okenné rámy a parapety, pevné dvere, antracitová strecha s naznačenými falcami a skutočný panel 230 × 195 × 17 mm. Geometria je rozmerová; nie je to iba ilustračný obrázok.
+Verzia 0.12.0-assistant, 10. 11. 2026. Celé steny, žiadny nábytok. Teplá biela fasáda, cédrový obklad, okenné rámy a parapety, pevné dvere, antracitová strecha s naznačenými falcami a skutočný panel 230 × 195 × 17 mm. Geometria je rozmerová; nie je to iba ilustračný obrázok.
 
 | Časť | Rozmer |
 |---|---|
@@ -38,3 +38,5 @@ Celý model ostáva na podstave 60 × 45 cm. Hmotnosť podľa materiálu pribli�
 8. Elektrické uzly, prúdy a zálohu najprv otestuj mimo dreva podľa docs/ZAPOJENIE.md. Dĺžky vodičov skráť až po uložení do trasy, pod podstavou nechaj 10 mm nožičky.
 
 Obnova modelu: blender -b --python tools/build_house.py. PDF a šablóny: python tools/build_documents.py s requirements-build.txt; Unicode font sa hľadá na Linuxe, Windows aj macOS alebo cez SOC_PDF_FONT. Panel, elektronika a spojky sú vizuálne modely podľa menovitých rozmerov, nie garantované detaily konkrétneho dodaného výrobku.
+
+Aktuálna doska: ESP-32D (klasické ESP32) z fotografie používateľa. Model rezervuje obálku 70 × 32 mm; skutočné rozmery a otvory dosky premeraj pred vŕtaním. Zapojenie je v docs/ZAPOJENIE.md, firmvér v firmware/esp32/. Použité tranzistory BC547B a kondenzátor 470 µF / 16 V sú zahrnuté v aktuálnom kusovníku.

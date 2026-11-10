@@ -24,7 +24,7 @@ flowchart LR
   W[Open-Meteo: mesto alebo poloha] --> M[Model výroby a spotreby]
   M --> N
   W --> P
-  H[ESP32-S3: panel, lux, prepínače] --> I[Autentifikovaný HTTP vstup]
+  H["ESP32 / ESP-32D: panel, batéria, prepínače"] --> I[Autentifikovaný HTTP vstup]
   I --> N[Normalizovaná vzorka + validácia]
   S[Simulátor] --> N
   N --> D[(SQLite)]
@@ -80,7 +80,7 @@ Kľúč ESP32 vzniká lokálne v `data/device_key.txt`, nie je súčasťou Gitu 
 | GET /api/history?period=day/week/month/all&run_id=ID | Graf a intervalovo vážené súčty |
 | GET /api/forecast | 24 h meteorologický výhľad alebo sezónny baseline, MAE pri dostatočnej histórii |
 | POST /api/demo | Scenár, pauza, rýchlosť alebo jeden krok |
-| POST /api/device/telemetry | Telemetria ESP32-S3 chránená hlavičkou `X-Device-Key` |
+| POST /api/device/telemetry | Telemetria ESP32 (ESP-32D) chránená hlavičkou `X-Device-Key` |
 | GET /api/export?run_id=ID | Export aktuálnej alebo archivovanej histórie |
 | POST /api/import | Atomický CSV import intervalových kWh |
 | GET /api/runs | Konfigurácie a rozsahy uložených histórií |
@@ -121,7 +121,7 @@ frontend/
   index.html        # Slovenské UI a setup wizard
   styles.css        # Responzívny vizuálny systém
   app.js            # API, grafy, toky, nastavenia
-firmware/esp32-s3/  # Arduino firmvér, lokálna Wi-Fi a HTTP telemetria
+firmware/esp32/  # Arduino firmvér, lokálna Wi-Fi a HTTP telemetria
 tests/              # Bilancia, SOC, ekonomika, API, persistencia
 docs/
   ARCHITEKTURA.md
@@ -139,7 +139,7 @@ README.md
 ## Etapy a akceptácia
 
 1. MVP PC: offline štart, wizard, všetkých 8 scenárov, fyzikálna bilancia, SOC, grafy, SQLite, CSV, validácia API, testy. Implementované.
-2. Hybridné demo: ESP32-S3 cez router, reálny výkon malého panela, lux, prepínače záťaže a výpadok siete. Server, dátový kontrakt a firmvér sú implementované; zostáva overenie na zakúpenom hardvéri a kalibrácia.
+2. Hybridné demo: ESP32 (ESP-32D) cez router, reálny výkon panela a batérie, prepínače záťaže a výpadok siete. Server, dátový kontrakt a firmvér sú implementované; zostáva overenie na zakúpenom hardvéri a kalibrácia.
 3. Analytika PC: Open-Meteo, fyzikálna aproximácia FV, časový baseline a import CSV sú implementované. Ďalej: validácia proti meraniam, pvlib, cenové API a pokročilejší ML.
 4. Interpretácia PC: Ollama a obmedzené číselné výstupy podľa faktov sú implementované. Zostáva inštalácia modelu používateľom a benchmark kvality/rýchlosti na jeho notebooku.
 5. Optimalizácia PC: plán spotreby/nabíjania, porovnanie stratégií na identických dátach a spracovanie SOČ výsledkov. Zatiaľ návrh.
@@ -149,7 +149,7 @@ README.md
 - FastAPI lifespan: https://fastapi.tiangolo.com/advanced/events/
 - SQLite WAL: https://www.sqlite.org/wal.html
 - Open-Meteo: https://open-meteo.com/en/docs
-- ESP32-S3 Wi-Fi station: https://docs.espressif.com/projects/esp-idf/en/latest/esp32s3/api-guides/wifi-driver/station-scenarios.html
+- ESP32 (ESP-32D) Wi-Fi station: https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/wifi-driver/station-scenarios.html
 
 Tieto zdroje podkladajú voľbu životného cyklu servera, lokálneho úložiska a implementáciu meteorologického providera; vlastné fyzikálne aproximácie sú uvedené vyššie.
 

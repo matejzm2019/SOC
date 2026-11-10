@@ -1,6 +1,6 @@
 # Overenie verzie 0.12.0-assistant
 
-8. 11. 2026. Overenie softvéru a rozmerového návrhu, nie protokol skúšok fyzicky postaveného domu.
+Historický záznam 8. 11. 2026 pre pôvodné ESP32-S3; na dosku ESP-32D platí novšia sekcia nižšie. Overenie softvéru a rozmerového návrhu, nie protokol skúšok fyzicky postaveného domu.
 
 - **84 úspešných testov, 1 preskočený**: Windows spúšťač na Linuxe. Dve upozornenia testovacích knižníc sa týkajú zastarávajúcich rozhraní.
 - Testy asistenta: zajtrajšok cez miestnu polnoc, predpoveď iného mesta/časovej zóny a konkrétnej hodiny, chýbajúca lokalita, vypnutý internet, zachovanie všeobecných vedeckých čísel, natívne nástroje Ollamy, označená encyklopedická náhrada, neznáme nástroje a limit kôl. Zmena AI volieb nezmaže energetickú históriu a nepremiestni uloženú lokalitu domu.
@@ -25,3 +25,14 @@ Elektroobálky a spojky nie sú garantované vrtné šablóny. Samostatná simul
 ## Doplnená kontrola formátovania chatu
 
 Chromium overil nadpisy vrátane `###`, zvýraznenie, vnorené zoznamy, tabuľky, odkazy a kód. Skúška potvrdila, že HTML/script z odpovede sa nespustí, nebezpečné odkazy nie sú klikateľné a obrázky nespustia externú požiadavku. Pri šírke 390 px dlhý kód a tabuľka posúvajú svoj obsah bez roztiahnutia stránky; pri kontrolovaných krokoch neboli JavaScriptové chyby.
+
+## Aktuálna doska ESP-32D – 10. 11. 2026
+
+Fotografia používateľa potvrdzuje 38-pinovú USB-C dosku s modulom ESP-32D (klasické ESP32); kapacita flash ani presná revízia dosky sa z nej nedajú overiť. Aktuálny firmvér je `firmware/esp32/energia_esp32.ino`, verzia 0.8.0-esp32d. Staré S3 piny a nastavenie N16R8 sa nepoužívajú.
+
+- Reálna kompilácia Arduino CLI 1.5.1, Espressif core 3.3.12, cieľ `esp32:esp32:esp32` (ESP32 Dev Module, predvolené 4 MB, PSRAM vypnutá), Adafruit INA219 1.2.3 a ArduinoJson 7.4.3: **1 063 388 B programu, 50 424 B RAM**. Produkčný kód výslovne odmietne nesprávny cieľ S3.
+- Samostatný BenchTwin sketch mimo projektu sa zostavil pre rovnaké ESP32: **303 200 B programu, 23 612 B RAM**. Toto nie je vykonanie celého elektrického obvodu v BenchTwin.
+- C++ test `house_guard_test.cpp` prešiel s `-Wall -Wextra -Werror`: odhad SOC, hysterézia, odrušenie a pretečenie millis. Je zaradený aj do CI. JavaScript prešiel syntaktickou kontrolou.
+- GPIO34 je ADC1 pre hlavný zdroj (delič 22 kΩ/10 kΩ); prepínače 32/33, LED 25/26, indikácia 27, I²C 21/22. GPIO6–11 sa nepoužívajú. Náhradné ADC softvérového testu sú 35/36/39.
+- Zapojenie, kusovník, PDF, vodiče, generátory, aplikácia, Blender/GLB/STL aj náhľady sú aktualizované. Obe kópie model.json sú zhodné; zostalo 395 objektov a podstava 600 × 450 mm. Obálka ESP 70 × 32 mm je montážna rezerva, nie meranie konkrétnej dosky.
+- BC547BBK je vhodný pre cca 15–20 mA na vetvu troch malých LED s vlastnými 330 Ω. Kondenzátor 470 µF / 16 V je na 5 V vetve dostatočný. Poradie C/B/E, polarita, stabilita napájania a reálny nabíjací prúd sa overujú na fyzických dieloch. Firmvér tu nebol nahraný do používateľovej dosky.
