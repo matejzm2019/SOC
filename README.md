@@ -1,22 +1,23 @@
-# SOČ – ESP-32D a existujúci 12 V solárny panel
+# SOČ – jeden celý zoznam a dva INA3221
 
-Aktualizácia 10. 11. 2026. Kompletné zdroje z commitu c0dfdf277da1b203b2bf85182aa39044608a9a1a.
+**[OTVORIŤ CELÝ ZOZNAM KOMPONENTOV A MATERIÁLU](ZOZNAM-KOMPONENTOV.md)**
 
-- [Stiahnuť kompletný projekt ZIP](SOC-vsetko.zip?raw=1)
-- [Čo objednať pre 12 V panel a ako to funguje](PANEL-12V-A-OBJEDNAVKA.md)
-- [Zapojenie ESP32 a solárnej vetvy](ZAPOJENIE-ESP32D.md)
-- [Návod BenchTwin](BENCHTWIN-NAVOD.txt)
-- [Skúšobný kód BenchTwin ZIP](BENCHTWIN-KOD.zip?raw=1)
-- [Zdrojové zmeny PR #4](https://github.com/matejzm2019/SOC/pull/4)
+Toto je jediný platný nákupný zoznam pre aktuálnu zostavu: elektronika, presné množstvá rezistorov/LED, konektory, vodiče, drevené diely, detaily, úchyty a vybavenie. Ostatné dokumenty popisujú zapojenie a funkciu. Objednávaj len to, čo ešte nemáš.
 
-**Panel už máš, nekupovať znova.** Potvrdený je iba údaj 12 V; výkon, Voc, Vmp, rozmery ani konektor zatiaľ nie. CN3791 zvoliť variant 12 V pre jednu LiPo 3,7/4,2 V; hlavná aj záložná vetva domu zostávajú 5 V. Štyri hlavné nákupné položky vrátane dvoch INA219 stoja podľa Techfun 10. 11. spolu 15,65–15,75 € bez drobností a dopravy.
+- [Stiahnuť celý aktuálny projekt ZIP](SOC-vsetko.zip?raw=1)
+- [Zapojenie domu](ZAPOJENIE-ESP32D.md)
+- [INA3221 – adresy, meracie piny a rozdiely dosiek](INA3221.md)
+- [12 V solár a dobíjanie zo zdroja](PANEL-12V-A-OBJEDNAVKA.md)
+- [BenchTwin návod](BENCHTWIN-NAVOD.txt)
+- [BenchTwin skúšobný kód ZIP](BENCHTWIN-KOD.zip?raw=1)
+- [Zdrojové zmeny PR #5](https://github.com/matejzm2019/SOC/pull/5)
 
-Pred prvým pripojením zmeraj Voc odpojeného panela a zachovaj rezervu pod limitom INA219 26 V a CN3791 28 V alebo nižším limitom konkrétneho modulu. Pri 24 V alebo viac panel nepripájaj bez preverenia. Over tiež dovolený nabíjací prúd článku a limit CN3791; 4 A MAX nie je pripravené nastavenie pre túto batériu. Podrobný postup je v zapojení. 470 µF / 16 V patrí iba na 5 V pri ESP.
+Aktualizované 10. 11. 2026, source commit 41a0b022bce204b8fda5e0027a1d267da8b2403d. Archív má SOC a samostatný SOC-simulacia vedľa seba.
 
-Rozbaľ ZIP. SOC obsahuje aplikáciu, firmware/esp32/energia_esp32.ino, model a stavebné PDF. SOC-simulacia je samostatne vedľa projektu. V 3D modeli zostáva pôvodný obrys panela ako predbežná rezerva, kým sa skutočný 12 V kus nezmeria. Nepriraďujeme mu výkon ani rozmery iného panela z Techfun.
+Používame ESP-32D, existujúci panel označený 12 V, chránenú LiPo 2500 mAh, CN3791 variant 12 V, MT3608, dva INA3221 CH1, 5 V relé, BC547 a 470 µF / 16 V iba na 5 V vetve. Hlavné moduly CN3791 + MT3608 + dva INA3221 + relé vychádzajú na 16,15–16,25 € bez dopravy/drobností; plná objednávka je v uvedenom zozname.
 
-ESP32 Dev Module, PSRAM Disabled. GPIO34 hlavný ADC cez delič, 32/33 prepínače, 25/26 BC547 LED, 27 indikácia, 21/22 I²C. GPIO6–11 sa nepoužívajú. Kapacitu flash over na konkrétnej doske.
+PANEL 0x40, BAT 0x41, čipové VS/VCC senzorov 3V3. Kladné meracie vstupy sú oddelené. Staršia doska má spoločný výkonový POW a CH1/GND, novšia IN1+/IN1−. Meracie piny over podľa R100; dvojica CH1/GND nie sú dva konce bočníka. Dodrž predajcov limit dosky 1,1 A pri nabíjaní aj vybíjaní a rezervu pod 26 V. Výkon, Voc a rozmery panela sú stále nepotvrdené. Over prúd článku a RCS nabíjačky.
 
-Prešlo 85 testov (1 preskočený na Linuxe), príjem skutočných 12 V aj 22 V, kompilácia produkcie 0.8.1-panel12 a automatické kontroly GitHub. API limit nenahrádza elektrickú ochranu. Fyzický beh ani celý BenchTwin obvod tu nebol overený.
+Firmvér 0.9.0-ina3221 používa Adafruit INA3221 Library 1.0.3, BusIO a ArduinoJson 7. Prešla kompilácia pre klasické ESP32, 85 testov (1 preskočený), kontrola znamienka/prúdu/registra, I2C chýb, geometrie a odkazov. Fyzická elektronika ani celý BenchTwin obvod tu neboli odskúšané. Softvér nezastaví elektrické preťaženie.
 
-BenchTwin používa samostatný loop()/millis() diagnostický sketch, pretože produkcia používa nepodporované FreeRTOS úlohy. ZIP s kódom nie je import celej zapojenej 3D scény. Neznáme parametre zadané do simulátora sú testovacie, nie meranie reálneho panela. AI beží na PC cez Ollamu.
+BenchTwin má samostatnú loop()/millis() diagnostiku s I2C identitou, produkcia používa FreeRTOS. Podpora konkrétneho INA3221 modelu v simulátore nie je potvrdená; elektrická skúška meradlami nie je úplný test registrov. AI zostáva na PC cez Ollamu.

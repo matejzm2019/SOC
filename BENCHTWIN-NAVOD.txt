@@ -24,33 +24,18 @@ Priebežne ulož/exportuj svoj BenchTwin projekt. Export Code → Project
 na celú scénu používaj projektové uloženie/export dostupný v aplikácii.
 S účtom si môžeš projekt uložiť aj do cloudu.
 
-2. KOMPONENTY – ČO VLOŽIŤ CEZ BUILD / INSERT PART
+2. KOMPONENTY – JEDEN ZOZNAM
 
-Hľadaj tieto názvy v katalógu; mená variantov sa môžu mierne líšiť:
-
-1× ESP32 DevKit / ESP32-WROOM, klasické ESP32 ako doska ESP-32D
-   z fotografie. Nevyberaj S3; veľkosť flash over na skutočnej doske.
-1× Solar panel označený 12 V. Reálny výkon a Voc zatiaľ nepoznáme;
-   výkon zvolený v simulácii je skúšobná hodnota, nie údaj tvojho panela.
-1× CN3791 MPPT solar Li-ion charger; nastav variant/MPPT pre 12 V panel,
-   ak model ponúka túto voľbu. Nepouži viacčlánkový CN3722.
-1× LiPo battery 1S, 3.7 V, 2500 mAh. Začni napr. na 3.8 V, nie na 0 V.
-1× MT3608 boost converter, výstup nastav na 5.00 V.
-2× INA219 current and power monitor, označ ich INA_PANEL a INA_BAT.
-1× 5 V jednokanálový prepínací relay module s COM/NO/NC a LOW trigger.
-2× NPN BC547B.
-6× biela LED, 1× modrá LED.
-7× rezistor 330 Ω, 2× 1 kΩ, 3× 10 kΩ, 1× 22 kΩ.
-   Voliteľne ďalšie 2× 10 kΩ ako pull-up prepínačov na 3.3 V.
-2× trvalý dvojpolohový prepínač (SPST/SPDT toggle/slide switch).
-1× nastaviteľný DC zdroj označený LAB_5V, nastavený na 5.00 V.
-1× 470 µF / 16 V kondenzátor na 5 V vetve pri ESP, s vhodnou polaritou.
-Rozpojiteľná servisná prepojka, vodiče, prípadne breadboard/rozvodné body.
-
-CN3791 a MT3608 aj INA219 sú priamo v aktuálnom verejnom katalógu.
-Katalóg obsahuje aj 1S LiPo varianty. Nezamieňaj LiPo s AA článkom.
-Samotný BMS/ochranný obvod nie je nabíjačka. Reálna vybraná LiPo už
-má ochranu; nevyrábaj z toho v skutočnosti dva články v sérii.
+Úplný platný zoznam je SOC/docs/KOMPONENTY.md (na distribučnej vetve
+GitHub ako ZOZNAM-KOMPONENTOV.md). Obsahuje elektroniku, množstvá
+rezistorov, konektory, drevo aj montážne diely. Tu nie je druhý zoznam.
+Použi dva INA3221 s R100, na každom CH1; panel 0x40, batéria 0x41.
+Ak konkrétna verzia BenchTwin nemá INA3221 alebo jeho I2C model,
+nepovažuj iný čip za náhradu. Pre elektrickú skúšku vlož merací
+bočník 0,1 Ω a meraj prúd/napätie Multimeterom; to neoveruje INA3221
+registre ani komunikáciu. Existencia/plná funkcia INA3221 v tvojej
+verzii simulátora tu nebola potvrdená. Diagnostický sketch vie
+skontrolovať I2C identitu iba ak ju simulačný model skutočne poskytuje.
 
 3. ROZLOŽENIE NA PLOCHE
 
@@ -67,18 +52,18 @@ V breadboarde kontroluj prepojenie radov aj rozdelené napájacie lišty.
 4. SPOLOČNÁ ZEM A NABÍJACIA VETVA
 
 Založ spoločnú GND: LAB mínus, mínus chránenej LiPo, CN3791 IN−/BAT−,
-MT3608 IN−/OUT−, GND ESP, GND oboch INA219, relé a emitorov tranzistorov.
+MT3608 IN−/OUT−, GND ESP, GND oboch INA3221, relé a emitorov tranzistorov.
 
-Solárny panel + → INA_PANEL VIN+
-INA_PANEL VIN− → CN3791 IN+
+Solárny panel + → INA_PANEL IN1+
+INA_PANEL IN1− → CN3791 IN+
 Solárny panel − → GND / CN3791 IN−
 
-POZOR na označenie INA219: VIN− je druhý koniec bočníka, nie GND!
+POZOR na označenie INA3221: IN1− je druhý koniec bočníka, nie GND!
 Ak ho dáš na zem, môžeš panel skratovať.
 
 Batériové meranie zapoj takto:
 
-CN3791 BAT+ ───┬── BAT_NODE ── INA_BAT VIN+ → VIN− → LiPo +
+CN3791 BAT+ ───┬── BAT_NODE ── INA_BAT IN1+ → IN1− → LiPo +
 MT3608 IN+ ────┘
 LiPo −, CN3791 BAT− a MT3608 IN− → GND
 
@@ -146,20 +131,21 @@ Merací uzol → GPIO34.
 Pri hlavnom zdroji 5 V je na GPIO34 približne 1.56 V / 1560 mV.
 Priame pripojenie 5 V na GPIO je nesprávne, aj keď ho simulátor toleruje.
 
-Oba INA219: VCC → ESP 3V3, GND → GND.
+Oba INA3221: VCC → ESP 3V3, GND → GND.
 ESP GPIO21 → SDA; GPIO22 → SCL.
 INA_PANEL má adresu 0x40; INA_BAT musí mať odlišnú adresu 0x41.
 Ak konkrétny model ponúka adresu/jumper A0, nastav ju na druhom kuse.
 Na reálnom breakoute sa to robí mostíkom A0 podľa jeho zapojenia.
 
-DÔLEŽITÉ PRE BETA VERZIU: dostupný 3D diel ešte nezaručuje všetky
-funkcie knižnice. Ak sa v konkrétnej verzii nedá zmeniť adresa druhého
-INA alebo knižnica ohlási, že podporuje iba 0x40, nedávaj dva prístroje
-s rovnakou adresou na tú istú zbernicu. Pre základný elektrický test
-nechaj SDA/SCL INA_BAT nepripojené a jeho napätie/prúd sleduj
-Multimeter/Scope cez správne zapojený bočník. Nabíjanie ani svetlá sa
-týmto neodpoja. Nie je to úplný test batériovej I2C telemetrie.
-Do fyzického modelu patrí správna 0x41 aj obidva I2C vodiče.
+DÔLEŽITÉ PRE REVÍZIU DOSKY: starší Techfun/CJMCU modul má spoločný
+výkonový POW/VIN+ a kladný výstup CH1; druhá svorka CH1 môže byť GND.
+Nie je to IN1+/IN1− pár. Nová revízia má tieto meracie piny oddelené.
+V simulátore sa riaď elektrickými uzlami, nie starým obrázkom svoriek.
+Na fyzickej doske over spojitosť k obom stranám R100 podľa
+SOC/docs/INA3221.md. Logické VS/VCC je 3V3, nikdy vstup panela.
+Limit vybraného modulu je 1,1 A v každom smere. Ak simulačný model
+nemá správne adresy/registre, elektrická skúška meradlami funguje
+samostatne; nejde o úplnú I2C telemetriu domu.
 
 8. KÓD PRE BENCHTWIN – BEZ FREERTOS A BEZ FALOŠNÝCH MERANÍ
 
@@ -178,13 +164,16 @@ telemetriu aplikácie. Prúdy a napätia overuj laboratórnymi meradlami.
 Pošli do Serial znak i; skener preverí ACK na adresách 64 a 65
 (teda 0x40 a 0x41). Výsledok 0 znamená odpoveď na danej adrese;
 samotný ACK ešte neoveruje správne registre a meraný prúd.
+Skener preto skúsi aj výrobcu a ID čipu: desiatkovo 21577/12832
+(teda 0x5449/0x3220). Hlásenie INA3221 identity OK potvrdzuje iba
+identitu modelu, nie kalibráciu alebo fyzikálnu správnosť merania.
 
 Skúšobný sketch nepoužíva FreeRTOS, používateľské C++ triedy,
-Adafruit INA219, ArduinoJson ani sieť. Používa zdokumentované
+Adafruit INA3221 Library, ArduinoJson ani sieť. Používa zdokumentované
 setup()/loop(), millis(), GPIO, ADC, Wire a Serial.
 Produkčný sketch SOC/firmware/esp32 má samostatnú FreeRTOS úlohu;
 BenchTwin ju podľa aktuálnej nápovedy nepodporuje. Na fyzický ESP
-patrí produkčný firmvér 0.8.1-panel12, nie tento obmedzený bench test.
+patrí produkčný firmvér 0.9.0-ina3221, nie tento obmedzený bench test.
 
 9. SKÚŠKY V TOMTO PORADÍ
 
@@ -265,7 +254,7 @@ Svetlá sú stále z batérie: skontroluj LOW-trigger, VCC relé a NO/NC.
 ESP sa pri výpadku vypne: skontroluj MT3608, jeho 5 V výstup,
   batériu a napájací pin dosky. Nevyrieš to pridaním skrytého USB zdroja.
 Záporný prúd v nabíjaní: over smer sondy/bočníka; batériový senzor
-  má VIN+ na BAT_NODE a VIN− pri plus batérie.
+  má IN1+ na BAT_NODE a IN1− pri plus batérie.
 INA nie je nájdený: VCC 3.3 V, spoločná zem, SDA=21/SCL=22,
   správne adresy a podpora konkrétneho modelu/knižnice v tvojej verzii.
 Na 0x41 nič neodpovedá: pozri krok 7; dva defaultné 0x40 nie sú riešenie.
@@ -277,7 +266,7 @@ HTTP nefunguje: najprv over, či je táto funkcia sprístupnená;
 Overené na verejnom rozhraní/dokumentácii BenchTwin: Build/Wire/Code/
 Simulate, Code → Libraries/What works?, Check, Upload & simulate,
 Project import/export kódu, laboratórne nástroje, ESP32 a katalógové
-CN3791/MT3608/INA219/LiPo. Verejná nápoveda výslovne uvádza obmedzenie
+CN3791/MT3608/INA3221/LiPo. Verejná nápoveda výslovne uvádza obmedzenie
 FreeRTOS a poznámky vydania uvádzajú Pro sieťové funkcie.
 Nebolo tu vykonané kompletné interaktívne zostavenie a odbehnutie
 celého domu v tvojom BenchTwin projekte. Tento návod nie je tvrdenie,
@@ -299,10 +288,13 @@ AKTUALIZÁCIA SOLÁRU 10. 11. 2026
 Potvrdené je iba označenie 12 V. CN3791 vyber vo variante 12 V pre
 1S LiPo, nie pre 12 V batériu. Nastavený bod MPPT musí zodpovedať
 skutočnému Vmp; ak je 12 V len názov panelovej sústavy s iným Vmp,
-pevnú MPPT hodnotu treba doladiť. INA219 má elektrický limit 26 V,
+pevnú MPPT hodnotu treba doladiť. INA3221 má elektrický limit 26 V,
 CN3791 čip 28 V; samotná simulácia nezistí skutočné Voc panela.
 Pred zapojením reálneho kusa zmeraj Voc podľa SOC/docs/ZAPOJENIE.md.
 Kondenzátor 470 µF/16 V zostáva na 5 V pri ESP, nie na solárnom vstupe.
 Rozmery, výkon a konektor v simulačnej scéne sú skúšobné, kým ich
 nepremeriaš na svojom kuse. Nepriraďujeme mu parametre iného
 Techfun panela. Nákupný zoznam: SOC/docs/PANEL-12V-A-OBJEDNAVKA.md.
+
+Aktuálna revízia: dva INA3221 CH1, spoločné logické 3V3/GND, oddelené
+kladné meracie vetvy. Všetky nákupné položky sú iba v KOMPONENTY.md.
