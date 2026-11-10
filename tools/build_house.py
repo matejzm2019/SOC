@@ -130,20 +130,20 @@ for x in (182,418):
 # Panel lead is attached to the roof. Fixed socket remains on the rear wall.
 tube('SOLAR Kabel k rozpojitelnemu konektoru',[(408,221,202),(450,280,202),(490,382,151),(500,408,90),(500,408,38)],black,2,1)
 box('Rozpojitelny konektor panela',495,400,27,10,8,12,black)
-modules=[('ESP32-S3 N16R8',385,265,64,28,3,blue),('CN3791 6V',460,265,46,24,5,green),('LiPo 104050 2500mAh',385,305,50,40,4,silver),('MT3608',445,305,38,20,6,blue),('INA219 panel 0x40',491,303,32,25,7,blue),('INA219 bateria 0x41',491,335,32,25,8,blue),('Rele REL300',437,349,52,27,9,blue),('LED a meraci delic',385,351,50,30,16,green)]
+modules=[('ESP-32D / ESP32',385,265,70,32,3,blue),('CN3791 12V',460,265,46,24,5,green),('LiPo 104050 2500mAh',385,305,50,40,4,silver),('MT3608',445,305,38,20,6,blue),('INA219 panel 0x40',491,303,32,25,7,blue),('INA219 bateria 0x41',491,335,32,25,8,blue),('Rele REL300',437,349,52,27,9,blue),('LED a meraci delic',385,351,50,30,16,green)]
 with (OUT/'rozmiestnenie-komponentov.csv').open('w',encoding='utf-8-sig',newline='') as f:
  writer=csv.writer(f);writer.writerow(['skupina','nazov','X_mm','Y_mm','Z_mm','sirka_X_mm','hlbka_Y_mm','vyska_Z_mm','presnost'])
- for name,x,y,w,d,g,mat in modules:writer.writerow([g,name,x,y,18,w,d,10 if g==4 else 16 if g==9 else 8,'menovitý rozmer výrobku' if g in (3,4) else 'návrhová rezerva; fyzicky overiť'])
+ for name,x,y,w,d,g,mat in modules:writer.writerow([g,name,x,y,18,w,d,10 if g==4 else 16 if g==9 else 8,'menovitý rozmer výrobku' if g == 4 else 'návrhová rezerva; fyzicky overiť'])
 for name,x,y,w,d,g,mat in modules:
  box(name,x,y,18,w,d,10 if g==4 else 1.6,mat,g)
  if g==4:
   box('LiPo ochranny kapton',385,341,18,50,4,10,gold,4)
   tube('LiPo cerveny vodic',[(433,342,24),(438,343,24),(440,334,24)],light,4,.6)
  elif g==3:
-  box('ESP32 kovovy RF kryt',x+24,y+4,20,25,20,3,silver,g)
+  box('ESP32 kovovy RF kryt',x+34,y+6,20,25,20,3,silver,g)
   box('ESP32 USB C',x,y+9,20,8,10,3,silver,g)
   for dx in range(5,61,3):
-   for dy in (1,25):box('ESP32 dutinkova lista',x+dx,y+dy,20,1.8,1.8,4,black,g)
+   for dy in (1,d-3):box('ESP32 dutinkova lista',x+dx,y+dy,20,1.8,1.8,4,black,g)
  elif g==9:box('Rele modry blok',x+13,y+5,20,21,16,14,blue,g)
  else:
   box(name+' hlavny obvod',x+8,y+5,20,max(8,w/3),8,3,black,g)
@@ -172,7 +172,7 @@ def label(text,x,y,size):
  bpy.ops.object.convert(target='MESH');finish(bpy.context.object,'C01 Popis '+text,ivory,14)
 label('SVETLA',36,49,5)
 label('A',54,22,5);label('B',94,22,5);label('5V',115,25,3.5)
-GROUPS={0:'Dom, fasada a priecky',1:'Cela odnimatelna strecha',2:'Panel na streche a jeho uchytenie',3:'ESP32-S3',4:'Chranena LiPo 2500mAh',5:'CN3791',6:'MT3608',7:'INA219 panel',8:'INA219 bateria',9:'Prepinacie rele LED',12:'Svetelny okruh A',13:'Svetelny okruh B',14:'Ovladaci panel svetiel A/B',15:'Vedenie LED',16:'LED a meraci delic',17:'Indikator hlavneho zdroja'}
+GROUPS={0:'Dom, fasada a priecky',1:'Cela odnimatelna strecha',2:'Panel na streche a jeho uchytenie',3:'ESP-32D / ESP32',4:'Chranena LiPo 2500mAh',5:'CN3791',6:'MT3608',7:'INA219 panel',8:'INA219 bateria',9:'Prepinacie rele LED',12:'Svetelny okruh A',13:'Svetelny okruh B',14:'Ovladaci panel svetiel A/B',15:'Vedenie LED',16:'LED a meraci delic',17:'Indikator hlavneho zdroja'}
 bpy.context.view_layer.update();meshes=[]
 for o in objects:
  o.data.calc_loop_triangles();p=[];n=[]
@@ -181,7 +181,7 @@ for o in objects:
   for idx in tri.vertices:
    p.extend(round(v*1000,3) for v in o.matrix_world@o.data.vertices[idx].co);n.extend(round(v,4) for v in normal)
  meshes.append(dict(name=o.name,p=p,n=n,c=list(o.data.materials[0].diffuse_color[:3]),g=int(o['group'])))
-asset=dict(units='mm',base=[600,450,8],house=[480,330,120],roof_angle_deg=35,roof_groups=[1,2],panel_size_mm=[230,195,17],groups=GROUPS,meshes=meshes,module_envelopes_only=True)
+asset=dict(units='mm',base=[600,450,8],house=[480,330,120],roof_angle_deg=35,roof_groups=[1,2],panel_size_mm=[230,195,17],groups=GROUPS,meshes=meshes,module_envelopes_only=True,panel_nominal_voltage_v=12,panel_dimensions_confirmed=False,panel_rated_power_w=None)
 for dest in (ROOT/'frontend/house/model.json',OUT/'3d/model.json'):dest.write_text(json.dumps(asset,separators=(',',':')))
 bpy.ops.object.select_all(action='DESELECT')
 for o in objects:o.select_set(True)

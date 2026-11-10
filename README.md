@@ -6,13 +6,13 @@ Lokálna aplikácia používa FastAPI, SQLite a responzívny webový dashboard. 
 
 - **DEMO MODE:** celý experiment funguje bez hardvéru, má pripravené scenáre a zrýchlený päťminútový simulačný krok.
 - **CSV história:** import vlastnej intervalovej spotreby a voliteľne FV, história, výpočtová ekonomika a výhľad podľa dostupných dát. Nepotrebuje ESP32.
-- **Normálny režim:** model domu s ESP32-S3, malým panelom a prepínačmi záťaží cez Wi-Fi. Backend na notebooku spracúva meranie v sekundových intervaloch; pri odpojení ESP čaká na dáta a po pripojení automaticky pokračuje. Energetika domácnosti je škálovaný výpočtový model.
+- **Normálny režim:** model domu s ESP32 (ESP-32D), malým panelom a prepínačmi záťaží cez Wi-Fi. Backend na notebooku spracúva meranie v sekundových intervaloch; pri odpojení ESP čaká na dáta a po pripojení automaticky pokračuje. Energetika domácnosti je škálovaný výpočtový model.
 
 Na model sa privádza iba nízke DC napätie. Laboratórny zdroj môže mať sieťový vstup vo svojom uzavretom prístroji; so sieťovým napätím sa na modeli nepracuje.
 
 ## Aktuálna stavba: smart dom s odnímateľnou strechou
 
-Verzia **0.12.0-assistant**: celé steny, bez nábytku, podstava 600 × 450 mm, dom 480 × 330 mm. Malé moduly CN3791 a MT3608, LiPo 2500 mAh, dva INA219, automatické prepnutie LED pri výpadku; panel 230 × 195 mm priamo na streche so sklonom 35°. AI zostáva na PC/serveri cez Ollamu, ESP komunikuje cez Wi-Fi.
+Verzia **0.12.0-assistant**: celé steny, bez nábytku, podstava 600 × 450 mm, dom 480 × 330 mm. Malé moduly CN3791 a MT3608, LiPo 2500 mAh, dva INA219, automatické prepnutie LED pri výpadku; existujúci 12 V panel priamo na streche so sklonom 35° (rozmery a výkon nepotvrdené). AI zostáva na PC/serveri cez Ollamu, ESP komunikuje cez Wi-Fi.
 
 - **[Stavebný návod PDF](model-domu/STAVEBNY-NAVOD.pdf)**, [rezací plán](model-domu/rezaci-plan.csv), [vodiče](model-domu/dlzky-vodicov.csv) a [detaily fasády](model-domu/detaily-fasady.csv).
 - **[3D Blender](model-domu/3d/dom.blend)**, [GLB](model-domu/3d/dom.glb), [pôdorys](model-domu/vykresy/podorys.svg), šablóny dielov 1:1 v model-domu/vykresy/.
@@ -60,11 +60,15 @@ py -3 -m venv .venv
 .\.venv\Scripts\python.exe -m uvicorn backend.main:app --host 0.0.0.0 --port 8765 --workers 1
 ```
 
-## ESP32-S3 a fyzický model
+## ESP32 (ESP-32D) a fyzický model
+
+**Solár je 12 V:** [aktuálna objednávka, limity a postup](docs/PANEL-12V-A-OBJEDNAVKA.md). CN3791 zvoliť 12 V pre jednu LiPo; 5 V vetvy sa nemenia. Rozmer panela v 3D je zatiaľ iba rezerva.
+
+Aktualizácia 10. 11. 2026: doska z fotografie nahrádza pôvodné S3. Použi aktuálnu pinovú tabuľku a Arduino **ESP32 Dev Module**, PSRAM vypnutú. BC547BBK a 470 µF / 16 V zo zásob sú pre túto zostavu vhodné.
 
 Hlavný 5 V zdroj napája cez relé LED. Pri výpadku LED prejdú na MT3608 z chránenej LiPo. ESP je stále na tomto zálohovanom výstupe; CN3791 nabíja článok zo soláru. Percentá sú orientačný odhad z napätia, prúd sa meria druhým INA219.
 
-Postup firmvéru je v [firmware/esp32-s3/README.md](firmware/esp32-s3/README.md), schéma v [docs/ZAPOJENIE.md](docs/ZAPOJENIE.md). Server pri prvom štarte vytvorí `data/device_key.txt`; do ignorovaného `secrets.h` doplň Wi-Fi, LAN URL PC a tento kľúč. Arduino AI nespúšťa, jeho úlohou je meranie a bezpečné miestne riadenie. Úplný popis: [AKO-TO-FUNGUJE.md](docs/AKO-TO-FUNGUJE.md).
+Postup firmvéru je v [firmware/esp32/README.md](firmware/esp32/README.md), schéma v [docs/ZAPOJENIE.md](docs/ZAPOJENIE.md). Server pri prvom štarte vytvorí `data/device_key.txt`; do ignorovaného `secrets.h` doplň Wi-Fi, LAN URL PC a tento kľúč. Arduino AI nespúšťa, jeho úlohou je meranie a bezpečné miestne riadenie. Úplný popis: [AKO-TO-FUNGUJE.md](docs/AKO-TO-FUNGUJE.md).
 
 ## Funkcie
 
@@ -102,7 +106,7 @@ Integračné testy používajú riadené HTTP odpovede pre počasie a Ollamu. Ov
 ```text
 backend/                 FastAPI, modely, simulátor, SQLite, analytika
 frontend/                responzívny dashboard bez build kroku
-firmware/esp32-s3/       Arduino firmvér a zapojenie
+firmware/esp32/       Arduino firmvér a zapojenie
 tests/                   automatické testy
 docs/                    architektúra, hardvér, demo a overenie
 deliverables/            prezentácia a správa pre učiteľa

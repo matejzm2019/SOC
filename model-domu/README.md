@@ -1,6 +1,6 @@
 # Drevený dom so strešným panelom – výrobný balík
 
-Verzia 0.12.0-assistant, 8. 11. 2026. Celé steny, žiadny nábytok. Teplá biela fasáda, cédrový obklad, okenné rámy a parapety, pevné dvere, antracitová strecha s naznačenými falcami a skutočný panel 230 × 195 × 17 mm. Geometria je rozmerová; nie je to iba ilustračný obrázok.
+Verzia 0.12.0-assistant, 10. 11. 2026. Celé steny, žiadny nábytok. Teplá biela fasáda, cédrový obklad, okenné rámy a parapety, pevné dvere, antracitová strecha s naznačenými falcami a predbežný obrys panela 230 × 195 × 17 mm. Geometria je rozmerová; nie je to iba ilustračný obrázok.
 
 | Časť | Rozmer |
 |---|---|
@@ -11,7 +11,7 @@ Verzia 0.12.0-assistant, 8. 11. 2026. Celé steny, žiadny nábytok. Teplá biel
 | Štít | základňa 330, výška 115,53 mm (výroba 115,5) |
 | Technická miestnosť | 158 × 138 mm |
 | Vyberateľná doska | 150 × 132 × 4 mm; X380 Y257 |
-| Panel | 230 × 195 × 17 mm, približne 533 g |
+| Panel | existujúci 12 V; obrys 230 × 195 × 17 mm je iba priestorová rezerva, rozmery/hmotnosť nepotvrdené |
 | Výška s nožičkami a panelom | približne 27 cm |
 
 Celý model ostáva na podstave 60 × 45 cm. Hmotnosť podľa materiálu približne 4–5 kg, fyzicky nezvážená. Preglejka: orientačne 600×450×8, 600×900×6, 600×900×4 mm, plus lišty podľa oboch CSV. Výrez rozlož s rezervou na šírku rezu a smer vlákien.
@@ -37,4 +37,8 @@ Celý model ostáva na podstave 60 × 45 cm. Hmotnosť podľa materiálu pribli�
 7. Ovládanie je na paneli C01 100 × 40 × 4 vľavo vpredu (X30/Y18), mimo chodníka. Štyri 15 mm stĺpiky vytvárajú miesto na telá prepínačov pod doskou; páčky sú hore. A/B: X56/X96, Y36; modrá LED: X119/Y36. Použi šablóny C01 a P01 a závity over na skutočných dieloch. Skrutky zospodu zapusti do podstavy.
 8. Elektrické uzly, prúdy a zálohu najprv otestuj mimo dreva podľa docs/ZAPOJENIE.md. Dĺžky vodičov skráť až po uložení do trasy, pod podstavou nechaj 10 mm nožičky.
 
-Obnova modelu: blender -b --python tools/build_house.py. PDF a šablóny: python tools/build_documents.py s requirements-build.txt; Unicode font sa hľadá na Linuxe, Windows aj macOS alebo cez SOC_PDF_FONT. Panel, elektronika a spojky sú vizuálne modely podľa menovitých rozmerov, nie garantované detaily konkrétneho dodaného výrobku.
+Obnova modelu: blender -b --python tools/build_house.py. PDF a šablóny: python tools/build_documents.py s requirements-build.txt; Unicode font sa hľadá na Linuxe, Windows aj macOS alebo cez SOC_PDF_FONT. Panel je predbežný priestorový obrys; presné rozmery neznámeho 12 V kusa sa musia zmerať. Elektronika a spojky sú rezervované obálky, nie garantované detaily konkrétneho dodaného výrobku.
+
+Aktuálna doska: ESP-32D (klasické ESP32) z fotografie používateľa. Model rezervuje obálku 70 × 32 mm; skutočné rozmery a otvory dosky premeraj pred vŕtaním. Zapojenie je v docs/ZAPOJENIE.md, firmvér v firmware/esp32/. Použité tranzistory BC547B a kondenzátor 470 µF / 16 V sú zahrnuté v aktuálnom kusovníku.
+
+Uchytenie L04, klipy a konektor panela prispôsob až po zmeraní 12 V kusa. Elektrická objednávka: docs/PANEL-12V-A-OBJEDNAVKA.md.

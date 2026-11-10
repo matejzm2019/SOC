@@ -22,7 +22,7 @@ parts=[
 ('L01','Nosník strechy',2,316,10,10,'lišta','spája štíty a tvorí jeden kus strechy'),
 ('L02','Vodiaci doraz strechy',4,30,10,6,'lišta','vôľa aspoň 0,5–1 mm'),
 ('L03','Výstuha pod panelom',2,440,10,10,'lišta','pozdĺž strechy, pod prednou rovinou'),
-('L04','Montážna lišta panela',2,250,8,6,'lišta','na prednej rovine; klipy držia rám panela'),
+('L04','Montážna lišta panela',2,250,8,6,'lišta','predbežná dĺžka podľa obálky; upraviť podľa skutočného 12 V panela'),
 ('C01','Ovládací panel',1,100,40,4,'preglejka','X30 Y18 na 15 mm stĺpikoch; A/B Ø6; LED Ø3; závit over na skutočnom prepínači'),
 ]
 with (OUT/'rezaci-plan.csv').open('w',newline='',encoding='utf-8-sig') as f:
@@ -45,8 +45,8 @@ for id,name,count,w,h,t,mat,note in parts:
  check=100 if w>=120 else 50
  svg=f'''<svg xmlns="http://www.w3.org/2000/svg" width="{w}mm" height="{h}mm" viewBox="0 0 {w} {h}"><title>{id} {html.escape(name)} – 1:1 mm</title><g fill="none" stroke="black" stroke-width="0.15">{shape}{holes}</g><text x="10" y="15" font-size="5" font-family="sans-serif">{id} · {w} x {h} x {t} mm · {count} ks · 1:1</text><path d="M10 {h-8} h{check}" stroke="blue" stroke-width="0.3"/><text x="10" y="{h-10}" font-size="4">Kontrolná mierka {check} mm</text></svg>'''
  (V/f'{id}-1ku1.svg').write_text(svg)
-wire=[('W01','LAB +5 V → hlavný rozvod',1,600,'0,5 mm²','červený'),('W02','LAB GND → spoločná zem',1,600,'0,5 mm²','čierny'),('W03','Batéria → INA219 0x41',2,150,'0,25–0,5 mm²','PH2.0 adaptér, polaritu zmerať'),('W04','INA219 → batériový uzol',1,120,'0,25–0,5 mm²','červený'),('W05','CN3791 BAT → batériový uzol',2,150,'0,25–0,5 mm²','pár + / GND'),('W06','Batériový uzol → MT3608 cez servisnú prepojku',2,150,'0,25–0,5 mm²','odpoj na úplné prednabitie'),('W07','MT3608 5 V → relé NC',1,150,'0,25–0,5 mm²','červený'),('W08','Hlavný +5 V → relé NO a VCC',2,150,'0,25–0,5 mm²','červený'),('W09','Relé COM → LED vetva A',2,750,'0,14–0,25 mm²','napájanie a spínaný návrat'),('W10','Relé COM → LED vetva B',2,500,'0,14–0,25 mm²','napájanie a spínaný návrat'),('W11','Rozvod 3 LED A na stene',2,300,'0,14 mm²','každá LED vlastný 330 Ω'),('W12','Rozvod 3 LED B na stene',2,300,'0,14 mm²','každá LED vlastný 330 Ω'),('W13','Prepínač A → GPIO5/GND',2,900,'0,14 mm²','signálový pár'),('W14','Prepínač B → GPIO6/GND',2,900,'0,14 mm²','signálový pár'),('W15','MT3608 → ESP napájací USB-C kábel',1,200,'hotový kábel','iba overených 5 V'),('W16','I²C ESP → INA219 0x40',4,180,'0,14 mm²','3V3 GND SDA SCL'),('W17','I²C INA219 0x40 → 0x41',4,100,'0,14 mm²','3V3 GND SDA SCL'),('W18','Panel na streche → INA219',2,650,'0,25–0,5 mm²','vrátane pôvodného kábla; 200 mm servisná slučka a rozpojiteľný konektor'),('W19','Panelový INA219 → CN3791 IN',2,150,'0,25–0,5 mm²','vstup nikdy na BAT'),('W24','GPIO4 delič a tranzistory LED',8,150,'0,14 mm²','miestne prepojky')]
-wire.append(('W25','LED hlavného zdroja → GPIO11/GND',2,900,'0,14 mm²','rezistor 330 Ω pri ovládacom paneli'))
+wire=[('W01','LAB +5 V → hlavný rozvod',1,600,'0,5 mm²','červený'),('W02','LAB GND → spoločná zem',1,600,'0,5 mm²','čierny'),('W03','Batéria → INA219 0x41',2,150,'0,25–0,5 mm²','PH2.0 adaptér, polaritu zmerať'),('W04','INA219 → batériový uzol',1,120,'0,25–0,5 mm²','červený'),('W05','CN3791 BAT → batériový uzol',2,150,'0,25–0,5 mm²','pár + / GND'),('W06','Batériový uzol → MT3608 cez servisnú prepojku',2,150,'0,25–0,5 mm²','odpoj na úplné prednabitie'),('W07','MT3608 5 V → relé NC',1,150,'0,25–0,5 mm²','červený'),('W08','Hlavný +5 V → relé NO a VCC',2,150,'0,25–0,5 mm²','červený'),('W09','Relé COM → LED vetva A',2,750,'0,14–0,25 mm²','napájanie a spínaný návrat'),('W10','Relé COM → LED vetva B',2,500,'0,14–0,25 mm²','napájanie a spínaný návrat'),('W11','Rozvod 3 LED A na stene',2,300,'0,14 mm²','každá LED vlastný 330 Ω'),('W12','Rozvod 3 LED B na stene',2,300,'0,14 mm²','každá LED vlastný 330 Ω'),('W13','Prepínač A → GPIO32/GND',2,900,'0,14 mm²','signálový pár'),('W14','Prepínač B → GPIO33/GND',2,900,'0,14 mm²','signálový pár'),('W15','MT3608 → ESP napájací USB-C kábel',1,200,'hotový kábel','iba overených 5 V'),('W16','I²C ESP → INA219 0x40',4,180,'0,14 mm²','3V3 GND SDA SCL'),('W17','I²C INA219 0x40 → 0x41',4,100,'0,14 mm²','3V3 GND SDA SCL'),('W18','Panel na streche → INA219',2,650,'0,25–0,5 mm²','vrátane pôvodného kábla; 200 mm servisná slučka a rozpojiteľný konektor'),('W19','Panelový INA219 → CN3791 IN',2,150,'0,25–0,5 mm²','vstup nikdy na BAT'),('W24','GPIO34 delič a tranzistory LED',8,150,'0,14 mm²','miestne prepojky')]
+wire.append(('W25','LED hlavného zdroja → GPIO27/GND',2,900,'0,14 mm²','rezistor 330 Ω pri ovládacom paneli'))
 with (OUT/'dlzky-vodicov.csv').open('w',newline='',encoding='utf-8-sig') as f:
  w=csv.writer(f);w.writerow(['ID','spoj','pocet_vodicov','dlzka_jedneho_mm','prierez','poznamka']);w.writerows(wire)
 details=[('A01a', 'Cédrový obklad čelný', 10, 480, 6, 1.5), ('A01b', 'Cédrový obklad bočný', 10, 318, 6, 1.5), ('A02', 'Rohové lišty', 4, 120, 6, 7), ('A03v', 'Zvislé rámy okien', 16, 54, 3, 2), ('A03h64', 'Vodorovné rámy predné', 6, 70, 3, 2), ('A03h56', 'Vodorovné rámy ostatné', 10, 62, 3, 2), ('A03m', 'Stredové priečniky okien', 8, 48, 2, 2), ('A04a', 'Parapety predné', 3, 74, 7, 2), ('A04b', 'Parapety ostatné', 5, 66, 7, 2), ('A05a', 'Pevná doska dverí', 1, 82, 40, 2), ('A05b', 'Zárubne dverí', 2, 86, 4, 3), ('A05c', 'Nadpražie dverí', 1, 48, 4, 3), ('A05d', 'Prah dverí', 1, 48, 10, 2), ('A06', 'Naznačené strešné falce', 24, 230, 1, 1), ('A07', 'Dvojdielny hrebenáč', 2, 504, 12, 1), ('A08', 'Odkvapové lišty', 2, 504, 6, 4), ('A09', 'Štítové lišty', 4, 230, 6, 4), ('A10', 'Vstupné nášľapy', 3, 62, 18, 2)]
@@ -84,7 +84,7 @@ for image,x in [('dom-zatvoreny.jpg',16),('dom-strecha-odlozena.jpg',210)]:
  if p.exists():c.drawImage(str(p),x*mm,95*mm,width=195*mm,height=135*mm,preserveAspectRatio=True,mask='auto')
 line(75,'Podstava domu 600 × 450 × 8. Dom 480 × 330. Steny 120 vysoké, hrúbka 6. Priečky vysoké 100.')
 line(65,'Strecha: sklon 35°, dve roviny 504 × 230 × 4; štíty a dorazy sú súčasťou jedného odnímateľného kusu.')
-line(55,'Panel 230 × 195 × 17 je na streche. Celá zostava zostáva na podstave 600 × 450.')
+line(55,'12 V panel je na streche. Obrys 230 × 195 × 17 je predbežný; skutočný kus treba premerať.')
 line(45,'Panel upevni za kovový rám na lišty L04. Elektronické otvory prenes zo skutočných dosiek.')
 line(35,'SVG v priečinku vykresy sú 1:1; tento PDF prehľad nie je šablóna 1:1. Pred rezaním zmeraj hrúbku dosiek.')
 pageend(1)
@@ -120,17 +120,18 @@ line(43,'Napájanie neveď cez tenké Dupont kontakty. Tie používaj na signál
 pageend(4)
 heading('Zapojenie – rozhodujúce uzly','Úplná pinová tabuľka a poradie montáže sú v docs/ZAPOJENIE.md. Batéria sa nepripája priamo na panel ani LAB.')
 rows=[
-'Panel → INA219 0x40 → CN3791 IN. CN3791 variant 6 V nabíja jediný chránený 1S článok na 4,2 V.',
+'12 V panel → INA219 0x40 → CN3791 IN (12 V variant). Nabíja jediný chránený 1S článok na 4,2 V.',
+'Pred zapojením zmeraj Voc: INA219 max. 26 V, CN3791 max. 28 V; zachovať rezervu a overiť modul.',
 'CN3791 BAT+ a MT3608 IN+ tvoria batériový uzol → INA219 0x41 VIN+ → VIN− → plus batérie.',
 'INA219 meria čistý prúd celého článku. Všetky odbery/nabíjanie musia byť na strane uzla, nie mimo bočníka.',
 'MT3608 nastav na 5,00 V pred pripojením ESP32. Menovitý 2 A údaj nie je zaručený výstup pri 3,7 → 5 V.',
 'Relé REL300: NO = hlavné +5 V; NC = MT3608 +5 V; COM = LED napájanie. VCC/JD-VCC = hlavné 5 V.',
 'Relé IN je pevne na GND. Zapnutý hlavný zdroj pritiahne NO; po vypnutí kontakt prejde na NC.',
-'LED A/B: každá LED cez svoj 330 Ω; kolektory 2N2222, emitory GND; GPIO7/10 cez 1 kΩ na bázy.',
-'Každá báza má 10 kΩ na GND. Prepínače svetiel: GPIO5/6 proti GND, druhý kontakt na prepínači voľný.',
-'Detekcia hlavného zdroja: LAB +5 V → 22 kΩ → GPIO4 → 10 kΩ → GND. Pri 5 V je ADC asi 1,56 V.',
-'I²C: GPIO8 SDA, GPIO9 SCL; oba INA219 napájané 3,3 V. Druhému nastav adresu 0x41.',
-'ESP32 je stále na MT3608. Pri slabom solári môže batéria klesať aj vtedy, keď hlavný zdroj napája LED.',
+'LED A/B: každá LED cez svoj 330 Ω; kolektory BC547B, emitory GND; GPIO25/26 cez 1 kΩ na bázy.',
+'Každá báza má 10 kΩ na GND. Prepínače svetiel: GPIO32/33 proti GND, druhý kontakt na prepínači voľný.',
+'Detekcia hlavného zdroja: LAB +5 V → 22 kΩ → GPIO34 → 10 kΩ → GND. Pri 5 V je ADC asi 1,56 V.',
+'I²C: GPIO21 SDA, GPIO22 SCL; oba INA219 napájané 3,3 V. Druhému nastav adresu 0x41.',
+'470 µF / 16 V pri ESP: plus na BACKUP 5 V, mínus na GND. ESP32 je stále na MT3608. Pri slabom solári môže batéria klesať aj vtedy, keď hlavný zdroj napája LED.',
 'CN3791 nemá hotový oddelený LOAD výstup. Na úplné prednabitie odpoj MT3608, svetlá aj ESP od článku.',
 'Pri úplnom prednabití odpoj panel, napájaj iba CN3791 zo správne nastaveného LAB; potom obnov solár.',
 'Nastavenie prúdu CN3791 over podľa článku. Hodnota 4 A MAX na e-shope nie je povolený prúd tejto batérie.',
@@ -152,7 +153,7 @@ steps=[
 for i,t in enumerate(steps):line(245-i*13,t,10)
 line(70,'Bezpečné napätia sú iba DC vetvy modelu. Notebook a Wi-Fi router zostanú počas ukážky zapnuté.')
 line(58,'Aktuálny kusovník: docs/KOMPONENTY.md; popis celého systému a AI: docs/AKO-TO-FUNGUJE.md.')
-line(46,'Skrutky nesmú preniknúť do solárnych článkov. Panel s hmotnosťou cca 533 g zdvíhaj spolu so strechou.')
+line(46,'Uchytenie prispôsob skutočnému panelu; rozmery a hmotnosť 12 V kusa nie sú potvrdené.')
 pageend(6)
 heading('Doplnkové detaily fasády a strechy','Všetko sú jednoduché nalepené lišty; žiadny nábytok ani otváracie dvere.')
 y=250

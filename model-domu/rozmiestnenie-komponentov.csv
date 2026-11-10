@@ -1,6 +1,6 @@
 ﻿skupina,nazov,X_mm,Y_mm,Z_mm,sirka_X_mm,hlbka_Y_mm,vyska_Z_mm,presnost
-3,ESP32-S3 N16R8,385,265,18,64,28,8,menovitý rozmer výrobku
-5,CN3791 6V,460,265,18,46,24,8,návrhová rezerva; fyzicky overiť
+3,ESP-32D / ESP32,385,265,18,70,32,8,návrhová rezerva; fyzicky overiť
+5,CN3791 12V,460,265,18,46,24,8,návrhová rezerva; fyzicky overiť
 4,LiPo 104050 2500mAh,385,305,18,50,40,10,menovitý rozmer výrobku
 6,MT3608,445,305,18,38,20,8,návrhová rezerva; fyzicky overiť
 7,INA219 panel 0x40,491,303,18,32,25,8,návrhová rezerva; fyzicky overiť

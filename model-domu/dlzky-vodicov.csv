@@ -11,12 +11,12 @@ W09,Relé COM → LED vetva A,2,750,"0,14–0,25 mm²",napájanie a spínaný n�
 W10,Relé COM → LED vetva B,2,500,"0,14–0,25 mm²",napájanie a spínaný návrat
 W11,Rozvod 3 LED A na stene,2,300,"0,14 mm²",každá LED vlastný 330 Ω
 W12,Rozvod 3 LED B na stene,2,300,"0,14 mm²",každá LED vlastný 330 Ω
-W13,Prepínač A → GPIO5/GND,2,900,"0,14 mm²",signálový pár
-W14,Prepínač B → GPIO6/GND,2,900,"0,14 mm²",signálový pár
+W13,Prepínač A → GPIO32/GND,2,900,"0,14 mm²",signálový pár
+W14,Prepínač B → GPIO33/GND,2,900,"0,14 mm²",signálový pár
 W15,MT3608 → ESP napájací USB-C kábel,1,200,hotový kábel,iba overených 5 V
 W16,I²C ESP → INA219 0x40,4,180,"0,14 mm²",3V3 GND SDA SCL
 W17,I²C INA219 0x40 → 0x41,4,100,"0,14 mm²",3V3 GND SDA SCL
 W18,Panel na streche → INA219,2,650,"0,25–0,5 mm²",vrátane pôvodného kábla; 200 mm servisná slučka a rozpojiteľný konektor
 W19,Panelový INA219 → CN3791 IN,2,150,"0,25–0,5 mm²",vstup nikdy na BAT
-W24,GPIO4 delič a tranzistory LED,8,150,"0,14 mm²",miestne prepojky
-W25,LED hlavného zdroja → GPIO11/GND,2,900,"0,14 mm²",rezistor 330 Ω pri ovládacom paneli
+W24,GPIO34 delič a tranzistory LED,8,150,"0,14 mm²",miestne prepojky
+W25,LED hlavného zdroja → GPIO27/GND,2,900,"0,14 mm²",rezistor 330 Ω pri ovládacom paneli

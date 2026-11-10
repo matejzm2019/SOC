@@ -13,8 +13,12 @@
 #ifndef WIFI_ENABLED
 #define WIFI_ENABLED 1
 #endif
-constexpr int MAIN_PIN=4,SW_A=5,SW_B=6,LED_A=7,LED_B=10,GRID_LED=11;
-constexpr int SIM_SUN=1,SIM_BAT=17,SIM_CURRENT=18;
+#if !defined(CONFIG_IDF_TARGET_ESP32)
+#error "Select ESP32 Dev Module for the photographed ESP-32D board (not ESP32-S3)."
+#endif
+// ADC1 GPIO34 remains available while Wi-Fi is active. Avoid flash and boot strapping pins.
+constexpr int MAIN_PIN=34,SW_A=32,SW_B=33,LED_A=25,LED_B=26,GRID_LED=27;
+constexpr int SIM_SUN=35,SIM_BAT=36,SIM_CURRENT=39;
 Adafruit_INA219 panelSensor(0x40),batterySensor(0x41);
 bool panelReady=false,batteryReady=false;
 float filteredVoltage=NAN;
@@ -46,7 +50,7 @@ void setup(){
   while(true)delay(1000);
  }
 #if !SIMULATED_SENSORS
- Wire.begin(8,9);panelReady=panelSensor.begin();batteryReady=batterySensor.begin();
+ Wire.begin(21,22);panelReady=panelSensor.begin();batteryReady=batterySensor.begin();
 #endif
 #if WIFI_ENABLED
  WiFi.mode(WIFI_STA);WiFi.begin(WIFI_SSID,WIFI_PASSWORD);lastWifiAttempt=millis();
@@ -61,7 +65,8 @@ void loop(){
  float panelV,panelA,panelW,batV=NAN,batA=NAN;
 #if SIMULATED_SENSORS
  const float sun=analogRead(SIM_SUN)/4095.0f;
- panelV=6.0f;panelA=.833f*sun;panelW=panelV*panelA;
+ // Synthetic 12 V / 1 W test profile, NOT the unknown real panel rating.
+ panelV=12.0f;panelW=1.0f*sun;panelA=panelW/panelV;
  batV=3.0f+1.2f*analogRead(SIM_BAT)/4095.0f;
  batA=(analogRead(SIM_CURRENT)/4095.0f-.5f)*1.0f;
 #else
@@ -78,7 +83,7 @@ void loop(){
  grid=mains;loads=loadStage;
  portEXIT_CRITICAL(&controlMux);
  JsonDocument doc;
- doc["device_id"]="energia-esp32";doc["firmware_version"]="0.7.0-controls";
+ doc["device_id"]="energia-esp32";doc["firmware_version"]="0.8.1-panel12";
  doc["telemetry_origin"]=SIMULATED_SENSORS?"software_test":"hardware";
  doc["panel_voltage_v"]=max(0.0f,panelV);doc["panel_current_a"]=max(0.0f,panelA);doc["panel_power_w"]=max(0.0f,panelW);
  doc["load_stage"]=loads;doc["grid_available"]=grid;
