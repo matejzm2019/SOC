@@ -1,4 +1,4 @@
-# ESP-32D / klasické ESP32 – firmvér 0.8.0-esp32d
+# ESP-32D / klasické ESP32 – firmvér 0.8.1-panel12
 
 Aktuálna doska je používateľova 38-pinová USB-C doska s modulom označeným ESP-32D. Nie je to ESP32-S3. Dva INA219, hlavný zdroj, dve svetelné vetvy a Wi-Fi telemetria pre FastAPI na PC. Pinová tabuľka: [ZAPOJENIE.md](../../docs/ZAPOJENIE.md).
 
@@ -15,3 +15,5 @@ I²C: GPIO21 SDA / GPIO22 SCL, panel 0x40, batéria 0x41, logické napájanie 3,
 Chýbajúci panelový merač zabráni odoslaniu vymyslených dát; chýbajúci batériový merač vynechá jeho hodnoty. Telemetria sa posiela každú sekundu. Prúd batérie je kladný pri nabíjaní. Percentá `voltage_estimate` sú orientačné, nemerajú kapacitu článku.
 
 `SIMULATED_SENSORS=1` používa náhradné ADC1 vstupy GPIO35/36/39; `WIFI_ENABLED=0` umožní iba Serial. Na skutočnú zostavu patria predvolené `SIMULATED_SENSORS=0` a `WIFI_ENABLED=1`. Firmvér nemá bežať v BenchTwin bez úprav FreeRTOS; na BenchTwin je samostatný sketch mimo projektu.
+
+Panel je označený 12 V; jeho výkon ani Voc nie sú potvrdené. INA219 meria skutočné napätie, vo firmvéri sa nenahrádza konštantou 12 V. API prijíma malé panely do 26 V / 20 W podľa jeho kontraktu, hardvér vyžaduje rezervu pod napäťovým limitom. Softvérová vetva SIMULATED_SENSORS má výslovne syntetický test 12 V / 1 W, nie odhad parametrov zakúpeného panela.

@@ -22,7 +22,7 @@ parts=[
 ('L01','Nosník strechy',2,316,10,10,'lišta','spája štíty a tvorí jeden kus strechy'),
 ('L02','Vodiaci doraz strechy',4,30,10,6,'lišta','vôľa aspoň 0,5–1 mm'),
 ('L03','Výstuha pod panelom',2,440,10,10,'lišta','pozdĺž strechy, pod prednou rovinou'),
-('L04','Montážna lišta panela',2,250,8,6,'lišta','na prednej rovine; klipy držia rám panela'),
+('L04','Montážna lišta panela',2,250,8,6,'lišta','predbežná dĺžka podľa obálky; upraviť podľa skutočného 12 V panela'),
 ('C01','Ovládací panel',1,100,40,4,'preglejka','X30 Y18 na 15 mm stĺpikoch; A/B Ø6; LED Ø3; závit over na skutočnom prepínači'),
 ]
 with (OUT/'rezaci-plan.csv').open('w',newline='',encoding='utf-8-sig') as f:
@@ -84,7 +84,7 @@ for image,x in [('dom-zatvoreny.jpg',16),('dom-strecha-odlozena.jpg',210)]:
  if p.exists():c.drawImage(str(p),x*mm,95*mm,width=195*mm,height=135*mm,preserveAspectRatio=True,mask='auto')
 line(75,'Podstava domu 600 × 450 × 8. Dom 480 × 330. Steny 120 vysoké, hrúbka 6. Priečky vysoké 100.')
 line(65,'Strecha: sklon 35°, dve roviny 504 × 230 × 4; štíty a dorazy sú súčasťou jedného odnímateľného kusu.')
-line(55,'Panel 230 × 195 × 17 je na streche. Celá zostava zostáva na podstave 600 × 450.')
+line(55,'12 V panel je na streche. Obrys 230 × 195 × 17 je predbežný; skutočný kus treba premerať.')
 line(45,'Panel upevni za kovový rám na lišty L04. Elektronické otvory prenes zo skutočných dosiek.')
 line(35,'SVG v priečinku vykresy sú 1:1; tento PDF prehľad nie je šablóna 1:1. Pred rezaním zmeraj hrúbku dosiek.')
 pageend(1)
@@ -120,7 +120,8 @@ line(43,'Napájanie neveď cez tenké Dupont kontakty. Tie používaj na signál
 pageend(4)
 heading('Zapojenie – rozhodujúce uzly','Úplná pinová tabuľka a poradie montáže sú v docs/ZAPOJENIE.md. Batéria sa nepripája priamo na panel ani LAB.')
 rows=[
-'Panel → INA219 0x40 → CN3791 IN. CN3791 variant 6 V nabíja jediný chránený 1S článok na 4,2 V.',
+'12 V panel → INA219 0x40 → CN3791 IN (12 V variant). Nabíja jediný chránený 1S článok na 4,2 V.',
+'Pred zapojením zmeraj Voc: INA219 max. 26 V, CN3791 max. 28 V; zachovať rezervu a overiť modul.',
 'CN3791 BAT+ a MT3608 IN+ tvoria batériový uzol → INA219 0x41 VIN+ → VIN− → plus batérie.',
 'INA219 meria čistý prúd celého článku. Všetky odbery/nabíjanie musia byť na strane uzla, nie mimo bočníka.',
 'MT3608 nastav na 5,00 V pred pripojením ESP32. Menovitý 2 A údaj nie je zaručený výstup pri 3,7 → 5 V.',
@@ -152,7 +153,7 @@ steps=[
 for i,t in enumerate(steps):line(245-i*13,t,10)
 line(70,'Bezpečné napätia sú iba DC vetvy modelu. Notebook a Wi-Fi router zostanú počas ukážky zapnuté.')
 line(58,'Aktuálny kusovník: docs/KOMPONENTY.md; popis celého systému a AI: docs/AKO-TO-FUNGUJE.md.')
-line(46,'Skrutky nesmú preniknúť do solárnych článkov. Panel s hmotnosťou cca 533 g zdvíhaj spolu so strechou.')
+line(46,'Uchytenie prispôsob skutočnému panelu; rozmery a hmotnosť 12 V kusa nie sú potvrdené.')
 pageend(6)
 heading('Doplnkové detaily fasády a strechy','Všetko sú jednoduché nalepené lišty; žiadny nábytok ani otváracie dvere.')
 y=250

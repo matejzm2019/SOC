@@ -1,6 +1,6 @@
 # Zapojenie a skúšky pred montážou
 
-Platí pre verziu 0.12.0-assistant: CN3791 + MT3608, chránená LiPo 104050 2 500 mAh, ESP32 (ESP-32D, 38-pinová USB-C doska z fotografie). Nepoužívaj starú schému s BQ24074/MAX17048.
+Platí pre verziu 0.12.0-assistant: 12 V solárny vstup → CN3791 pre 1S LiPo + MT3608, chránená LiPo 104050 2 500 mAh, ESP32 (ESP-32D, 38-pinová USB-C doska z fotografie). Nepoužívaj starú schému s BQ24074/MAX17048.
 
 ## Napájacie uzly
 
@@ -23,6 +23,20 @@ Všetky prevádzkové GND majú spoločnú referenciu.
 Batériový INA219 musí byť v ceste VŠETKÉHO prúdu do/z článku. CN3791 aj MT3608 sa pripájajú na strane VIN+, batéria na VIN−. Pripojenie boostu priamo na batériový plus mimo senzora by skreslilo čistý prúd. Používaj iba plus/mínus chránenej batérie s vyvedeným káblikom; neotváraj článok ani neobchádzaj jeho internú ochranu.
 
 Menič MT3608 sám nie je ochrana LiPo pred hlbokým vybitím. Článok musí mať funkčnú ochranu. Podľa údajov modulu pri nastavovaní meniča používaj malú skúšobnú záťaž; najprv meraj výstup, až potom pripájaj ESP. Hodnota 2 A pri meničoch sa nesmie zameniť za zaručený trvalý prúd na 5 V pri vybitom článku. Testuj s limitom a reálnym odberom.
+
+## Solárny panel označený 12 V
+
+Zatiaľ je potvrdený iba údaj **12 V**. Výkon, napätie naprázdno Voc, pracovný bod Vmp, rozmery ani konektor nepoznáme. Nepriraďuj mu automaticky 1,8 W, 5 W alebo rozmery iného panela z ponuky. Nový panel sa neobjednáva.
+
+Vyber **CN3791 – variant 12 V**, stále pre jednu chránenú LiPo 3,7 V / plne nabitú 4,2 V. Techfun tým označuje optimalizáciu pre solárny vstup, nie 12 V batériu. CN3791 používa pevný MPPT bod nastavený deličom; ak označenie panela 12 V znamená napr. pracovných 18 V, pre optimálny zisk treba doladiť MPPT podľa skutočného Vmp. Samotný názov variantu nepotvrdzuje presnú zhodu.
+
+Pred prvým pripojením:
+
+1. Panel nechaj odpojený od elektroniky. Multimeter nastav na jednosmerné napätie s rozsahom nad očakávanou hodnotou, napr. 60/200 V DC; káble patria do COM a V, nie do prúdového vstupu. Zmeraj plus/mínus panela pod najsilnejším zamýšľaným osvetlením. Znamienko určí aj polaritu.
+2. Zaznamenaj Voc. Panelový INA219 môže mať na VIN+/VIN− najviac 26 V; tento limit platí aj pri vypnutom ESP. CN3791 má podľa datasheetu vstup 4,5–28 V, konkrétny modul môže mať nižší limit. V celej solárnej vetve platí najnižší limit a musí zostať rezerva. Ak nameriaš 24 V alebo viac, panel zatiaľ nepripájaj; treba preveriť maximálne Voc a zmeniť diely podľa potreby. 24 V je konzervatívna hranica prvého testu, nie nový limit senzora. Jedno meranie v teple nezaručuje bezpečnosť pri zimnom chlade; vonkajšiu prevádzku over podľa parametrov panela.
+3. Pred LiPo over nabíjací limit dosky. Vyššie vstupné napätie neznamená vhodný prúd pre článok: menič vie previesť výkon na väčší batériový prúd. RCS určuje I = 0,120 V / RCS. Hodnota 4 A MAX nie je pokyn pre tento článok; príklad 0,5 A / 0,24 Ω sa smie použiť až po potvrdení dovoleného prúdu batérie a vhodného rezistora.
+
+Panel sa zapája výhradne cez INA_PANEL do **IN+/IN− CN3791**. Batériová a 5 V vetva, hlavný zdroj 5 V aj GPIO zostávajú podľa schémy. MT3608 patrí za batériu, nie medzi 12 V panel a ESP. Na panel nepripájaj priamo LiPo, 5 V LED, ESP ani 470 µF / 16 V kondenzátor. Tento kondenzátor zostáva na BACKUP_5V.
 
 ## GPIO a meranie
 
@@ -51,14 +65,14 @@ Doska 100 × 40 × 4 mm je na štyroch 15 mm stĺpikoch, spodok Z23 a vrch Z27. 
 
 ## Panel na odnímateľnej streche
 
-Panel 230 × 195 × 17 mm je na prednej rovine 35°. Dve lišty L04 a štyri príchytky držia kovový rám, nie články. Pod strešnou rovinou sú výstuhy L03. Nevŕtaj cez panel a skrutky neťahaj do jeho zadnej fólie. Panel má približne 533 g; strechu zdvíhaj za rám oboma rukami.
+Existujúci 12 V panel patrí na prednú strešnú rovinu 35°. Obálka 230 × 195 × 17 mm a lišty L04 v 3D modeli sú iba pôvodná priestorová rezerva; rozmery ani hmotnosť skutočného panela nie sú známe. Úchyty a otvory premeraj pred rezaním. Pod strešnou rovinou zostávajú výstuhy L03. Nevŕtaj články ani zadnú fóliu, strechu zdvíhaj za drevený rám.
 
 W18 sú dva vodiče po 650 mm vrátane pôvodného kábla panela. Nechaj aspoň 200 mm voľnú servisnú slučku, odľahčenie ťahu a označený rozpojiteľný konektor SOLÁR. Pôvodný konektor panela zachovaj, typ a polaritu over na dodanom kuse. Pred úplným odložením strechy konektor rozpoj. Kábel nesmie byť zovretý medzi stenou a strechou.
 
 ## Úplné prednabitie batérie
 
 1. Vypni model, odpoj MT3608 aj všetky iné záťaže od batériového uzla. ESP sa pri tom vypne.
-2. Odpoj panel od vstupu CN3791. LAB nastav samostatne na vhodné napätie pre variant 6 V, typicky s malou rezervou nad jeho MPPT bodom; konkrétnu hodnotu a prúd over podľa dodanej dosky. Nenastavuj týmto napätím súčasne hlavnú 5 V vetvu domu.
+2. Odpoj panel od vstupu CN3791. LAB nastav samostatne podľa skutočného MPPT bodu 12 V variantu; pri overenom MPPT bode 12 V môže ísť napr. o 13–14 V. Over limit dosky a prúd. Táto hodnota platí iba pre vstup nabíjačky, nikdy pre priamy článok alebo 5 V vetvu. Nenastavuj týmto napätím súčasne hlavnú 5 V vetvu domu.
 3. LAB zapoj iba na IN+/IN− nabíjačky. Batéria zostáva na BAT cez INA219. Nie je pripojená priamo na LAB.
 4. Pred pripojením článku over nabíjací limit podľa jeho datasheetu; prípadnú zmenu RCS urob s učiteľom. Techfun údaj 4 A MAX nie je vhodný návod na nastavenie.
 5. Po dobití odpoj nabíjací LAB, nastav hlavný zdroj späť na 5,0 V, obnov panel a až potom záťaže. Nedobíjaj celý model z náhodne nastaveného laboratórneho výstupu.

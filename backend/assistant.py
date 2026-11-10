@@ -78,10 +78,10 @@ def facts_for(state, history, forecast):
             add("Koniec najlepšieho hodinového intervalu FV", best["timestamp"], forecast["model"])
         add("Odhad spotreby počas výhľadu", f'{sum(p["load_w"] for p in points) / 1000:.2f} kWh', forecast["model"])
     add("Úloha ESP32", "Meria panel a batériu dvoma INA219 cez I²C, sleduje hlavný zdroj, spína LED cez výkonové prvky. Cez Wi-Fi komunikuje s FastAPI na PC; AI Ollama beží na PC, nie na ESP32.", "návrh systému")
-    add("Napájanie fyzického modelu", "Hlavný zdroj napája LED. Pri výpadku relé prepne LED na 5 V menič MT3608 z chránenej LiPo. ESP32 zostáva na meničovom výstupe. CN3791 nabíja batériu zo soláru. Percentá sú orientačný odhad z napätia, nie meranie skutočnej kapacity.", "návrh systému")
+    add("Napájanie fyzického modelu", "Hlavný zdroj napája LED. Pri výpadku relé prepne LED na 5 V menič MT3608 z chránenej LiPo. ESP32 zostáva na meničovom výstupe. CN3791 variant 12 V nabíja jednu LiPo 3,7/4,2 V z panela označeného 12 V. Výkon, Voc a rozmery tohto panela nie sú potvrdené. INA219 má elektrický limit 26 V; pred zapojením sa musí overiť Voc s rezervou. Kondenzátor 470 µF/16 V patrí iba na 5 V vetvu. Percentá sú orientačný odhad z napätia, nie meranie skutočnej kapacity.", "návrh systému")
     if sample.get("telemetry_origin") == "software_test":
         add("Zdroj telemetrie", "TESTOVACIE SOFTVÉROVÉ ÚDAJE, nie meranie fyzického hardvéru.", "systém")
-    add("Konštrukcia domu", "Podstava 600 × 450 mm, dom 480 × 330 mm, celé steny a strecha odnímateľná v jednom kuse. Bez nábytku. Panel 230 × 195 mm je na prednej strešnej rovine so sklonom 35°. Strecha sa odníma spolu s panelom; pred úplným odložením sa rozpojí jeho dvojpinový konektor.", "výrobný návrh")
+    add("Konštrukcia domu", "Podstava 600 × 450 mm, dom 480 × 330 mm, celé steny a strecha odnímateľná v jednom kuse. Bez nábytku. Existujúci 12 V panel je na prednej strešnej rovine so sklonom 35°; obrys 230 × 195 mm v modeli je iba rezerva, skutočné rozmery nie sú potvrdené. Strecha sa odníma spolu s panelom; pred úplným odložením sa rozpojí jeho dvojpinový konektor.", "výrobný návrh")
     add("Softvérové demo", "Simulácia spracovaná na notebooku, ktorá nepotrebuje fyzický hardvér.", "návrh systému")
     if settings["battery_enabled"] and not settings["demo_mode"]:
         add("Nastavená kapacita malej batérie", f'{settings["battery_capacity_mah"]} mAh', "používateľské nastavenie; nie meranie kapacity")

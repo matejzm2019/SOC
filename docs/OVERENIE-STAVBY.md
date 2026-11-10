@@ -36,3 +36,13 @@ Fotografia používateľa potvrdzuje 38-pinovú USB-C dosku s modulom ESP-32D (k
 - GPIO34 je ADC1 pre hlavný zdroj (delič 22 kΩ/10 kΩ); prepínače 32/33, LED 25/26, indikácia 27, I²C 21/22. GPIO6–11 sa nepoužívajú. Náhradné ADC softvérového testu sú 35/36/39.
 - Zapojenie, kusovník, PDF, vodiče, generátory, aplikácia, Blender/GLB/STL aj náhľady sú aktualizované. Obe kópie model.json sú zhodné; zostalo 395 objektov a podstava 600 × 450 mm. Obálka ESP 70 × 32 mm je montážna rezerva, nie meranie konkrétnej dosky.
 - BC547BBK je vhodný pre cca 15–20 mA na vetvu troch malých LED s vlastnými 330 Ω. Kondenzátor 470 µF / 16 V je na 5 V vetve dostatočný. Poradie C/B/E, polarita, stabilita napájania a reálny nabíjací prúd sa overujú na fyzických dieloch. Firmvér tu nebol nahraný do používateľovej dosky.
+
+## Solárny vstup označený 12 V – 10. 11. 2026
+
+Používateľ pozná iba údaj 12 V; výkon, Voc, Vmp, hmotnosť, konektor ani rozmery nie sú potvrdené. Existujúci panel sa nekupuje znova, 3D obrys 230 × 195 × 17 mm zostáva výslovne predbežný. Geometria sa pri tejto zmene nemenila; exporty majú aktualizovaný názov CN3791 12 V a JSON metadata o nepotvrdených rozmeroch/výkone. Doterajšie náhľady zobrazujú tú istú priestorovú rezervu.
+
+- Techfun CN3791: variant 12 V, 4,40 €, pri čítaní dát variantov 2 ks skladom. MT3608 0,85–0,95 €, INA219 4,50 €/ks, LOW-trigger relé 5 V 1,40 €. Súčet štyroch hlavných položiek vrátane dvoch senzorov je 15,65–15,75 €; bez dopravy a drobností. Diely sa objednávajú iba ak ich používateľ ešte nemá.
+- Datasheet CN3791 potvrdzuje 1S/4,2 V, vstup 4,5–28 V, pevný MPPT delič s referenciou 1,205 V a I = 0,120 V / RCS. TI INA219 potvrdzuje elektrický limit 26 V, aj keď register umožňuje 32 V rozsah. V návrhu platí najnižší limit modulu s rezervou. Skutočné Voc ani nabíjací prúd neboli merané.
+- **85 testov prešlo, 1 Windows test preskočený na Linuxe**. Nová skúška prijíma skutočných 12 V aj 22 V, bez nahradenia konštantou, a odmieta 26,1 V podľa API limitu. Dve upozornenia testovacích knižníc zostávajú. API validácia nenahrádza elektrickú ochranu senzora.
+- Produkčný firmvér 0.8.1-panel12 zostavený Arduino CLI 1.5.1 / core 3.3.12 pre esp32:esp32:esp32: **1 063 372 B programu / 50 424 B RAM**. Softvérový test má výslovne syntetický profil 12 V / 1 W, nie vymyslený údaj o reálnom paneli. Skutočný firmvér meria hodnoty INA219.
+- Aktualizovaný nákupný a montážny návod, PDF, pevné 5 V vetvy, význam kondenzátora 16 V, návod BenchTwin, vysvetlenie kalibrácie a faktický kontext AI. Nabíjačka, batéria, fyzické prepnutie ani celý BenchTwin obvod tu neboli vykonané na používateľových dieloch.

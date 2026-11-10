@@ -42,9 +42,21 @@ def test_lighting_only_api(tmp_path,monkeypatch):
   assert c.post('/api/device/telemetry',json=BASE|{'water':{}},headers={'X-Device-Key':'house-key'}).status_code==422
 
 
+def test_nominal_12v_panel_accepts_actual_voltage_and_keeps_electrical_limit(tmp_path,monkeypatch):
+ monkeypatch.setenv('SOC_OFFLINE','1')
+ with TestClient(create_app(tmp_path/'panel12.sqlite3','panel12-key')) as c:
+  for voltage in (12.0,22.0):
+   data=BASE|dict(panel_voltage_v=voltage,panel_power_w=voltage*.03)
+   assert Esp32Telemetry(**data).panel_voltage_v==voltage
+   assert c.post('/api/device/telemetry',json=data,headers={'X-Device-Key':'panel12-key'}).status_code==200
+  assert c.post('/api/device/telemetry',json=BASE|dict(panel_voltage_v=26.1),headers={'X-Device-Key':'panel12-key'}).status_code==422
+
+
 def test_manufacturing_geometry_matches_cutting_list():
  asset=json.loads((ROOT/'frontend/house/model.json').read_text())
  assert asset['units']=='mm' and asset['base']==[600,450,8]
+ assert asset['panel_nominal_voltage_v']==12 and asset['panel_dimensions_confirmed'] is False
+ assert asset['panel_rated_power_w'] is None
  assert (ROOT/'frontend/house/model.json').read_bytes()==(ROOT/'model-domu/3d/model.json').read_bytes()
  base=next(m for m in asset['meshes'] if m['name'].startswith('P01'))
  for axis,size in enumerate([600,450,8]):

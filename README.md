@@ -12,7 +12,7 @@ Na model sa privádza iba nízke DC napätie. Laboratórny zdroj môže mať sie
 
 ## Aktuálna stavba: smart dom s odnímateľnou strechou
 
-Verzia **0.12.0-assistant**: celé steny, bez nábytku, podstava 600 × 450 mm, dom 480 × 330 mm. Malé moduly CN3791 a MT3608, LiPo 2500 mAh, dva INA219, automatické prepnutie LED pri výpadku; panel 230 × 195 mm priamo na streche so sklonom 35°. AI zostáva na PC/serveri cez Ollamu, ESP komunikuje cez Wi-Fi.
+Verzia **0.12.0-assistant**: celé steny, bez nábytku, podstava 600 × 450 mm, dom 480 × 330 mm. Malé moduly CN3791 a MT3608, LiPo 2500 mAh, dva INA219, automatické prepnutie LED pri výpadku; existujúci 12 V panel priamo na streche so sklonom 35° (rozmery a výkon nepotvrdené). AI zostáva na PC/serveri cez Ollamu, ESP komunikuje cez Wi-Fi.
 
 - **[Stavebný návod PDF](model-domu/STAVEBNY-NAVOD.pdf)**, [rezací plán](model-domu/rezaci-plan.csv), [vodiče](model-domu/dlzky-vodicov.csv) a [detaily fasády](model-domu/detaily-fasady.csv).
 - **[3D Blender](model-domu/3d/dom.blend)**, [GLB](model-domu/3d/dom.glb), [pôdorys](model-domu/vykresy/podorys.svg), šablóny dielov 1:1 v model-domu/vykresy/.
@@ -61,6 +61,8 @@ py -3 -m venv .venv
 ```
 
 ## ESP32 (ESP-32D) a fyzický model
+
+**Solár je 12 V:** [aktuálna objednávka, limity a postup](docs/PANEL-12V-A-OBJEDNAVKA.md). CN3791 zvoliť 12 V pre jednu LiPo; 5 V vetvy sa nemenia. Rozmer panela v 3D je zatiaľ iba rezerva.
 
 Aktualizácia 10. 11. 2026: doska z fotografie nahrádza pôvodné S3. Použi aktuálnu pinovú tabuľku a Arduino **ESP32 Dev Module**, PSRAM vypnutú. BC547BBK a 470 µF / 16 V zo zásob sú pre túto zostavu vhodné.
 

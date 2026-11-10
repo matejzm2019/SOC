@@ -6,7 +6,7 @@ Verzia 0.12.0-assistant, 8. 11. 2026. SOČ je funkčný nízkonapäťový model 
 
 ```mermaid
 flowchart LR
- P[Solár] --> C[CN3791 nabíjanie]
+ P["12 V solár, parametre overiť"] --> C["CN3791 12 V vstup, 1S LiPo"]
  C --> B[Chránená LiPo 2500 mAh]
  B --> M[MT3608 záložných 5 V]
  L[LAB 5 V] --> R[Prepínacie relé LED]
@@ -40,7 +40,7 @@ Notebook a router neodpájaj pri ukážke vypnutia laboratórnej vetvy. Keď sa 
 
 ## Strecha s panelom
 
-Panel je priamo na prednej strešnej rovine so sklonom 35°. Celá strecha vrátane panela a líšt sa zdvihne ako jeden kus. Pred úplným odložením sa rozpojí označený konektor. Všetky LED, ESP a batéria ostávajú v pevnej časti domu. Rozmer podstavy zostáva 600 × 450 mm.
+Existujúci panel označený 12 V je na prednej strešnej rovine so sklonom 35°. Jeho výkon, Voc a rozmery nie sú potvrdené; obrys v 3D je predbežný. Celá strecha vrátane panela a líšt sa zdvihne ako jeden kus. Pred úplným odložením sa rozpojí označený konektor. Všetky LED, ESP a batéria ostávajú v pevnej časti domu. Rozmer podstavy zostáva 600 × 450 mm.
 
 ## AI a server – konkrétne spustenie
 
@@ -65,3 +65,5 @@ AI dostáva vybrané systémové fakty, dostupné merania a pôvod údajov. Vysv
 - `firmware/esp32/`: aktuálny firmvér s lokálnou obsluhou LED a dvoma INA219.
 
 Návod BENCHTWIN-NAVOD.txt a kompatibilný skúšobný sketch sú v samostatnom priečinku SOC-simulacia vedľa projektu. BenchTwin nepodporuje FreeRTOS úlohy produkčného firmvéru; samostatný sketch overuje ovládanie a elektrické zapojenie podľa návodu.
+
+Aktuálny nákup a solárne limity: [PANEL-12V-A-OBJEDNAVKA.md](PANEL-12V-A-OBJEDNAVKA.md).
