@@ -13,7 +13,7 @@ flowchart LR
  M --> R
  R --> LED[Svetlá domu]
  M --> E["ESP32 / ESP-32D"]
- I[Dva INA219, prepínače] --> E
+ I[Dva INA3221, prepínače] --> E
  E <-->|Wi-Fi / HTTP JSON| S[PC: FastAPI + SQLite]
  S <-->|iba lokálne na PC| AI[Ollama + Qwen]
  WEB[Webová aplikácia: PC / mobil] <-->|LAN| S
@@ -26,7 +26,7 @@ flowchart LR
 
 ## Meranie a model sú rozlíšené
 
-Dva INA219 merajú malý panel a čistý prúd/napätie článku. Kladný batériový prúd znamená nabíjanie, záporný vybíjanie. Percentá sú hrubý odhad zo všeobecnej napäťovej krivky LiPo; nie je to fuel gauge ani test skutočnej kapacity. Pri nabíjaní môže odhad nadhodnocovať a pri záťaži podhodnocovať. Hodnota 2 500 mAh je údaj zo štítku. Skutočná využiteľná kapacita vyžaduje kontrolované vybíjanie s integráciou prúdu a odpojením na stanovenej hranici.
+Dva INA3221 merajú malý panel a čistý prúd/napätie článku. Kladný batériový prúd znamená nabíjanie, záporný vybíjanie. Percentá sú hrubý odhad zo všeobecnej napäťovej krivky LiPo; nie je to fuel gauge ani test skutočnej kapacity. Pri nabíjaní môže odhad nadhodnocovať a pri záťaži podhodnocovať. Hodnota 2 500 mAh je údaj zo štítku. Skutočná využiteľná kapacita vyžaduje kontrolované vybíjanie s integráciou prúdu a odpojením na stanovenej hranici.
 
 Veľké výkony domu v kW, import/export a virtuálna domáca batéria sú výpočtový model. Malý článok fyzicky napája LED a ESP, nie kilowattový dom. Fyzické svetlá sa ovládajú dvoma prepínačmi A/B na vyvýšenom paneli vľavo vpredu; 3D model ukazuje ich hlásený stav. Spotreba jednotlivých miestností sa nemerajú.
 
@@ -62,8 +62,10 @@ AI dostáva vybrané systémové fakty, dostupné merania a pôvod údajov. Vysv
 - `model-domu/vykresy/`: SVG šablóny 1:1 a pôdorys.
 - `docs/KOMPONENTY.md`: jednotný kusovník a známe otvorené položky.
 - `docs/ZAPOJENIE.md`: pinová tabuľka, vodiče, kontrolné merania a skúšky.
-- `firmware/esp32/`: aktuálny firmvér s lokálnou obsluhou LED a dvoma INA219.
+- `firmware/esp32/`: aktuálny firmvér s lokálnou obsluhou LED a dvoma INA3221.
 
 Návod BENCHTWIN-NAVOD.txt a kompatibilný skúšobný sketch sú v samostatnom priečinku SOC-simulacia vedľa projektu. BenchTwin nepodporuje FreeRTOS úlohy produkčného firmvéru; samostatný sketch overuje ovládanie a elektrické zapojenie podľa návodu.
 
 Aktuálny nákup a solárne limity: [PANEL-12V-A-OBJEDNAVKA.md](PANEL-12V-A-OBJEDNAVKA.md).
+
+Jediný celý nákupný zoznam: [KOMPONENTY.md](KOMPONENTY.md). Každý INA3221 používa CH1 a vlastný kladný merací vstup; podrobnosti [INA3221.md](INA3221.md).

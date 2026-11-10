@@ -42,3 +42,5 @@ Obnova modelu: blender -b --python tools/build_house.py. PDF a šablóny: python
 Aktuálna doska: ESP-32D (klasické ESP32) z fotografie používateľa. Model rezervuje obálku 70 × 32 mm; skutočné rozmery a otvory dosky premeraj pred vŕtaním. Zapojenie je v docs/ZAPOJENIE.md, firmvér v firmware/esp32/. Použité tranzistory BC547B a kondenzátor 470 µF / 16 V sú zahrnuté v aktuálnom kusovníku.
 
 Uchytenie L04, klipy a konektor panela prispôsob až po zmeraní 12 V kusa. Elektrická objednávka: docs/PANEL-12V-A-OBJEDNAVKA.md.
+
+Meranie: dva INA3221 CH1; obálky po 40 × 40 mm sú návrhové rezervy. PANEL X489/Y302, BAT X489/Y346; relé X435/Y349. Skutočné dosky premerať. Jediný celý zoznam je docs/KOMPONENTY.md.

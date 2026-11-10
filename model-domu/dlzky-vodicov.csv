@@ -1,8 +1,8 @@
 ﻿ID,spoj,pocet_vodicov,dlzka_jedneho_mm,prierez,poznamka
 W01,LAB +5 V → hlavný rozvod,1,600,"0,5 mm²",červený
 W02,LAB GND → spoločná zem,1,600,"0,5 mm²",čierny
-W03,Batéria → INA219 0x41,2,150,"0,25–0,5 mm²","PH2.0 adaptér, polaritu zmerať"
-W04,INA219 → batériový uzol,1,120,"0,25–0,5 mm²",červený
+W03,Batéria → INA3221 0x41,2,150,"0,25–0,5 mm²","PH2.0 adaptér, polaritu zmerať"
+W04,INA3221 → batériový uzol,1,120,"0,25–0,5 mm²",červený
 W05,CN3791 BAT → batériový uzol,2,150,"0,25–0,5 mm²",pár + / GND
 W06,Batériový uzol → MT3608 cez servisnú prepojku,2,150,"0,25–0,5 mm²",odpoj na úplné prednabitie
 W07,MT3608 5 V → relé NC,1,150,"0,25–0,5 mm²",červený
@@ -14,9 +14,9 @@ W12,Rozvod 3 LED B na stene,2,300,"0,14 mm²",každá LED vlastný 330 Ω
 W13,Prepínač A → GPIO32/GND,2,900,"0,14 mm²",signálový pár
 W14,Prepínač B → GPIO33/GND,2,900,"0,14 mm²",signálový pár
 W15,MT3608 → ESP napájací USB-C kábel,1,200,hotový kábel,iba overených 5 V
-W16,I²C ESP → INA219 0x40,4,180,"0,14 mm²",3V3 GND SDA SCL
-W17,I²C INA219 0x40 → 0x41,4,100,"0,14 mm²",3V3 GND SDA SCL
-W18,Panel na streche → INA219,2,650,"0,25–0,5 mm²",vrátane pôvodného kábla; 200 mm servisná slučka a rozpojiteľný konektor
-W19,Panelový INA219 → CN3791 IN,2,150,"0,25–0,5 mm²",vstup nikdy na BAT
+W16,I²C ESP → INA3221 0x40,4,180,"0,14 mm²",3V3 GND SDA SCL
+W17,I²C INA3221 0x40 → 0x41,4,100,"0,14 mm²",3V3 GND SDA SCL
+W18,Panel na streche → INA3221,2,650,"0,25–0,5 mm²",vrátane pôvodného kábla; 200 mm servisná slučka a rozpojiteľný konektor
+W19,Panelový INA3221 → CN3791 IN,2,150,"0,25–0,5 mm²",vstup nikdy na BAT
 W24,GPIO34 delič a tranzistory LED,8,150,"0,14 mm²",miestne prepojky
 W25,LED hlavného zdroja → GPIO27/GND,2,900,"0,14 mm²",rezistor 330 Ω pri ovládacom paneli

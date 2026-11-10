@@ -42,7 +42,7 @@ def facts_for(state, history, forecast):
         if settings["battery_enabled"] and sample["soc_pct"] is not None and (settings["demo_mode"] or sample.get("battery_voltage_v") is not None):
             add("Odhad nabitia malej batérie" if sample.get("battery_voltage_v") is not None else "Modelovaný stav batérie", f'{sample["soc_pct"]:.0f} %', quality)
         if sample.get("battery_voltage_v") is not None:
-            add("Napätie malej batérie", f'{sample["battery_voltage_v"]:.2f} V', "ESP32 · INA219" if sample.get("battery_soc_method")=="voltage_estimate" else "ESP32 · MAX17048")
+            add("Napätie malej batérie", f'{sample["battery_voltage_v"]:.2f} V', "ESP32 · INA3221" if sample.get("battery_soc_method")=="voltage_estimate" else "ESP32 · MAX17048")
     totals = history.get("totals", {})
     if totals.get("load_kwh") is not None:
         add("Spotreba v zobrazenom poslednom dni", f'{totals["load_kwh"]:.2f} kWh', quality)
@@ -77,8 +77,8 @@ def facts_for(state, history, forecast):
             best = max(points, key=lambda p: p["pv_w"])
             add("Koniec najlepšieho hodinového intervalu FV", best["timestamp"], forecast["model"])
         add("Odhad spotreby počas výhľadu", f'{sum(p["load_w"] for p in points) / 1000:.2f} kWh', forecast["model"])
-    add("Úloha ESP32", "Meria panel a batériu dvoma INA219 cez I²C, sleduje hlavný zdroj, spína LED cez výkonové prvky. Cez Wi-Fi komunikuje s FastAPI na PC; AI Ollama beží na PC, nie na ESP32.", "návrh systému")
-    add("Napájanie fyzického modelu", "Hlavný zdroj napája LED. Pri výpadku relé prepne LED na 5 V menič MT3608 z chránenej LiPo. ESP32 zostáva na meničovom výstupe. CN3791 variant 12 V nabíja jednu LiPo 3,7/4,2 V z panela označeného 12 V. Výkon, Voc a rozmery tohto panela nie sú potvrdené. INA219 má elektrický limit 26 V; pred zapojením sa musí overiť Voc s rezervou. Kondenzátor 470 µF/16 V patrí iba na 5 V vetvu. Percentá sú orientačný odhad z napätia, nie meranie skutočnej kapacity.", "návrh systému")
+    add("Úloha ESP32", "Meria panel a batériu dvoma INA3221 cez I²C, sleduje hlavný zdroj, spína LED cez výkonové prvky. Cez Wi-Fi komunikuje s FastAPI na PC; AI Ollama beží na PC, nie na ESP32.", "návrh systému")
+    add("Napájanie fyzického modelu", "Hlavný zdroj napája LED. Pri výpadku relé prepne LED na 5 V menič MT3608 z chránenej LiPo. ESP32 zostáva na meničovom výstupe. CN3791 variant 12 V nabíja jednu LiPo 3,7/4,2 V z panela označeného 12 V. Výkon, Voc a rozmery tohto panela nie sú potvrdené. Vybraný modul INA3221 má limit prúdu 1,1 A v oboch smeroch a čip napätia 26 V; pred zapojením sa musí overiť Voc s rezervou. Kondenzátor 470 µF/16 V patrí iba na 5 V vetvu. Percentá sú orientačný odhad z napätia, nie meranie skutočnej kapacity.", "návrh systému")
     if sample.get("telemetry_origin") == "software_test":
         add("Zdroj telemetrie", "TESTOVACIE SOFTVÉROVÉ ÚDAJE, nie meranie fyzického hardvéru.", "systém")
     add("Konštrukcia domu", "Podstava 600 × 450 mm, dom 480 × 330 mm, celé steny a strecha odnímateľná v jednom kuse. Bez nábytku. Existujúci 12 V panel je na prednej strešnej rovine so sklonom 35°; obrys 230 × 195 mm v modeli je iba rezerva, skutočné rozmery nie sú potvrdené. Strecha sa odníma spolu s panelom; pred úplným odložením sa rozpojí jeho dvojpinový konektor.", "výrobný návrh")

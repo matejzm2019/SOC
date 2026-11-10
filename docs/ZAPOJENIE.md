@@ -5,10 +5,10 @@ Platí pre verziu 0.12.0-assistant: 12 V solárny vstup → CN3791 pre 1S LiPo +
 ## Napájacie uzly
 
 ```text
-PANEL + → INA219 0x40 VIN+ → VIN− → CN3791 IN+
+PANEL + → INA3221 0x40 IN1+ → IN1− → CN3791 IN+
 PANEL − ──────────────────────────→ CN3791 IN− / GND
 
-CN3791 BAT+ ──┬── BATÉRIOVÝ UZOL + ── INA219 0x41 VIN+ → VIN− → LiPo +
+CN3791 BAT+ ──┬── BATÉRIOVÝ UZOL + ── INA3221 0x41 IN1+ → IN1− → LiPo +
 MT3608 IN+ ───┘
 LiPo −, CN3791 BAT−, MT3608 IN− → spoločná GND chránenej strany článku
 
@@ -20,7 +20,7 @@ relé COM ── dve LED vetvy
 Všetky prevádzkové GND majú spoločnú referenciu.
 ```
 
-Batériový INA219 musí byť v ceste VŠETKÉHO prúdu do/z článku. CN3791 aj MT3608 sa pripájajú na strane VIN+, batéria na VIN−. Pripojenie boostu priamo na batériový plus mimo senzora by skreslilo čistý prúd. Používaj iba plus/mínus chránenej batérie s vyvedeným káblikom; neotváraj článok ani neobchádzaj jeho internú ochranu.
+Batériový INA3221 musí byť v ceste VŠETKÉHO prúdu do/z článku. CN3791 aj MT3608 sa pripájajú na strane IN1+, batéria na IN1−. Pripojenie boostu priamo na batériový plus mimo senzora by skreslilo čistý prúd. Používaj iba plus/mínus chránenej batérie s vyvedeným káblikom; neotváraj článok ani neobchádzaj jeho internú ochranu.
 
 Menič MT3608 sám nie je ochrana LiPo pred hlbokým vybitím. Článok musí mať funkčnú ochranu. Podľa údajov modulu pri nastavovaní meniča používaj malú skúšobnú záťaž; najprv meraj výstup, až potom pripájaj ESP. Hodnota 2 A pri meničoch sa nesmie zameniť za zaručený trvalý prúd na 5 V pri vybitom článku. Testuj s limitom a reálnym odberom.
 
@@ -33,7 +33,7 @@ Vyber **CN3791 – variant 12 V**, stále pre jednu chránenú LiPo 3,7 V / plne
 Pred prvým pripojením:
 
 1. Panel nechaj odpojený od elektroniky. Multimeter nastav na jednosmerné napätie s rozsahom nad očakávanou hodnotou, napr. 60/200 V DC; káble patria do COM a V, nie do prúdového vstupu. Zmeraj plus/mínus panela pod najsilnejším zamýšľaným osvetlením. Znamienko určí aj polaritu.
-2. Zaznamenaj Voc. Panelový INA219 môže mať na VIN+/VIN− najviac 26 V; tento limit platí aj pri vypnutom ESP. CN3791 má podľa datasheetu vstup 4,5–28 V, konkrétny modul môže mať nižší limit. V celej solárnej vetve platí najnižší limit a musí zostať rezerva. Ak nameriaš 24 V alebo viac, panel zatiaľ nepripájaj; treba preveriť maximálne Voc a zmeniť diely podľa potreby. 24 V je konzervatívna hranica prvého testu, nie nový limit senzora. Jedno meranie v teple nezaručuje bezpečnosť pri zimnom chlade; vonkajšiu prevádzku over podľa parametrov panela.
+2. Zaznamenaj Voc. Panelový INA3221 môže mať na IN1+/IN1− najviac 26 V; tento limit platí aj pri vypnutom ESP. CN3791 má podľa datasheetu vstup 4,5–28 V, konkrétny modul môže mať nižší limit. V celej solárnej vetve platí najnižší limit a musí zostať rezerva. Ak nameriaš 24 V alebo viac, panel zatiaľ nepripájaj; treba preveriť maximálne Voc a zmeniť diely podľa potreby. 24 V je konzervatívna hranica prvého testu, nie nový limit senzora. Jedno meranie v teple nezaručuje bezpečnosť pri zimnom chlade; vonkajšiu prevádzku over podľa parametrov panela.
 3. Pred LiPo over nabíjací limit dosky. Vyššie vstupné napätie neznamená vhodný prúd pre článok: menič vie previesť výkon na väčší batériový prúd. RCS určuje I = 0,120 V / RCS. Hodnota 4 A MAX nie je pokyn pre tento článok; príklad 0,5 A / 0,24 Ω sa smie použiť až po potvrdení dovoleného prúdu batérie a vhodného rezistora.
 
 Panel sa zapája výhradne cez INA_PANEL do **IN+/IN− CN3791**. Batériová a 5 V vetva, hlavný zdroj 5 V aj GPIO zostávajú podľa schémy. MT3608 patrí za batériu, nie medzi 12 V panel a ESP. Na panel nepripájaj priamo LiPo, 5 V LED, ESP ani 470 µF / 16 V kondenzátor. Tento kondenzátor zostáva na BACKUP_5V.
@@ -47,13 +47,28 @@ Panel sa zapája výhradne cez INA_PANEL do **IN+/IN− CN3791**. Batériová a 
 | 33 | prepínač B medzi GPIO a GND | LOW = svetlá B zapnuté |
 | 25 | 1 kΩ do bázy BC547B vetvy A | každá báza aj 10 kΩ na GND |
 | 26 | 1 kΩ do bázy BC547B vetvy B | rovnaké zapojenie |
-| 21 | SDA oboch INA219 | logické napájanie senzorov 3,3 V |
-| 22 | SCL oboch INA219 | adresy 0x40 a 0x41 |
+| 21 | SDA oboch INA3221 | logické napájanie senzorov 3,3 V |
+| 22 | SCL oboch INA3221 | adresy 0x40 a 0x41 |
 | 27 | rezistor 330 Ω, modrá LED na GND | indikácia prítomnosti hlavného zdroja |
 
 Prepínače sú na paneli C01 vľavo vpredu (X30/Y18), kontakty do GND s interným INPUT_PULLUP na 3,3 V. Pri 900 mm vedení možno doplniť 10 kΩ pull-up na 3,3 V pri ESP. Samostatná úloha vzorkuje každých 10 ms a prijme zmenu až po 30 ms stabilného kontaktu; funguje bez servera. Modrá LED GPIO27 je na tom istom paneli cez 330 Ω. Na GPIO neprivádzaj 5 V. GPIO6–11 sú vyhradené pre flash; nepripájaj k nim svetlá ani prepínače. GPIO34 je vstup ADC1, funguje aj pri zapnutej Wi-Fi. Čísla GPIO sú popisy na doske, nie poradie kontaktov.
 
-Oba INA219 napájaj 3,3 V, nikdy cez 5 V pull-up na SDA/SCL. Druhý nastav adresovacou prepojkou A0 podľa konkrétnej dosky na 0x41. Over I²C skenerom; nespoliehaj sa na nepresnú tabuľku adries e-shopu. Voliteľný BH1750 z pôvodného návrhu nový firmvér nevyžaduje a nemeria ho.
+Oba INA3221: čipové napájanie **VS/VCC → ESP 3V3**, GND → spoločná zem, SDA → GPIO21, SCL → GPIO22. VS/VCC nie je solárny vstup. Na zbernici majú byť pull-up rezistory iba na 3V3. Panelový modul má A0 na GND (0x40). Na batériovom odstráň prípadný mostík A0–GND a spoj A0–VS (3V3), teda 0x41. Nespájaj súčasne GND a VS. Meria sa **CH1 na každom module**, R100 = 0,1 Ω; v Adafruit knižnici je to kanál 0. CH2/CH3 nepoužívame, ich výkonové piny nechaj voľné.
+
+### Meracie svorky staršej a novšej dosky INA3221
+
+Techfun uvádza spoločný kladný vstup troch kanálov. Pri staršej CJMCU doske je vstup IN1+ na spoločnom výkonovom **POW/VIN+** vývode; výstup IN1− je **kladný vývod CH1**. Druhý vývod v dvojici CH1 môže byť **GND**, nie druhá strana bočníka! Pri novšej doske sú priamo vyvedené samostatné IN1+/IN1−. Piny PV/TC/CRI/WAR sú signály upozornení, nie napájací vstup; v tomto návrhu ich nechaj voľné. VPU je pomocné napájanie pull-up pre upozornenia, nie vstup panela.
+
+Pred napájaním identifikuj vývody na dodanej doske multimetrom v režime spojitosti pri odpojenej batérii aj paneli: IN1+ musí ísť na jednu stranu R100 kanála CH1, IN1− na druhú; GND nesmie mať skrat na žiadnu stranu R100. Piny čipového VS/VCC sa identifikujú oddelene od výkonového POW/VIN+. Riaď sa konkrétnym označením a spojmi, nie len fyzickou polohou z internetu. Viac: [INA3221.md](INA3221.md).
+
+Panel + → **PANEL modul IN1+**; **PANEL IN1− → CN3791 IN+**.
+Batériový uzol (CN3791 BAT+ a MT3608 IN+) → **BAT modul IN1+**; **BAT IN1− → chránená LiPo +**. Všetky prevádzkové záporné vodiče patria do spoločnej GND. Kladné výkonové vstupy dvoch modulov navzájom nespájaj.
+
+### Prúdový limit meracích dosiek
+
+Vybraný Techfun modul má predajcom udaných **1,1 A**. Tento limit sa týka každého použitého kanála aj nabíjania a vybíjania. CN3791 nesmie byť bez overenia ponechaný na 4 A. Nabíjací prúd musí rešpektovať nižší z limitov článku a meracej dosky, s rezervou. Over aj vstupný prúd MT3608 pri špičkách ESP a vybitej batérii. Ak bude vetva potrebovať viac, merací návrh sa musí upraviť; ďalší voľný kanál sa neparalelizuje a softvér preťaženie fyzicky nezastaví.
+
+Firmware 0.9.0-ina3221 kontroluje ID čipu, výsledok každého I2C čítania, správne znamienko a rozsah ±1,1 A. Pri chybe panelového merania vynechá telemetriu; pri chybe batériového merača vynechá iba batériové polia. Nahrávanie starého firmvéru pre iný merač nestačí.
 
 ## LED vetvy
 
@@ -73,8 +88,8 @@ W18 sú dva vodiče po 650 mm vrátane pôvodného kábla panela. Nechaj aspoň 
 
 1. Vypni model, odpoj MT3608 aj všetky iné záťaže od batériového uzla. ESP sa pri tom vypne.
 2. Odpoj panel od vstupu CN3791. LAB nastav samostatne podľa skutočného MPPT bodu 12 V variantu; pri overenom MPPT bode 12 V môže ísť napr. o 13–14 V. Over limit dosky a prúd. Táto hodnota platí iba pre vstup nabíjačky, nikdy pre priamy článok alebo 5 V vetvu. Nenastavuj týmto napätím súčasne hlavnú 5 V vetvu domu.
-3. LAB zapoj iba na IN+/IN− nabíjačky. Batéria zostáva na BAT cez INA219. Nie je pripojená priamo na LAB.
-4. Pred pripojením článku over nabíjací limit podľa jeho datasheetu; prípadnú zmenu RCS urob s učiteľom. Techfun údaj 4 A MAX nie je vhodný návod na nastavenie.
+3. LAB zapoj iba na IN+/IN− nabíjačky. Batéria zostáva na BAT cez INA3221. Nie je pripojená priamo na LAB.
+4. Pred pripojením článku over nabíjací limit podľa jeho datasheetu a limitu INA3221 1,1 A; prípadnú zmenu RCS urob s učiteľom. Techfun údaj 4 A MAX nie je vhodný návod na nastavenie.
 5. Po dobití odpoj nabíjací LAB, nastav hlavný zdroj späť na 5,0 V, obnov panel a až potom záťaže. Nedobíjaj celý model z náhodne nastaveného laboratórneho výstupu.
 
 CN3791 nemá samostatný power-path LOAD port. Pri zapnutom ESP sa môže rozhodovanie o ukončení nabíjania skresľovať. Na plné dobitie preto platí uvedený postup s odpojenou záťažou. Solárna prezentácia so zapnutou elektronikou ukazuje čistý prúd, nie automaticky úspešné nabíjanie.
