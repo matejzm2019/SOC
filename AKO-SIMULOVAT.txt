@@ -30,8 +30,9 @@ Hľadaj tieto názvy v katalógu; mená variantov sa môžu mierne líšiť:
 
 1× ESP32 DevKit / ESP32-WROOM, klasické ESP32 ako doska ESP-32D
    z fotografie. Nevyberaj S3; veľkosť flash over na skutočnej doske.
-1× Solar panel 6 V / 5 W.
-1× CN3791 MPPT solar Li-ion charger; nastav variant/MPPT pre 6 V panel,
+1× Solar panel označený 12 V. Reálny výkon a Voc zatiaľ nepoznáme;
+   výkon zvolený v simulácii je skúšobná hodnota, nie údaj tvojho panela.
+1× CN3791 MPPT solar Li-ion charger; nastav variant/MPPT pre 12 V panel,
    ak model ponúka túto voľbu. Nepouži viacčlánkový CN3722.
 1× LiPo battery 1S, 3.7 V, 2500 mAh. Začni napr. na 3.8 V, nie na 0 V.
 1× MT3608 boost converter, výstup nastav na 5.00 V.
@@ -183,7 +184,7 @@ Adafruit INA219, ArduinoJson ani sieť. Používa zdokumentované
 setup()/loop(), millis(), GPIO, ADC, Wire a Serial.
 Produkčný sketch SOC/firmware/esp32 má samostatnú FreeRTOS úlohu;
 BenchTwin ju podľa aktuálnej nápovedy nepodporuje. Na fyzický ESP
-patrí produkčný firmvér 0.8.0-esp32d, nie tento obmedzený bench test.
+patrí produkčný firmvér 0.8.1-panel12, nie tento obmedzený bench test.
 
 9. SKÚŠKY V TOMTO PORADÍ
 
@@ -222,7 +223,7 @@ Ak sa obaly elektroniky zdvojujú s funkčnými dielmi, používaj import
 ako referenciu vedľa obvodu alebo vytvor vlastný obal nástrojmi Build.
 
 Rozmery: podstava 600 × 450 × 8, dom 480 × 330, steny 120 vysoké,
-strecha 35°, panel 230 × 195 × 17 mm. Ovládací panel C01 je vpredu
+strecha 35°, obrys panela 230 × 195 × 17 mm je predbežný, skutočný 12 V panel treba zmerať. Ovládací panel C01 je vpredu
 vľavo X30/Y18, 100 × 40 mm; A má os X56/Y36, B X96/Y36.
 Vstupný chodník má X približne 323–385, takže ovládanie doň nezasahuje.
 Elektronika je v zadnej pravej miestnosti na doske X380/Y257,
@@ -292,3 +293,16 @@ Aktualizácia 10. 11.: rovnaká mapa pinov ako fyzická ESP-32D doska;
 GPIO34 ADC1, GPIO32/33 prepínače, GPIO25/26 LED, GPIO27 indikácia,
 GPIO21/22 I2C. GPIO6–11 nepoužívať (flash). BC547B a 470 µF/16 V
 sú vhodné pre uvedené malé LED a 5 V vetvu.
+
+AKTUALIZÁCIA SOLÁRU 10. 11. 2026
+
+Potvrdené je iba označenie 12 V. CN3791 vyber vo variante 12 V pre
+1S LiPo, nie pre 12 V batériu. Nastavený bod MPPT musí zodpovedať
+skutočnému Vmp; ak je 12 V len názov panelovej sústavy s iným Vmp,
+pevnú MPPT hodnotu treba doladiť. INA219 má elektrický limit 26 V,
+CN3791 čip 28 V; samotná simulácia nezistí skutočné Voc panela.
+Pred zapojením reálneho kusa zmeraj Voc podľa SOC/docs/ZAPOJENIE.md.
+Kondenzátor 470 µF/16 V zostáva na 5 V pri ESP, nie na solárnom vstupe.
+Rozmery, výkon a konektor v simulačnej scéne sú skúšobné, kým ich
+nepremeriaš na svojom kuse. Nepriraďujeme mu parametre iného
+Techfun panela. Nákupný zoznam: SOC/docs/PANEL-12V-A-OBJEDNAVKA.md.

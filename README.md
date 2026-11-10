@@ -1,27 +1,22 @@
-# SOČ – ESP-32D, aktuálny balík
+# SOČ – ESP-32D a existujúci 12 V solárny panel
 
-Aktualizované 10. 11. 2026 podľa fotografie používateľovej 38-pinovej USB-C dosky ESP-32D. Zdrojový commit: 593a6b108e7d6476cc2f29b11e189640b731f2b0.
+Aktualizácia 10. 11. 2026. Kompletné zdroje z commitu c0dfdf277da1b203b2bf85182aa39044608a9a1a.
 
-- [Stiahnuť celý projekt ZIP](SOC-vsetko.zip?raw=1)
-- [Aktuálne zapojenie ESP-32D](ZAPOJENIE-ESP32D.md)
-- [Návod pre BenchTwin](BENCHTWIN-NAVOD.txt)
-- [Skúšobný kód pre BenchTwin ZIP](BENCHTWIN-KOD.zip?raw=1)
-- [Zmeny zdrojov – PR #4](https://github.com/matejzm2019/SOC/pull/4)
+- [Stiahnuť kompletný projekt ZIP](SOC-vsetko.zip?raw=1)
+- [Čo objednať pre 12 V panel a ako to funguje](PANEL-12V-A-OBJEDNAVKA.md)
+- [Zapojenie ESP32 a solárnej vetvy](ZAPOJENIE-ESP32D.md)
+- [Návod BenchTwin](BENCHTWIN-NAVOD.txt)
+- [Skúšobný kód BenchTwin ZIP](BENCHTWIN-KOD.zip?raw=1)
+- [Zdrojové zmeny PR #4](https://github.com/matejzm2019/SOC/pull/4)
 
-Rozbaľ SOC-vsetko.zip. SOC obsahuje aplikáciu, firmware/esp32/energia_esp32.ino, model a stavebné PDF. SOC-simulacia je samostatne vedľa projektu. Použi aktuálne zapojenie; pôvodné S3 GPIO6–11 na klasickom ESP32 patria flash.
+**Panel už máš, nekupovať znova.** Potvrdený je iba údaj 12 V; výkon, Voc, Vmp, rozmery ani konektor zatiaľ nie. CN3791 zvoliť variant 12 V pre jednu LiPo 3,7/4,2 V; hlavná aj záložná vetva domu zostávajú 5 V. Štyri hlavné nákupné položky vrátane dvoch INA219 stoja podľa Techfun 10. 11. spolu 15,65–15,75 € bez drobností a dopravy.
 
-| Pripojenie | GPIO |
-|---|---|
-| Hlavný zdroj cez delič 22 kΩ / 10 kΩ | 34 (ADC1) |
-| Prepínače A / B proti GND | 32 / 33 |
-| BC547 svetiel A / B cez 1 kΩ | 25 / 26 |
-| Modrá LED cez 330 Ω | 27 |
-| INA219 SDA / SCL | 21 / 22 |
+Pred prvým pripojením zmeraj Voc odpojeného panela a zachovaj rezervu pod limitom INA219 26 V a CN3791 28 V alebo nižším limitom konkrétneho modulu. Pri 24 V alebo viac panel nepripájaj bez preverenia. Over tiež dovolený nabíjací prúd článku a limit CN3791; 4 A MAX nie je pripravené nastavenie pre túto batériu. Podrobný postup je v zapojení. 470 µF / 16 V patrí iba na 5 V pri ESP.
 
-Dva BC547BBK zo zásob stačia na dve vetvy po troch malých LED s vlastným 330 Ω. Kondenzátor 470 µF / 16 V patrí na 5 V vetvu, plus na 5 V a mínus na GND. GPIO používajú iba 3,3 V logiku. Over poradie C/B/E konkrétnych tranzistorov.
+Rozbaľ ZIP. SOC obsahuje aplikáciu, firmware/esp32/energia_esp32.ino, model a stavebné PDF. SOC-simulacia je samostatne vedľa projektu. V 3D modeli zostáva pôvodný obrys panela ako predbežná rezerva, kým sa skutočný 12 V kus nezmeria. Nepriraďujeme mu výkon ani rozmery iného panela z Techfun.
 
-Arduino IDE: ESP32 Dev Module, PSRAM Disabled; kapacitu flash over pri nahrávaní, z fotografie nie je známa. Kompilácia produkcie aj samostatného skúšobného sketchu pre klasické ESP32 prešla. Automatické kontroly PR tiež prešli. Fyzický beh na používateľovej doske ani celý BenchTwin obvod tu nebol overený.
+ESP32 Dev Module, PSRAM Disabled. GPIO34 hlavný ADC cez delič, 32/33 prepínače, 25/26 BC547 LED, 27 indikácia, 21/22 I²C. GPIO6–11 sa nepoužívajú. Kapacitu flash over na konkrétnej doske.
 
-BenchTwin: Build → Wire → Code → Simulate. BENCHTWIN-KOD.zip importuje kód, nie zapojenú 3D scénu. Produkčný firmvér používa FreeRTOS, ktorý BenchTwin aktuálne nepodporuje; skúšobný sketch používa loop()/millis(), overuje ovládanie a hlavný zdroj, nevyrába percentá ani HTTP telemetriu. Podpora druhej adresy INA219 a siete závisí od konkrétnej verzie/funkcií BenchTwin.
+Prešlo 85 testov (1 preskočený na Linuxe), príjem skutočných 12 V aj 22 V, kompilácia produkcie 0.8.1-panel12 a automatické kontroly GitHub. API limit nenahrádza elektrickú ochranu. Fyzický beh ani celý BenchTwin obvod tu nebol overený.
 
-AI zostáva na PC cez Ollamu. Chat má sformátované nadpisy, zoznamy, tabuľky a kód; knižnice sú pribalené bez CDN.
+BenchTwin používa samostatný loop()/millis() diagnostický sketch, pretože produkcia používa nepodporované FreeRTOS úlohy. ZIP s kódom nie je import celej zapojenej 3D scény. Neznáme parametre zadané do simulátora sú testovacie, nie meranie reálneho panela. AI beží na PC cez Ollamu.
