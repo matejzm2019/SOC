@@ -1,5 +1,5 @@
 SOČ SMART DOM – NÁVOD PRE BENCHTWIN
-8. 11. 2026; zodpovedá domu a zapojeniu verzie 0.12.0.
+10. 11. 2026; zodpovedá domu a zapojeniu verzie 0.12.0.
 
 Tento návod a súbor benchtwin/sketch.ino sú vedľa projektu SOC.
 Cieľ: postaviť v BenchTwin skutočné elektrické zapojenie svetiel,
@@ -28,8 +28,8 @@ S účtom si môžeš projekt uložiť aj do cloudu.
 
 Hľadaj tieto názvy v katalógu; mená variantov sa môžu mierne líšiť:
 
-1× ESP32-S3 DevKit / ESP32-S3-DevKitC-1. Ak máš variant N16R8,
-   vyber ho; pre tento elektrický test nerozhoduje veľkosť PSRAM.
+1× ESP32 DevKit / ESP32-WROOM, klasické ESP32 ako doska ESP-32D
+   z fotografie. Nevyberaj S3; veľkosť flash over na skutočnej doske.
 1× Solar panel 6 V / 5 W.
 1× CN3791 MPPT solar Li-ion charger; nastav variant/MPPT pre 6 V panel,
    ak model ponúka túto voľbu. Nepouži viacčlánkový CN3722.
@@ -37,13 +37,13 @@ Hľadaj tieto názvy v katalógu; mená variantov sa môžu mierne líšiť:
 1× MT3608 boost converter, výstup nastav na 5.00 V.
 2× INA219 current and power monitor, označ ich INA_PANEL a INA_BAT.
 1× 5 V jednokanálový prepínací relay module s COM/NO/NC a LOW trigger.
-2× NPN 2N2222A.
+2× NPN BC547B.
 6× biela LED, 1× modrá LED.
 7× rezistor 330 Ω, 2× 1 kΩ, 3× 10 kΩ, 1× 22 kΩ.
    Voliteľne ďalšie 2× 10 kΩ ako pull-up prepínačov na 3.3 V.
 2× trvalý dvojpolohový prepínač (SPST/SPDT toggle/slide switch).
 1× nastaviteľný DC zdroj označený LAB_5V, nastavený na 5.00 V.
-1× 470 µF kondenzátor na 5 V vetve pri ESP, s vhodnou polaritou.
+1× 470 µF / 16 V kondenzátor na 5 V vetve pri ESP, s vhodnou polaritou.
 Rozpojiteľná servisná prepojka, vodiče, prípadne breadboard/rozvodné body.
 
 CN3791 a MT3608 aj INA219 sú priamo v aktuálnom verejnom katalógu.
@@ -96,7 +96,7 @@ simulačnú hodnotu. Reálny dovolený prúd treba overiť podľa článku.
 
 MT3608 OUT+ → BACKUP_5V, nastav presne 5.00 V a skontroluj multimetrom.
 MT3608 OUT− → GND.
-BACKUP_5V → 5V/VIN napájací vstup konkrétnej dosky ESP32-S3.
+BACKUP_5V → 5V/VIN napájací vstup konkrétnej dosky ESP32 / ESP-32D.
 NIE na pin 3V3. Ak má model dosky automatické USB napájanie,
 nesmie ním maskovať test batériovej vetvy; používaj zapojené napájanie.
 
@@ -124,29 +124,29 @@ LIGHTS_5V → 330 Ω → anóda LED1 → katóda → kolektor tranzistora A
 LIGHTS_5V → 330 Ω → anóda LED2 → katóda → kolektor tranzistora A
 LIGHTS_5V → 330 Ω → anóda LED3 → katóda → kolektor tranzistora A
 Emitor tranzistora A → GND
-GPIO7 → 1 kΩ → báza A; báza A → 10 kΩ → GND
+GPIO25 → 1 kΩ → báza A; báza A → 10 kΩ → GND
 
-Vetva B je rovnaká s ďalšími tromi LED, tranzistorom B a GPIO10.
+Vetva B je rovnaká s ďalšími tromi LED, tranzistorom B a GPIO26.
 Na tranzistore sa riaď názvami C/B/E; nepredpokladaj poradie nôh podľa
 obrázka iného puzdra. Tri LED nie sú zapojené do série na 5 V.
 
-Prepínač A: stredný/spoločný kontakt → GPIO5, jeden krajný → GND.
-Druhý krajný nechaj voľný. Pri SPST jednoducho spoj GPIO5 proti GND.
-Prepínač B rovnako na GPIO6. Neprepínaj GPIO medzi 5 V a zemou!
+Prepínač A: stredný/spoločný kontakt → GPIO32, jeden krajný → GND.
+Druhý krajný nechaj voľný. Pri SPST jednoducho spoj GPIO32 proti GND.
+Prepínač B rovnako na GPIO33. Neprepínaj GPIO medzi 5 V a zemou!
 Softvér používa INPUT_PULLUP; kontakt spojený na GND znamená zapnuté.
-Voliteľné 10 kΩ pull-up sú z GPIO5/6 na ESP 3V3, nikdy na 5 V.
+Voliteľné 10 kΩ pull-up sú z GPIO32/33 na ESP 3V3, nikdy na 5 V.
 
-Modrá indikácia: GPIO11 → 330 Ω → anóda modrej LED; katóda → GND.
+Modrá indikácia: GPIO27 → 330 Ω → anóda modrej LED; katóda → GND.
 
 7. DETEKCIA HLAVNÉHO ZDROJA A I2C
 
 MAIN_5V → 22 kΩ → merací uzol → 10 kΩ → GND
-Merací uzol → GPIO4.
-Pri hlavnom zdroji 5 V je na GPIO4 približne 1.56 V / 1560 mV.
+Merací uzol → GPIO34.
+Pri hlavnom zdroji 5 V je na GPIO34 približne 1.56 V / 1560 mV.
 Priame pripojenie 5 V na GPIO je nesprávne, aj keď ho simulátor toleruje.
 
 Oba INA219: VCC → ESP 3V3, GND → GND.
-ESP GPIO8 → SDA; GPIO9 → SCL.
+ESP GPIO21 → SDA; GPIO22 → SCL.
 INA_PANEL má adresu 0x40; INA_BAT musí mať odlišnú adresu 0x41.
 Ak konkrétny model ponúka adresu/jumper A0, nastav ju na druhom kuse.
 Na reálnom breakoute sa to robí mostíkom A0 podľa jeho zapojenia.
@@ -181,9 +181,9 @@ samotný ACK ešte neoveruje správne registre a meraný prúd.
 Skúšobný sketch nepoužíva FreeRTOS, používateľské C++ triedy,
 Adafruit INA219, ArduinoJson ani sieť. Používa zdokumentované
 setup()/loop(), millis(), GPIO, ADC, Wire a Serial.
-Produkčný sketch SOC/firmware/esp32-s3 má samostatnú FreeRTOS úlohu;
+Produkčný sketch SOC/firmware/esp32 má samostatnú FreeRTOS úlohu;
 BenchTwin ju podľa aktuálnej nápovedy nepodporuje. Na fyzický ESP
-patrí produkčný firmvér 0.7.0-controls, nie tento obmedzený bench test.
+patrí produkčný firmvér 0.8.0-esp32d, nie tento obmedzený bench test.
 
 9. SKÚŠKY V TOMTO PORADÍ
 
@@ -265,7 +265,7 @@ ESP sa pri výpadku vypne: skontroluj MT3608, jeho 5 V výstup,
   batériu a napájací pin dosky. Nevyrieš to pridaním skrytého USB zdroja.
 Záporný prúd v nabíjaní: over smer sondy/bočníka; batériový senzor
   má VIN+ na BAT_NODE a VIN− pri plus batérie.
-INA nie je nájdený: VCC 3.3 V, spoločná zem, SDA=8/SCL=9,
+INA nie je nájdený: VCC 3.3 V, spoločná zem, SDA=21/SCL=22,
   správne adresy a podpora konkrétneho modelu/knižnice v tvojej verzii.
 Na 0x41 nič neodpovedá: pozri krok 7; dva defaultné 0x40 nie sú riešenie.
 HTTP nefunguje: najprv over, či je táto funkcia sprístupnená;
@@ -275,7 +275,7 @@ HTTP nefunguje: najprv over, či je táto funkcia sprístupnená;
 
 Overené na verejnom rozhraní/dokumentácii BenchTwin: Build/Wire/Code/
 Simulate, Code → Libraries/What works?, Check, Upload & simulate,
-Project import/export kódu, laboratórne nástroje, ESP32-S3 a katalógové
+Project import/export kódu, laboratórne nástroje, ESP32 a katalógové
 CN3791/MT3608/INA219/LiPo. Verejná nápoveda výslovne uvádza obmedzenie
 FreeRTOS a poznámky vydania uvádzajú Pro sieťové funkcie.
 Nebolo tu vykonané kompletné interaktívne zostavenie a odbehnutie
@@ -287,3 +287,8 @@ https://benchtwin.com/
 https://benchtwin.com/microcontroller-simulator
 V aplikácii: What’s new, Code → What works? a Code → Libraries.
 Reálne zapojenie nášho domu: SOC/docs/ZAPOJENIE.md.
+
+Aktualizácia 10. 11.: rovnaká mapa pinov ako fyzická ESP-32D doska;
+GPIO34 ADC1, GPIO32/33 prepínače, GPIO25/26 LED, GPIO27 indikácia,
+GPIO21/22 I2C. GPIO6–11 nepoužívať (flash). BC547B a 470 µF/16 V
+sú vhodné pre uvedené malé LED a 5 V vetvu.
